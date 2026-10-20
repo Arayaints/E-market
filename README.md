@@ -1,10 +1,10 @@
 # 🏬 e-Market Management System (ระบบจัดการแผงเช่าตลาดและสัญญาการเช่า)
 
 ระบบบริหารจัดการแผงเช่าตลาดและสัญญาการเช่า พัฒนาด้วยสถาปัตยกรรม **Decoupled Modern Web Application**:
-- **Frontend (FE)**: [Nuxt.js (Nuxt 3)](file:///Users/chinchutha/Project/frontend) + Vanilla CSS Design Tokens (Glassmorphism & Dark Mode)
-- **Backend (BE)**: [Python FastAPI](file:///Users/chinchutha/Project/backend) ตามมาตรฐาน **REST API**
+- **Frontend (FE)**: [Nuxt.js (Nuxt 4)](file:///Users/chinchutha/Project/frontend) + Clean Frontend Modular Architecture
+- **Backend (BE)**: [Go (Gin Framework)](file:///Users/chinchutha/Project/backend) ตามมาตรฐาน **Clean Architecture**
 - **Authentication**: มาตรฐาน **JSON Web Token (JWT Bearer Token)** ทุกการเรียกใช้งาน API
-- **Database**: SQLite พร้อม SQLAlchemy 2.0 ORM และ Pydantic v2 Data Validation
+- **Database**: GORM (SQLite / PostgreSQL) พร้อมระบบ Auto-Migrate & Seeds
 
 ---
 
@@ -12,10 +12,9 @@
 
 | บริการ | URL | รายละเอียด |
 | :--- | :--- | :--- |
-| **Frontend Web App** | [http://localhost:3000](http://localhost:3000) | หน้าเว็บ Nuxt 3 (Dashboard, แผงเช่า, สัญญาเช่า, ตั้งค่า) |
-| **Backend REST API** | [http://localhost:8000](http://localhost:8000) | FastAPI Backend API |
-| **Interactive API Docs (Swagger UI)** | [http://localhost:8000/docs](http://localhost:8000/docs) | เอกสารและทดสอบ REST API แบบ Interactive |
-| **Alternative Docs (ReDoc)** | [http://localhost:8000/redoc](http://localhost:8000/redoc) | เอกสาร API ฉบับ ReDoc สวยงาม |
+| **Frontend Web App** | [http://localhost:3000](http://localhost:3000) | หน้าเว็บ Nuxt 4 (Dashboard, แผงเช่า, สัญญาเช่า, ตั้งค่า) |
+| **Backend REST API** | [http://localhost:8000](http://localhost:8000) | Go Gin REST API Server |
+| **Interactive API Docs (Swagger UI)** | [http://localhost:8000/swagger/index.html](http://localhost:8000/swagger/index.html) | เอกสารและทดสอบ REST API แบบ Interactive |
 
 ---
 

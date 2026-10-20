@@ -21,9 +21,9 @@ export abstract class HttpService {
 		if (!base) {
 			try {
 				const config = useRuntimeConfig()
-				base = (config.public?.apiUrl || config.public?.apiBase || "http://localhost:8000/api/v1") as string
+				base = (config.public?.apiUrl || config.public?.apiBase || "/api/v1") as string
 			} catch {
-				base = "http://localhost:8000/api/v1"
+				base = "/api/v1"
 			}
 		}
 		let url = base.replace(/\/+$/, "")
@@ -118,6 +118,30 @@ export abstract class HttpService {
 			}
 			return this.handleError<T>(response.status, payload, response.statusText)
 		} catch (error: any) {
+			if (!url.startsWith("/api/v1")) {
+				try {
+					const cleanEp = endpoint.startsWith("/") ? endpoint : `/${endpoint}`
+					const subPath = this.path ? `/${this.path.replace(/^\/+|\/+$/g, "")}` : ""
+					let fallbackUrl = `/api/v1${subPath}${cleanEp}`
+					if (params) {
+						const searchParams = this.createParams(params).toString()
+						if (searchParams) {
+							fallbackUrl += (fallbackUrl.includes("?") ? "&" : "?") + searchParams
+						}
+					}
+					const fallbackRes = await fetch(fallbackUrl, {
+						...fetchOptions,
+						headers,
+						body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
+					})
+					const payload = await fallbackRes.json().catch(() => null)
+					if (fallbackRes.ok) {
+						return this.handleResponse<T>(fallbackRes.status, payload)
+					}
+				} catch {
+					// fallback failed, continue to standard error handling
+				}
+			}
 			return this.handleError<T>(0, null, error?.message || "Network Error: Please check your connection")
 		}
 	}
@@ -128,7 +152,7 @@ export abstract class HttpService {
 				const authStore = useAuthStore()
 				try {
 					const config = useRuntimeConfig()
-					const base = (config.public?.apiUrl || config.public?.apiBase || "http://localhost:8000/api/v1") as string
+					const base = (config.public?.apiUrl || config.public?.apiBase || "/api/v1") as string
 					const refreshUrl = `${base.replace(/\/+$/, "")}/auth/refresh_token`
 					const res = await fetch(refreshUrl, {
 						method: "POST",

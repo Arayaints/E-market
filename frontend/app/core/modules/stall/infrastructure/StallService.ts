@@ -17,7 +17,7 @@ export class StallService extends HttpService {
 	async getWaitingQueue(stallIdent: string): Promise<IResponse<IWaitingQueueInfo>> {
 		// Endpoint is at bookings/waiting-queue/{stall_ident}
 		const config = useRuntimeConfig()
-		const base = (config.public?.apiUrl || config.public?.apiBase || "http://localhost:8000/api/v1") as string
+		const base = (config.public?.apiUrl || config.public?.apiBase || "/api/v1") as string
 		const url = `${base.replace(/\/+$/, "")}/bookings/waiting-queue/${stallIdent}`
 		try {
 			const res = await fetch(url)

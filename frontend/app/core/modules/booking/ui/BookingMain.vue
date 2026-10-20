@@ -156,7 +156,7 @@
                     </button>
 
                     <!-- Action for Pending Approval: Officer Approve or Reject -->
-                    <template v-if="b.status === 'pending_approval'">
+                    <template v-if="b.status === 'pending_approval' || b.status === 'pending'">
                       <button class="btn btn-sm btn-primary" @click="openApproveModal(b)">
                         ✓ อนุมัติ
                       </button>
@@ -301,7 +301,7 @@ const loadBookings = async () => {
   }
 }
 
-const pendingBookings = computed(() => bookings.value.filter(b => b.status === 'pending_approval'))
+const pendingBookings = computed(() => bookings.value.filter(b => b.status === 'pending_approval' || b.status === 'pending'))
 const approvedBookings = computed(() => bookings.value.filter(b => b.status === 'approved'))
 const visitedBookings = computed(() => bookings.value.filter(b => b.status === 'visited'))
 
@@ -388,7 +388,8 @@ const onApplicationSubmitted = async () => {
 
 const getBookingBadgeClass = (status: string) => {
   switch (status) {
-    case 'pending_approval': return 'badge badge-reserved'
+    case 'pending_approval':
+    case 'pending': return 'badge badge-reserved'
     case 'approved': return 'badge badge-available'
     case 'visited': return 'badge badge-occupied'
     case 'lease_applied': return 'badge badge-available'
@@ -400,7 +401,8 @@ const getBookingBadgeClass = (status: string) => {
 
 const getBookingStatusLabel = (status: string) => {
   switch (status) {
-    case 'pending_approval': return 'รอเจ้าหน้าที่อนุมัติ'
+    case 'pending_approval':
+    case 'pending': return 'รอเจ้าหน้าที่อนุมัติ'
     case 'approved': return 'นัดหมายสำเร็จ'
     case 'visited': return 'ดูแผงแล้ว (รอตัดสินใจ)'
     case 'lease_applied': return 'ยื่นคำร้องขอเช่าแล้ว'

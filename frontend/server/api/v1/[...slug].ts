@@ -340,6 +340,103 @@ const generateStalls = () => {
 
 const STALLS_DATA = generateStalls()
 
+const BOOKINGS_DATA: any[] = [
+  {
+    id: 1,
+    booking_number: 'BK-2026-0042',
+    stall_id: 1,
+    stall_number: 'A-01',
+    stall_monthly_rate: 2500,
+    market_name: 'ตลาดนัดจตุจักร',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-444-5566',
+    tenant_email: 'somchai@example.com',
+    intended_business: 'เสื้อผ้าและแฟชั่นวินเทจ',
+    visit_date: '2026-10-25',
+    visit_time_slot: '10:00 - 12:00',
+    status: 'approved',
+    officer_notes: 'อนุมัตินัดหมาย ให้เจ้าหน้าที่เวรพาเดินชมแผงโซน A',
+    created_at: '2026-10-18T10:30:00Z'
+  },
+  {
+    id: 2,
+    booking_number: 'BK-2026-0043',
+    stall_id: 4,
+    stall_number: 'B-04',
+    stall_monthly_rate: 1800,
+    market_name: 'ตลาดประชานิเวศน์ 1',
+    tenant_name: 'สมหญิง รักการค้า',
+    tenant_phone: '089-123-4567',
+    tenant_email: 'somying@example.com',
+    intended_business: 'อาหารพร้อมทานและเบเกอรี่',
+    visit_date: '2026-10-26',
+    visit_time_slot: '14:00 - 16:00',
+    status: 'pending_approval',
+    created_at: '2026-10-19T09:15:00Z'
+  },
+  {
+    id: 3,
+    booking_number: 'BK-2026-0044',
+    stall_id: 8,
+    stall_number: 'A-08',
+    stall_monthly_rate: 2500,
+    market_name: 'ตลาดนัดจตุจักร',
+    tenant_name: 'นายกิตติคุณ มั่งคั่ง',
+    tenant_phone: '082-998-1122',
+    tenant_email: 'kittikun@example.com',
+    intended_business: 'ร้านกาแฟโบราณและเครื่องดื่ม',
+    visit_date: '2026-10-20',
+    visit_time_slot: '10:00 - 12:00',
+    status: 'visited',
+    officer_notes: 'นำชมแผงเรียบร้อย ผู้ขอจองมีความสนใจยื่นสัญญาเช่า',
+    created_at: '2026-10-17T11:00:00Z'
+  }
+]
+
+const APPLICATIONS_DATA: any[] = [
+  {
+    id: 1,
+    application_number: 'APP-2026-0015',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-444-5566',
+    tenant_id_card: '1-1004-99887-12-3',
+    stall_id: 1,
+    stall_number: 'A-01',
+    market_name: 'ตลาดนัดจตุจักร',
+    business_name: 'ร้านเสื้อผ้าวินเทจสมชาย',
+    business_type: 'แฟชั่นและเครื่องแต่งกาย',
+    stage: 'approved',
+    status: 'approved',
+    created_at: '2026-10-19T14:20:00Z'
+  }
+]
+
+const CONTRACTS_DATA: any[] = [
+  {
+    id: 1,
+    contract_number: 'CNT-2026-0001',
+    stall_id: 2,
+    tenant_name: 'นายกิตติคุณ มั่งคั่ง',
+    tenant_id_card: '1-1004-99887-12-3',
+    tenant_phone: '082-998-1122',
+    business_name: 'ร้านกาแฟโบราณลุงกิต',
+    business_type: 'อาหารและเครื่องดื่ม',
+    start_date: '2026-01-01',
+    end_date: '2026-12-31',
+    billing_cycle: 'monthly',
+    rental_fee: 2500,
+    security_deposit: 5000,
+    advance_payment: 2500,
+    status: 'active',
+    stall: {
+      id: 2,
+      stall_number: 'A-02',
+      zone_name: 'โซนอาหารปรุงสำเร็จ',
+      monthly_rate: 2500
+    }
+  }
+]
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug') || ''
   const method = getMethod(event)
@@ -470,100 +567,180 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // --- /bookings ---
-  if (cleanSlug === 'bookings') {
-    if (method === 'POST') {
+  // --- /bookings or /bookings/:id/... ---
+  if (cleanSlug.startsWith('bookings')) {
+    const parts = cleanSlug.split('/').filter(Boolean)
+
+    // 1. /bookings/:id/approve
+    if (parts.length === 3 && parts[2] === 'approve' && method === 'POST') {
+      const bId = Number(parts[1])
       const body = await readBody(event).catch(() => ({}))
-      const bookingNumber = `BK-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        booking.status = 'approved'
+        booking.officer_notes = body.officer_notes || 'อนุมัตินัดหมาย ให้เจ้าหน้าที่เวรนำชมแผง'
+      }
+      return { status: true, code: 200, message: 'อนุมัตินัดหมายเรียบร้อย', data: booking }
+    }
+
+    // 2. /bookings/:id/reject
+    if (parts.length === 3 && parts[2] === 'reject' && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        booking.status = 'rejected'
+        booking.rejection_reason = body.rejection_reason || 'ไม่อนุมัติคำขอ'
+      }
+      return { status: true, code: 200, message: 'ปฏิเสธคำขอเรียบร้อย', data: booking }
+    }
+
+    // 3. /bookings/:id/decide
+    if (parts.length === 3 && parts[2] === 'decide' && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        if (body.decision === 'interested') {
+          booking.status = 'visited'
+        } else {
+          booking.status = 'cancelled'
+        }
+      }
+      return { status: true, code: 200, message: 'บันทึกการตัดสินใจเรียบร้อย', data: booking }
+    }
+
+    // 4. /bookings/waiting-queue/:stallIdent
+    if (parts.length === 3 && parts[1] === 'waiting-queue') {
+      const stallIdent = decodeURIComponent(parts[2])
+      const queues = BOOKINGS_DATA.filter(b => b.stall_number === stallIdent && (b.status === 'pending_approval' || b.status === 'pending'))
       return {
-        id: Math.floor(Math.random() * 1000) + 10,
-        booking_number: bookingNumber,
-        stall_id: body.stall_id || 1,
-        tenant_name: body.tenant_name || 'สมชาย ใจดี',
-        tenant_phone: body.tenant_phone || '081-444-5566',
-        tenant_email: body.tenant_email || 'somchai@example.com',
-        visit_date: body.visit_date || '2026-10-25',
-        visit_time_slot: body.visit_time_slot || '10:00 - 12:00',
-        intended_business: body.intended_business || 'จำหน่ายอาหารและเครื่องดื่ม',
-        status: 'pending',
-        created_at: new Date().toISOString()
+        stall_code: stallIdent,
+        total_in_queue: queues.length,
+        current_queue: queues.length > 0 ? 1 : 0,
+        estimated_wait_days: queues.length * 3,
+        can_queue: true
       }
     }
-    return [
-      {
-        id: 1,
-        booking_number: 'BK-2026-0042',
-        stall_id: 1,
-        stall_number: 'A-01',
-        market_name: 'ตลาดนัดจตุจักร',
-        tenant_name: 'สมชาย ใจดี',
-        tenant_phone: '081-444-5566',
-        visit_date: '2026-10-25',
-        visit_time_slot: '10:00 - 12:00',
-        status: 'approved',
-        created_at: '2026-10-18T10:30:00Z'
-      },
-      {
-        id: 2,
-        booking_number: 'BK-2026-0043',
-        stall_id: 4,
-        stall_number: 'B-04',
-        market_name: 'ตลาดประชานิเวศน์ 1',
-        tenant_name: 'สมหญิง รักการค้า',
-        tenant_phone: '089-123-4567',
-        visit_date: '2026-10-26',
-        visit_time_slot: '14:00 - 16:00',
-        status: 'pending',
-        created_at: '2026-10-19T09:15:00Z'
+
+    // 5. POST /bookings (Create new booking)
+    if (parts.length === 1 && method === 'POST') {
+      const body = await readBody(event).catch(() => ({}))
+      const stallId = Number(body.stall_id) || 1
+      const stall = STALLS_DATA.find(s => s.id === stallId) || STALLS_DATA[0]
+      const randomNum = Math.floor(1000 + Math.random() * 9000)
+      const bookingNumber = `BK-${new Date().getFullYear()}-${randomNum}`
+
+      const newBooking = {
+        id: Date.now(),
+        booking_number: bookingNumber,
+        stall_id: stall?.id || stallId,
+        stall_number: stall?.stall_number || `A-${stallId}`,
+        stall_monthly_rate: stall?.monthly_rate || 2500,
+        market_name: stall?.market_name || 'ตลาดนัดจตุจักร',
+        tenant_name: body.tenant_name || 'ผู้ขอจองเข้าชม',
+        tenant_phone: body.tenant_phone || '081-000-0000',
+        tenant_email: body.tenant_email || '',
+        tenant_id_card: body.tenant_id_card || '',
+        visit_date: body.visit_date || new Date().toISOString().slice(0, 10),
+        visit_time_slot: body.visit_time_slot || '10:00 - 12:00',
+        intended_business: body.intended_business || 'จำหน่ายสินค้าทั่วไป',
+        status: 'pending_approval',
+        created_at: new Date().toISOString()
       }
-    ]
+
+      // Mark stall status as reserved
+      if (stall) {
+        stall.status = 'reserved'
+      }
+
+      // Store in memory so it appears immediately in GET /bookings
+      BOOKINGS_DATA.unshift(newBooking)
+
+      return {
+        status: true,
+        code: 200,
+        data: newBooking,
+        ...newBooking
+      }
+    }
+
+    // 6. GET /bookings
+    return BOOKINGS_DATA
   }
 
   // --- /contracts ---
-  if (cleanSlug === 'contracts') {
-    return [
-      {
-        id: 1,
-        contract_number: 'CNT-2026-0001',
-        stall_id: 2,
-        tenant_name: 'นายกิตติคุณ มั่งคั่ง',
-        tenant_id_card: '1-1004-99887-12-3',
-        tenant_phone: '082-998-1122',
-        business_name: 'ร้านกาแฟโบราณลุงกิต',
-        business_type: 'อาหารและเครื่องดื่ม',
-        start_date: '2026-01-01',
-        end_date: '2026-12-31',
-        billing_cycle: 'monthly',
-        rental_fee: 2500,
-        security_deposit: 5000,
-        advance_payment: 2500,
+  if (cleanSlug.startsWith('contracts')) {
+    if (method === 'POST') {
+      const body = await readBody(event).catch(() => ({}))
+      const randomNum = Math.floor(1000 + Math.random() * 9000)
+      const contractNumber = `CNT-${new Date().getFullYear()}-${randomNum}`
+      const stallId = Number(body.stall_id) || 1
+      const stall = STALLS_DATA.find(s => s.id === stallId) || STALLS_DATA[0]
+
+      const newContract = {
+        id: Date.now(),
+        contract_number: contractNumber,
+        stall_id: stallId,
+        tenant_name: body.tenant_name || 'ผู้ทำสัญญาเช่า',
+        tenant_id_card: body.tenant_id_card || '',
+        tenant_phone: body.tenant_phone || '',
+        business_name: body.business_name || '',
+        business_type: body.business_type || 'ทั่วไป',
+        start_date: body.start_date || new Date().toISOString().slice(0, 10),
+        end_date: body.end_date || new Date(Date.now() + 365*86400000).toISOString().slice(0, 10),
+        billing_cycle: body.billing_cycle || 'monthly',
+        rental_fee: body.rental_fee || stall?.monthly_rate || 2500,
+        security_deposit: body.security_deposit || 5000,
+        advance_payment: body.advance_payment || 2500,
         status: 'active',
         stall: {
-          id: 2,
-          stall_number: 'A-02',
-          zone_name: 'โซนอาหารปรุงสำเร็จ',
-          monthly_rate: 2500
+          id: stall?.id || stallId,
+          stall_number: stall?.stall_number || `A-${stallId}`,
+          zone_name: stall?.zone || 'โซนทั่วไป',
+          monthly_rate: stall?.monthly_rate || 2500
         }
       }
-    ]
+
+      if (stall) {
+        stall.status = 'occupied'
+      }
+
+      CONTRACTS_DATA.unshift(newContract)
+      return { status: true, code: 200, data: newContract, ...newContract }
+    }
+    return CONTRACTS_DATA
   }
 
   // --- /applications ---
-  if (cleanSlug === 'applications') {
-    return [
-      {
-        id: 1,
-        application_number: 'APP-2026-0015',
-        tenant_name: 'สมชาย ใจดี',
-        tenant_phone: '081-444-5566',
-        stall_number: 'A-01',
-        market_name: 'ตลาดนัดจตุจักร',
-        business_name: 'ร้านกาแฟโบราณ',
-        stage: 'approved',
-        status: 'approved',
-        created_at: '2026-10-19T14:20:00Z'
+  if (cleanSlug.startsWith('applications')) {
+    if (method === 'POST') {
+      const body = await readBody(event).catch(() => ({}))
+      const randomNum = Math.floor(1000 + Math.random() * 9000)
+      const appNumber = `APP-${new Date().getFullYear()}-${randomNum}`
+      const stallId = Number(body.stall_id) || 1
+      const stall = STALLS_DATA.find(s => s.id === stallId) || STALLS_DATA[0]
+
+      const newApp = {
+        id: Date.now(),
+        application_number: appNumber,
+        tenant_name: body.applicant_name || body.tenant_name || 'ผู้ยื่นคำร้อง',
+        tenant_phone: body.applicant_phone || body.tenant_phone || '',
+        tenant_id_card: body.id_card_number || body.tenant_id_card || '',
+        stall_id: stallId,
+        stall_number: stall?.stall_number || `A-${stallId}`,
+        market_name: stall?.market_name || 'ตลาดนัดจตุจักร',
+        business_name: body.intended_product_type || body.business_name || 'ร้านค้า',
+        business_type: body.business_type || 'ทั่วไป',
+        stage: 'submitted',
+        status: 'pending',
+        created_at: new Date().toISOString()
       }
-    ]
+
+      APPLICATIONS_DATA.unshift(newApp)
+      return { status: true, code: 200, data: newApp, ...newApp }
+    }
+    return APPLICATIONS_DATA
   }
 
   // --- /auth/login or /auth/token ---
@@ -571,15 +748,26 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event).catch(() => ({}))
     const username = body?.username || 'admin'
     const role = username === 'admin' ? 'admin' : username === 'staff' ? 'staff' : 'tenant'
+    const userInfo = {
+      id: username === 'tenant' ? 3 : 1,
+      username,
+      full_name: username === 'tenant' ? 'คุณสมชาย ใจดี (ผู้เช่าแผงค้า)' : 'ผู้ดูแลระบบตลาด กทม. (Admin)',
+      email: `${username}@emarket.bma.go.th`,
+      role
+    }
     return {
+      status: true,
+      code: 200,
+      data: {
+        access_token: 'mock-jwt-token-bma-emarket-2026',
+        token_type: 'bearer',
+        role,
+        user: userInfo
+      },
       access_token: 'mock-jwt-token-bma-emarket-2026',
       token_type: 'bearer',
-      user: {
-        id: 1,
-        username,
-        email: `${username}@emarket.bma.go.th`,
-        role
-      }
+      role,
+      user: userInfo
     }
   }
 
