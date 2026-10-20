@@ -9,7 +9,7 @@
         title="ย้อนกลับ"
         aria-label="ย้อนกลับ"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
@@ -81,30 +81,30 @@ const handleBack = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 22px;
-  padding: 6px 0 2px 0;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 2px 0;
   flex-wrap: wrap;
 }
 
 .body-breadcrumb-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .body-breadcrumb-back-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
   background: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #334155;
+  color: #475569;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
@@ -124,10 +124,11 @@ const handleBack = () => {
 .body-breadcrumb-trail {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  font-size: 1.125rem;
+  gap: 8px;
+  font-size: 0.85rem;
   font-family: 'Bai Jamjuree', sans-serif;
   flex-wrap: wrap;
+  line-height: 1.4;
 }
 
 .body-breadcrumb-link {
@@ -144,20 +145,20 @@ const handleBack = () => {
 
 .body-breadcrumb-sep {
   color: #cbd5e1;
-  font-size: 1rem;
+  font-size: 0.75rem;
   font-weight: 300;
   user-select: none;
 }
 
 .body-breadcrumb-current {
   color: #0f172a;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .body-breadcrumb-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 </style>

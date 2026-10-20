@@ -1,4 +1,32 @@
 import { defineEventHandler, getRouterParam, getMethod, getQuery, readBody, setResponseStatus } from 'h3'
+import crypto from 'node:crypto'
+
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+}
+
+function generateRfc7519Jwt(payload: Record<string, any>, secret: string = 'bma-emarket-jwt-secret-key-2026'): string {
+  const header = { alg: 'HS256', typ: 'JWT' }
+  const encodedHeader = base64UrlEncode(JSON.stringify(header))
+  const encodedPayload = base64UrlEncode(JSON.stringify({
+    ...payload,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 86400
+  }))
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+
+  return `${encodedHeader}.${encodedPayload}.${signature}`
+}
 
 // 12 Bangkok Markets Dataset (Official BMA Markets)
 const MARKETS_DATA = [
@@ -755,19 +783,68 @@ export default defineEventHandler(async (event) => {
       email: `${username}@emarket.bma.go.th`,
       role
     }
+
+    const accessToken = generateRfc7519Jwt({
+      user_id: userInfo.id,
+      username: userInfo.username,
+      role: userInfo.role
+    })
+
+    const refreshToken = generateRfc7519Jwt({
+      user_id: userInfo.id,
+      username: userInfo.username,
+      type: 'refresh'
+    })
+
     return {
       status: true,
       code: 200,
       data: {
-        access_token: 'mock-jwt-token-bma-emarket-2026',
+        access_token: accessToken,
+        refresh_token: refreshToken,
         token_type: 'bearer',
         role,
         user: userInfo
       },
-      access_token: 'mock-jwt-token-bma-emarket-2026',
+      access_token: accessToken,
+      refresh_token: refreshToken,
       token_type: 'bearer',
       role,
       user: userInfo
+    }
+  }
+
+  // --- /auth/refresh_token ---
+  if (cleanSlug === 'auth/refresh_token') {
+    const body = await readBody(event).catch(() => ({}))
+    const newAccessToken = generateRfc7519Jwt({
+      user_id: 1,
+      username: 'admin',
+      role: 'admin'
+    })
+    return {
+      status: true,
+      code: 200,
+      data: {
+        access_token: newAccessToken,
+        refresh_token: body?.refresh_token || newAccessToken,
+        token_type: 'bearer'
+      }
+    }
+  }
+
+  // --- /auth/me ---
+  if (cleanSlug === 'auth/me') {
+    return {
+      status: true,
+      code: 200,
+      data: {
+        id: 1,
+        username: 'admin',
+        full_name: 'ผู้ดูแลระบบตลาด กทม. (Admin)',
+        email: 'admin@emarket.bma.go.th',
+        role: 'admin'
+      }
     }
   }
 

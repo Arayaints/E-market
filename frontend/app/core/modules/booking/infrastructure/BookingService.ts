@@ -29,4 +29,8 @@ export class BookingService extends HttpService {
 	async rejectBooking(id: number, reason?: string): Promise<IResponse<IBooking>> {
 		return this.updateStatus(id, "rejected", reason)
 	}
+
+	async getWaitingQueue(stallIdent: string): Promise<IResponse<any>> {
+		return this.get<any>(`/waiting-queue/${encodeURIComponent(stallIdent)}`)
+	}
 }
