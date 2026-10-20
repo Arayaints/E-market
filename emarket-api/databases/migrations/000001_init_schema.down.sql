@@ -1,0 +1,10 @@
+-- 000001_init_schema.down.sql
+
+DROP TABLE IF EXISTS "item";
+DROP TABLE IF EXISTS "contract";
+DROP TABLE IF EXISTS "application";
+DROP TABLE IF EXISTS "booking";
+DROP TABLE IF EXISTS "stall";
+DROP TABLE IF EXISTS "zone";
+DROP TABLE IF EXISTS "market";
+DROP TABLE IF EXISTS "user";

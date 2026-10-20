@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prod
+    container_name: emarket-api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=prod
+      - PORT=8080
+      - DB_DRIVER=postgres
+      - DB_URL=postgres://emarket_user:emarket_pass@postgres:5432/emarket_db?sslmode=disable
+      - JWT_SECRET=super-secret-production-jwt-key
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: emarket-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: emarket_user
+      POSTGRES_PASSWORD: emarket_pass
+      POSTGRES_DB: emarket_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
