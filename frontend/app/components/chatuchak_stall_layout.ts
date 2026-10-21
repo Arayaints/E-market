@@ -25,6 +25,9 @@ export interface MapStall {
   photo: string
   coordinates: [number, number][]
   center: [number, number]
+  floor: string
+  floorName: string
+  floorLevel: number
 }
 
 export interface ProjectStallLayout {
@@ -34,6 +37,8 @@ export interface ProjectStallLayout {
   available: number
   reserved: number
   occupied: number
+  floorId: string
+  floorName: string
 }
 
 // Stall module dimensions (meters)
@@ -134,7 +139,16 @@ const findLabelPoint = (poly: Pt[]): Pt => {
   return best
 }
 
-export const buildProjectStallLayout = (project: ProjectZone): ProjectStallLayout => {
+export const buildProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
+  // Determine floor info
+  const floorList = project.floors && project.floors.length > 0
+    ? project.floors
+    : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+  
+  const currentFloor = floorList.find(f => f.id === floorId) || floorList[0]
+  const effectiveFloorId = currentFloor.id
+  const hasMultipleFloors = floorList.length > 1
+
   // Remove duplicated closing vertex
   const ring = project.coordinates.slice(0, -1) as Pt[]
   const origin = ring[0]
@@ -175,6 +189,9 @@ export const buildProjectStallLayout = (project: ProjectZone): ProjectStallLayou
   const bandH = STALL_D * 2 + AISLE
   let rowIdx = 0
 
+  // Floor rent multiplier: upper floors have slightly lower rent
+  const levelMultiplier = currentFloor.level === 2 ? 0.9 : (currentFloor.level >= 3 ? 0.82 : 1.0)
+
   for (let bandY = minY + EDGE_SETBACK; bandY + STALL_D <= maxY - EDGE_SETBACK; bandY += bandH) {
     for (let r = 0; r < 2; r++) {
       const y0 = bandY + r * STALL_D
@@ -200,15 +217,15 @@ export const buildProjectStallLayout = (project: ProjectZone): ProjectStallLayou
       if (rowCells.length === 0) continue
       const letter = rowLabel(rowIdx)
       rowCells.forEach((cell, idx) => {
-        const code = `${project.sectionNumber}-${letter}${String(idx + 1).padStart(2, '0')}`
+        const floorTag = hasMultipleFloors ? `${currentFloor.shortLabel}-` : ''
+        const code = `${project.sectionNumber}-${floorTag}${letter}${String(idx + 1).padStart(2, '0')}`
         const isCorner = idx === 0 || idx === rowCells.length - 1
-        const u = hash01(`${project.id}:${code}`)
+        const u = hash01(`${project.id}:${effectiveFloorId}:${code}`)
         let status: StallStatus = 'occupied'
         if (u < availRatio) status = 'available'
         else if (u < availRatio + reservedRatio) status = 'reserved'
 
         // แผงเรียงชิดติดกันเป็นบล็อกสถาปัตยกรรม (Seamless Architectural Island)
-        // มีเส้นแบ่งล็อคสีขาวคมชัดระดับมิลลิเมตร ไร้เส้นซ้ำซ้อนหนาเทอะทะ
         const ringLocal: Pt[] = [
           [cell.x0, y0],
           [cell.x1, y0],
@@ -219,22 +236,30 @@ export const buildProjectStallLayout = (project: ProjectZone): ProjectStallLayou
         const coords = ringLocal.map(p => proj.toLngLat(rotate(p, angle)))
         const center = proj.toLngLat(rotate([(cell.x0 + cell.x1) / 2, (y0 + y1) / 2], angle))
 
+        const baseMonthly = isCorner ? 2200 : 1800
+        const monthlyRent = Math.round((baseMonthly * levelMultiplier) / 50) * 50
+        const baseEntry = isCorner ? 90000 : 75000
+        const entryFee = Math.round((baseEntry * levelMultiplier) / 1000) * 1000
+
         stalls.push({
           code,
           projectId: project.id,
-          zone: project.name,
+          zone: `${project.name} (${currentFloor.name})`,
           status,
           areaType: isCorner ? 'หัวมุม' : 'ทั่วไป',
           size: STALL_W * STALL_D,
           widthM: STALL_W,
           depthM: STALL_D,
-          entryFee: isCorner ? 90000 : 75000,
-          monthlyRent: isCorner ? 2200 : 1800,
+          entryFee,
+          monthlyRent,
           commonFee: 500,
-          depositFee: isCorner ? 2200 : 1800,
+          depositFee: monthlyRent,
           photo: '/images/stall_3d_perspective.jpg',
           coordinates: coords,
-          center
+          center,
+          floor: effectiveFloorId,
+          floorName: currentFloor.name,
+          floorLevel: currentFloor.level
         })
       })
       rowIdx++
@@ -251,18 +276,33 @@ export const buildProjectStallLayout = (project: ProjectZone): ProjectStallLayou
     total: stalls.length,
     available,
     reserved,
-    occupied: stalls.length - available - reserved
+    occupied: stalls.length - available - reserved,
+    floorId: effectiveFloorId,
+    floorName: currentFloor.name
   }
 }
 
-// Pre-compute layouts for all projects once (deterministic)
+// Pre-compute layouts for all projects & floors (deterministic)
 const layoutCache = new Map<string, ProjectStallLayout>()
 
-export const getProjectStallLayout = (project: ProjectZone): ProjectStallLayout => {
-  let layout = layoutCache.get(project.id)
+export const getProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
+  const effectiveFloorId = floorId || project.floors?.[0]?.id || '1'
+  const cacheKey = `${project.id}:${effectiveFloorId}`
+  let layout = layoutCache.get(cacheKey)
   if (!layout) {
-    layout = buildProjectStallLayout(project)
-    layoutCache.set(project.id, layout)
+    layout = buildProjectStallLayout(project, effectiveFloorId)
+    layoutCache.set(cacheKey, layout)
   }
   return layout
+}
+
+export const getAllFloorLayoutsForProject = (project: ProjectZone): Map<string, ProjectStallLayout> => {
+  const map = new Map<string, ProjectStallLayout>()
+  const floors = project.floors && project.floors.length > 0
+    ? project.floors
+    : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+  floors.forEach(f => {
+    map.set(f.id, getProjectStallLayout(project, f.id))
+  })
+  return map
 }

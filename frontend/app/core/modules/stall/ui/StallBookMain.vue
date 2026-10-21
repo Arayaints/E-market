@@ -46,7 +46,9 @@
       </div>
 
       <!-- Stepper Component (3 Steps) -->
-      <BookingStepper :currentStep="currentStep" @changeStep="setStep" />
+      <div class="booking-stepper-wrap">
+        <BookingStepper :currentStep="currentStep" @changeStep="setStep" />
+      </div>
 
       <!-- ============================================================ -->
       <!-- STEP 1: เลือกแผงเช่าที่สนใจ (Projects Overview & Sub-Stalls)  -->
@@ -64,20 +66,23 @@
         </div>
 
         <!-- Title & Filter Header -->
-        <div style="margin-bottom: 16px;">
-          <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
-            เลือกแผงเช่าที่สนใจ
-          </h2>
-          <div style="font-size: 0.82rem; color: #64748b;">
-            คลิกเลือกโครงการหรือแผงค้าบนแผนที่เพื่อดูรายละเอียดและทำรายการจอง
+        <div class="step1-title-bar">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+              เลือกแผงเช่าที่สนใจ
+            </h2>
+            <div style="font-size: 0.82rem; color: #64748b;">
+              คลิกเลือกโครงการหรือแผงค้าบนแผนที่เพื่อดูรายละเอียดและทำรายการจอง
+            </div>
+            <div style="height: 3px; width: 48px; background: var(--primary); border-radius: var(--radius-full); margin-top: 6px;"></div>
           </div>
-          <div style="height: 3px; width: 48px; background: var(--primary); border-radius: var(--radius-full); margin-top: 6px;"></div>
+          <div id="step1-map-toolbar" class="step1-map-toolbar"></div>
         </div>
 
         <!-- ========================================================== -->
         <!-- GIS PROJECTS & STALLS MAP                                  -->
         <!-- ========================================================== -->
-        <div class="card" style="padding: 0; position: relative; overflow: hidden; background: #faf8f5; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+        <div style="padding: 0; position: relative; overflow: hidden; margin-bottom: 24px;">
 
           <!-- The SVG Master Map of Projects Component -->
           <MarketProjectsOverviewMap
@@ -148,10 +153,13 @@
                     <div v-for="s in selectedStalls" :key="s.code" class="sel-stall-card">
                       <div class="ssc-head">
                         <div class="ssc-title">
-                          <strong>แผง {{ s.code }}</strong>
-                          <span :class="s.status === 'available' ? 'badge badge-available' : 'badge badge-reserved'" style="font-size: 0.68rem; padding: 2px 8px;">
-                            {{ s.status === 'available' ? 'แผงว่าง' : 'ติดจอง' }}
-                          </span>
+                          <div class="ssc-title-main">
+                            <strong>แผง {{ s.code }}</strong>
+                            <span :class="s.status === 'available' ? 'badge badge-available' : 'badge badge-reserved'" class="ssc-status-badge">
+                              {{ s.status === 'available' ? 'แผงว่าง' : 'ติดจอง' }}
+                            </span>
+                          </div>
+                          <span v-if="s.floorName" class="ssc-floor-name" :title="s.floorName">{{ s.floorName }}</span>
                         </div>
                         <button type="button" class="ssc-remove" @click.stop="removeStall(s.code)" title="นำแผงนี้ออก" aria-label="ลบแผง">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -262,6 +270,41 @@
                   </button>
                 </div>
               </div>
+              </transition>
+
+              <!-- Empty state occupies the same right-side drawer until a stall is chosen. -->
+              <transition name="slide-fade">
+                <aside
+                  v-if="selectedProject && selectedStalls.length === 0"
+                  class="map-selection-empty-drawer"
+                  aria-live="polite"
+                  aria-label="กรุณาเลือกแผง"
+                >
+                  <header class="msed-header">
+                    <strong>แผงที่เลือก (0)</strong>
+                    <span>{{ selectedProject.name }}</span>
+                  </header>
+                  <div class="msed-content">
+                    <template v-if="isSelectedProjectFull">
+                      <span class="msed-icon is-full" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7m0-7-7 7"></path></svg>
+                      </span>
+                      <h3>โครงการนี้เต็มแล้ว</h3>
+                      <p>ขณะนี้มีผู้เช่าครบทุกแผง จึงไม่สามารถเลือกแผงหรือทำรายการจองได้</p>
+                    </template>
+                    <template v-else>
+                    <span class="msed-icon" aria-hidden="true">
+                      <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
+                    </span>
+                    <h3>กรุณาเลือกแผงที่สนใจ</h3>
+                    <p>คลิกแผงบนผังเพื่อดูรายละเอียด และเพิ่มเข้ารายการจอง</p>
+                    <div class="msed-status-list">
+                      <div><i class="is-available"></i><span><strong>แผงสีเขียว</strong> จองได้ทันที</span></div>
+                      <div><i class="is-reserved"></i><span><strong>แผงสีเหลือง</strong> ลงทะเบียนคิวสำรอง</span></div>
+                    </div>
+                    </template>
+                  </div>
+                </aside>
               </transition>
             </template>
           </MarketProjectsOverviewMap>
@@ -774,7 +817,12 @@
               </div>
               <div>
                 <div style="color: #64748b; font-size: 0.8rem; margin-bottom: 4px;">หมายเลขแผง</div>
-                <div style="color: #1e293b; font-size: 0.95rem; font-weight: 700;">{{ stallItem.code }}</div>
+                <div style="color: #1e293b; font-size: 0.95rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>{{ stallItem.code }}</span>
+                  <span v-if="stallItem.floorName" style="font-size: 0.72rem; padding: 1px 7px; border-radius: 4px; background: #eff6ff; color: #2563eb; font-weight: 600; border: 1px solid #bfdbfe;">
+                    {{ stallItem.floorName }}
+                  </span>
+                </div>
               </div>
               <div>
                 <div style="color: #64748b; font-size: 0.8rem; margin-bottom: 4px;">ประเภทพื้นที่</div>
@@ -1283,8 +1331,10 @@ const selectedProject = ref<{
   stallsAvailable: number
   totalStalls: number
 } | null>(null)
+const isSelectedProjectFull = computed(() => selectedProject.value?.stallsAvailable === 0)
 
 const bookingMode = ref<'available' | 'queue'>('available')
+// Step 1 starts with all stalls displayed by default
 const onlyAvailable = ref(false)
 const showTrafficHeatmap = ref(false)
 const zoneFilter = ref<'all' | 'hotspot' | 'stage'>('all')
@@ -1591,6 +1641,7 @@ let sigCtx: CanvasRenderingContext2D | null = null
 interface StallModel {
   code: string
   zone: string
+  floorName?: string
   status: 'available' | 'occupied' | 'reserved'
   areaType: string
   size: number
@@ -2139,7 +2190,6 @@ const selectStall = (s: StallModel) => {
   if (s.status === 'occupied') {
     return
   }
-
   // Toggle off if clicking an already selected stall
   const existingIdx = selectedStalls.value.findIndex(item => item.code === s.code)
   if (existingIdx !== -1) {
@@ -2517,6 +2567,47 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.booking-stepper-wrap { margin-top: 24px; }
+
+.step1-title-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.step1-map-toolbar { flex: 0 1 700px; width: min(100%, 700px); margin-left: auto; display: flex; justify-content: flex-end; }
+@media (max-width: 760px) { .step1-title-bar { align-items: flex-start; flex-direction: column; gap: 12px; } .step1-map-toolbar { width: 100%; max-width: none; } }
+
+.map-selection-empty-drawer {
+  position: absolute;
+  top: 62px;
+  right: 14px;
+  z-index: 25;
+  display: flex;
+  width: 334px;
+  min-height: 355px;
+  max-height: calc(100% - 76px);
+  flex-direction: column;
+  overflow: hidden;
+  /* Capture clicks so they do not pass through to a random map feature behind the drawer. */
+  pointer-events: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, .16);
+  backdrop-filter: blur(14px);
+}
+.msed-header { padding: 15px 16px 13px; border-bottom: 1px solid #eef2f6; }
+.msed-header strong { display: block; color: #0f172a; font-size: .98rem; font-weight: 800; }
+.msed-header span { display: block; margin-top: 3px; overflow: hidden; color: #64748b; font-size: .8rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.msed-content { display: flex; flex: 1; flex-direction: column; align-items: center; padding: 30px 23px 22px; text-align: center; }
+.msed-icon { display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid #bfdbfe; border-radius: 17px; background: #eff6ff; color: #2563eb; box-shadow: 0 7px 16px rgba(37, 99, 235, .12); }
+.msed-content h3 { margin: 15px 0 5px; color: #0f172a; font-size: 1.02rem; font-weight: 800; }
+.msed-content > p { max-width: 240px; margin: 0; color: #64748b; font-size: .8rem; line-height: 1.5; }
+.msed-icon.is-full { border-color: #fecaca; background: #fef2f2; color: #dc2626; box-shadow: 0 7px 16px rgba(220, 38, 38, .1); }
+.msed-status-list { width: 100%; margin-top: 21px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; text-align: left; }
+.msed-status-list > div { display: flex; align-items: center; gap: 8px; color: #475569; font-size: .72rem; line-height: 1.4; }
+.msed-status-list > div + div { margin-top: 8px; }
+.msed-status-list i { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; }
+.msed-status-list i.is-available { background: #10b981; }
+.msed-status-list i.is-reserved { background: #f59e0b; }
+.msed-status-list strong { color: #334155; font-weight: 800; }
+
 /* Form input disabled style */
 .form-input:disabled,
 .form-select:disabled {
@@ -2644,9 +2735,12 @@ onUnmounted(() => {
 /* Per-stall cards inside selected-stall drawer */
 .sel-stall-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 .sel-stall-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #ffffff; }
-.ssc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.ssc-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ssc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ssc-title { display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.ssc-title-main { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .ssc-title strong { font-size: 0.9rem; color: #0f172a; white-space: nowrap; }
+.ssc-status-badge { flex-shrink: 0; padding: 3px 8px !important; font-size: 0.66rem !important; }
+.ssc-floor-name { display: block; max-width: 248px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #64748b; font-size: 0.7rem; font-weight: 600; line-height: 1.35; }
 .ssc-remove { width: 24px; height: 24px; border-radius: 8px; border: 1px solid #e2e8f0; background: #ffffff; color: #64748b; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s ease; }
 .ssc-remove:hover { background: #fef2f2; border-color: #fca5a5; color: #ef4444; }
 .ssc-body { display: grid; grid-template-columns: 84px 1fr; gap: 10px; align-items: stretch; }

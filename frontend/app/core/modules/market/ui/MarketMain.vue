@@ -484,10 +484,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Official BMA e-Market Footer -->
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
+import AppFooter from '~/components/AppFooter.vue'
+
 const { get } = useApi()
 
 // Search & Filter State

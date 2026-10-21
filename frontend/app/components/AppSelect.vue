@@ -4,7 +4,7 @@
     <button
       type="button"
       class="app-select-trigger"
-      :class="{ 'has-value': !!modelValue, 'is-focused': isOpen, 'is-error': error }"
+      :class="{ 'has-value': !!selectedOption, 'is-focused': isOpen, 'is-error': error }"
       :disabled="disabled"
       @click="toggleDropdown"
       :aria-expanded="isOpen"
@@ -27,13 +27,13 @@
             v-for="opt in normalizedOptions"
             :key="opt.value"
             class="app-select-option"
-            :class="{ 'is-selected': modelValue === opt.value }"
+            :class="{ 'is-selected': isOptionSelected(opt) }"
             role="option"
-            :aria-selected="modelValue === opt.value"
+            :aria-selected="isOptionSelected(opt)"
             @click="selectOption(opt)"
           >
             <span class="app-select-option-text">{{ opt.label }}</span>
-            <span v-if="modelValue === opt.value" class="app-select-check">
+            <span v-if="isOptionSelected(opt)" class="app-select-check">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
@@ -83,8 +83,14 @@ const normalizedOptions = computed<SelectOption[]>(() => {
   })
 })
 
+const isOptionSelected = (opt: SelectOption) => {
+  const currentVal = props.modelValue ?? ''
+  return String(opt.value) === String(currentVal)
+}
+
 const selectedOption = computed(() => {
-  return normalizedOptions.value.find(o => String(o.value) === String(props.modelValue))
+  const currentVal = props.modelValue ?? ''
+  return normalizedOptions.value.find(o => String(o.value) === String(currentVal))
 })
 
 const selectedLabel = computed(() => {
@@ -130,6 +136,10 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   font-family: inherit;
+}
+
+.app-select-container.is-open {
+  z-index: 50;
 }
 
 .app-select-trigger {

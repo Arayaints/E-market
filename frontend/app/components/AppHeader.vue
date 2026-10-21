@@ -14,6 +14,16 @@
           <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
+
+      <!-- System Brand Title -->
+      <NuxtLink to="/" class="navbar-brand-tag" title="ระบบบริหารจัดการแผงเช่า สำนักงานตลาดกรุงเทพมหานคร">
+        <span class="brand-title-text">e-Market</span>
+        <span class="bma-pill-badge">
+          <span class="bma-dot"></span>
+          <span class="bma-text-full">ระบบบริหารจัดการแผงเช่า สำนักงานตลาดกรุงเทพมหานคร</span>
+          <span class="bma-text-short">ระบบบริหารจัดการแผงเช่า กทม.</span>
+        </span>
+      </NuxtLink>
     </div>
 
     <div class="navbar-right">
@@ -108,9 +118,24 @@ const handleLogout = async () => {
 
 <style scoped>
 .navbar-brand-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+  user-select: none;
+}
+
+.navbar-brand-tag:hover {
+  opacity: 0.88;
+}
+
+.brand-title-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .bma-pill-badge {
@@ -120,10 +145,11 @@ const handleLogout = async () => {
   background: #eff6ff;
   border: 1px solid #dbeafe;
   color: #1e40af;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.76rem;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .bma-dot {
@@ -131,6 +157,24 @@ const handleLogout = async () => {
   height: 6px;
   border-radius: 50%;
   background: #2563eb;
+  flex-shrink: 0;
+}
+
+.bma-text-full {
+  display: inline;
+}
+
+.bma-text-short {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .bma-text-full { display: none; }
+  .bma-text-short { display: inline; }
+}
+
+@media (max-width: 540px) {
+  .bma-pill-badge { display: none; }
 }
 
 .navbar-subtitle-text {

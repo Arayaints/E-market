@@ -1,6 +1,14 @@
 // Real GIS Polygon Footprints & Geodesic Ground Areas for Chatuchak Market Projects (1-30)
 // Extracted directly from OpenStreetMap Official Cadastral/Building Boundaries
 
+export interface ProjectFloor {
+  id: string
+  name: string
+  shortLabel: string
+  level: number
+  description?: string
+}
+
 export interface ProjectZone {
   id: string
   name: string
@@ -12,6 +20,7 @@ export interface ProjectZone {
   realAreaSqm: number
   centroid: [number, number]
   coordinates: [number, number][]
+  floors?: ProjectFloor[]
 }
 
 export const CHATUCHAK_PROJECTS: ProjectZone[] = [
@@ -24,6 +33,10 @@ export const CHATUCHAK_PROJECTS: ProjectZone[] = [
     "stallsAvailable": 18,
     "totalStalls": 68,
     "realAreaSqm": 2583,
+    "floors": [
+      { "id": "1", "name": "ชั้น 1 (ของสะสม / เครื่องดนตรีไทย)", "shortLabel": "1F", "level": 1 },
+      { "id": "2", "name": "ชั้น 2 (หนังสือเก่า / แกลเลอรีภาพถ่าย)", "shortLabel": "2F", "level": 2 }
+    ],
     "centroid": [
       100.548742,
       13.799016
@@ -60,6 +73,18 @@ export const CHATUCHAK_PROJECTS: ProjectZone[] = [
     "stallsAvailable": 12,
     "totalStalls": 56,
     "realAreaSqm": 2278,
+    "floors": [
+      { "id": "1", "name": "ชั้น 1 (เสื้อผ้าแฟชั่นสตรีทแวร์)", "shortLabel": "1F", "level": 1 },
+      { "id": "2", "name": "ชั้น 2 (เครื่องประดับและงานแฮนด์เมด)", "shortLabel": "2F", "level": 2 },
+      { "id": "3", "name": "ชั้น 3 (ดีไซเนอร์สเปซ / สตูดิโอตัดเย็บ)", "shortLabel": "3F", "level": 3 },
+      { "id": "4", "name": "ชั้น 4 (แฟชั่นวินเทจ)", "shortLabel": "4F", "level": 4 },
+      { "id": "5", "name": "ชั้น 5 (รองเท้าและกระเป๋า)", "shortLabel": "5F", "level": 5 },
+      { "id": "6", "name": "ชั้น 6 (เครื่องประดับแฟชั่น)", "shortLabel": "6F", "level": 6 },
+      { "id": "7", "name": "ชั้น 7 (แฟชั่นไลฟ์สไตล์)", "shortLabel": "7F", "level": 7 },
+      { "id": "8", "name": "ชั้น 8 (งานออกแบบร่วมสมัย)", "shortLabel": "8F", "level": 8 },
+      { "id": "9", "name": "ชั้น 9 (โชว์รูมผู้ประกอบการ)", "shortLabel": "9F", "level": 9 },
+      { "id": "10", "name": "ชั้น 10 (พื้นที่จัดแสดงสินค้า)", "shortLabel": "10F", "level": 10 }
+    ],
     "centroid": [
       100.54946,
       13.798077
@@ -96,6 +121,10 @@ export const CHATUCHAK_PROJECTS: ProjectZone[] = [
     "stallsAvailable": 20,
     "totalStalls": 80,
     "realAreaSqm": 2087,
+    "floors": [
+      { "id": "1", "name": "ชั้น 1 (เบเกอรี่ / คาเฟ่ / ขนมโบราณ)", "shortLabel": "1F", "level": 1 },
+      { "id": "2", "name": "ชั้น 2 (ของแต่งบ้าน / เซรามิก / งานไม้)", "shortLabel": "2F", "level": 2 }
+    ],
     "centroid": [
       100.550488,
       13.798134

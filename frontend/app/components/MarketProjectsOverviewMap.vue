@@ -1,56 +1,92 @@
 <template>
   <div class="projects-master-container" :class="{ 'is-preview-mode': previewMode }">
     <!-- Top Interactive Filter & Quick Search Bar -->
+    <Teleport to="#step1-map-toolbar">
     <div v-if="!previewMode" class="master-map-top-bar">
-      <div class="master-map-tools-left">
-        <!-- Category Dropdown Filter -->
-        <div class="map-category-select-wrapper">
-          <select
-            :value="categoryFilter || ''"
-            @change="handleCategorySelect"
-            class="map-category-select"
-            aria-label="กรองหมวดหมู่สินค้า"
-          >
-            <option value="">หมวดหมู่ทั้งหมด ({{ projects.length }} โครงการ)</option>
-            <option v-for="cat in categoryStats" :key="cat.name" :value="cat.name">
-              {{ cat.name }} ({{ cat.projectCount }} โครงการ)
-            </option>
-          </select>
-          <span class="category-select-icon">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <div class="master-map-tools-right">
+        <!-- Search Input with Clear Button -->
+        <div class="search-input-group">
+          <span class="search-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
           </span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="ค้นหาโครงการหรือหมวดหมู่สินค้า..."
+            class="map-search-input"
+            @input="handleSearchInput"
+          />
+          <button
+            v-if="searchQuery"
+            type="button"
+            class="clear-search-btn"
+            @click="clearSearch"
+            aria-label="ล้างคำค้นหา"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div class="map-advanced-filter-wrap">
+          <button type="button" class="map-advanced-filter-btn" :class="{ active: hasAdvancedFilters }" @click="showAdvancedFilters = !showAdvancedFilters" :aria-expanded="showAdvancedFilters">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10m-7 6h4"></path></svg>
+            ตัวกรอง
+            <span v-if="advancedFilterCount" class="map-advanced-count">{{ advancedFilterCount }}</span>
+          </button>
+          <div v-if="showAdvancedFilters" class="map-advanced-filter-panel">
+            <div class="map-filter-panel-head">
+              <strong>ตัวกรองเพิ่มเติม</strong>
+              <button type="button" @click="showAdvancedFilters = false" aria-label="ปิดตัวกรอง">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div class="filter-field-group">
+              <span class="filter-field-label">หมวดหมู่</span>
+              <AppSelect
+                :model-value="categoryFilter || ''"
+                :options="categoryOptions"
+                placeholder="เลือกหมวดหมู่"
+                @update:model-value="handleCategoryChange"
+              />
+            </div>
+
+            <div class="filter-field-group">
+              <span class="filter-field-label">งบค่าเช่าต่อเดือน</span>
+              <AppSelect
+                v-model="rentFilter"
+                :options="rentOptions"
+                placeholder="งบค่าเช่าต่อเดือน"
+              />
+            </div>
+
+            <div class="filter-field-group">
+              <span class="filter-field-label">สถานะแผง</span>
+              <AppSelect
+                v-model="availabilityFilter"
+                :options="availabilityOptions"
+                placeholder="สถานะแผง"
+              />
+            </div>
+
+            <div class="map-filter-panel-footer">
+              <span>พบ <strong>{{ filteredProjectCount }}</strong> โครงการ · <strong>{{ filteredStallCount }}</strong> แผง</span>
+              <button v-if="hasActiveFilters" type="button" @click="clearAllFilters">ล้าง</button>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- Search Input with Clear Button -->
-      <div class="search-input-group">
-        <span class="search-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </span>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="ค้นหาโครงการหรือหมวดหมู่สินค้า..."
-          class="map-search-input"
-          @input="handleSearchInput"
-        />
-        <button
-          v-if="searchQuery"
-          type="button"
-          class="clear-search-btn"
-          @click="clearSearch"
-          aria-label="ล้างคำค้นหา"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
     </div>
+    </Teleport>
 
     <!-- Preview Mode Top Bar (สำหรับขั้นตอนตรวจสอบยืนยันข้อมูล) -->
-    <div v-else class="master-map-top-bar preview-top-bar">
+    <div v-if="previewMode" class="master-map-top-bar preview-top-bar">
       <div class="master-map-tools-left" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <!-- Clickable Booked Stalls Button / Pill -->
         <button
@@ -121,7 +157,7 @@
           title="ปรับมุมมองกลับสู่กึ่งกลาง"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="10" r="10"></circle>
             <line x1="22" y1="12" x2="18" y2="12"></line>
             <line x1="6" y1="12" x2="2" y2="12"></line>
             <line x1="12" y1="6" x2="12" y2="2"></line>
@@ -130,6 +166,28 @@
           <span>ปรับกึ่งกลาง</span>
         </button>
       </div>
+
+      <!-- Floating Floor Preview Pill in Step 3 Preview Mode -->
+      <transition name="fade">
+        <div
+          v-if="previewMode && activeProject && activeProjectFloors.length > 1"
+          class="map-floating-floor-preview-pill"
+        >
+          <span class="floor-preview-label">ชั้น:</span>
+          <div class="floor-preview-tabs">
+            <button
+              v-for="fl in activeProjectFloors"
+              :key="fl.id"
+              type="button"
+              class="floor-preview-tab"
+              :class="{ active: currentFloorId === fl.id }"
+              @click="switchFloor(fl.id)"
+            >
+              {{ fl.shortLabel }}
+            </button>
+          </div>
+        </div>
+      </transition>
 
       <!-- Floating Return to Booked Stalls Button (แสดงเมื่อคลิกดูโครงการอื่นใน Step 3) -->
       <transition name="fade">
@@ -153,13 +211,85 @@
       <!-- Overlay slot: ให้หน้าจองวาง drawer แผงที่เลือกทับบนแผนที่ -->
       <slot name="overlay" :activeProject="activeProject" />
 
+      <!-- Multi-floor projects require an explicit floor choice before showing stalls. -->
+      <transition name="fsc-fade">
+        <div
+          v-if="floorSelectorProject"
+          class="floor-selector-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="floor-selector-title"
+          @click.self="closeFloorSelector"
+        >
+          <section class="floor-selector-panel">
+            <div class="fsc-top-bar">
+              <div class="fsc-top-left">
+                <div class="fsc-badge-row">
+                  <span class="fsc-building-tag" :style="{ color: floorSelectorProject.color, borderColor: floorSelectorProject.color, backgroundColor: `${floorSelectorProject.color}14` }">
+                    อาคาร {{ floorSelectorProject.floors?.length }} ชั้น
+                  </span>
+                  <span class="fsc-proj-code">โครงการที่ {{ floorSelectorProject.sectionNumber }}</span>
+                </div>
+                <h3 id="floor-selector-title" class="fsc-title">เลือกชั้นที่ต้องการดู</h3>
+                <p class="fsc-desc">{{ floorSelectorProject.name }} · {{ floorSelectorProject.category }}</p>
+              </div>
+              <button type="button" class="fsc-close-btn" @click="closeFloorSelector" aria-label="ปิดตัวเลือกชั้น">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div class="fsc-guidance-card">
+              <span class="fsc-guidance-icon-box">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"></path><path d="M5 20V4h14v16"></path><path d="M9 8h2M9 12h2M13 8h2M13 12h2"></path></svg>
+              </span>
+              <span class="fsc-guidance-content">
+                <span class="fsc-step-label">ขั้นตอนที่ 1: เลือกชั้น</span>
+                <span class="fsc-step-hint">เลือกชั้นเพื่อดูผังแผงและเลือกแผงว่าง</span>
+              </span>
+            </div>
+
+            <div class="fsc-floors-stack" aria-label="รายการชั้น">
+              <button
+                v-for="floor in floorSelectorProject.floors"
+                :key="floor.id"
+                type="button"
+                class="fsc-floor-item"
+                @click="selectFloorFromDialog(floor.id)"
+              >
+                <span class="fsc-pillar">
+                  <span class="fsc-pillar-level">{{ floor.shortLabel }}</span>
+                  <span class="fsc-pillar-badge">ชั้น {{ floor.level }}</span>
+                </span>
+                <span class="fsc-floor-details">
+                  <span class="fsc-floor-headline">
+                    <span class="fsc-floor-title-text">{{ floor.name }}</span>
+                    <span class="fsc-avail-chip" :class="{ 'is-none': getFloorLayout(floorSelectorProject, floor.id).available === 0 }">
+                      <i class="fsc-chip-dot"></i>ว่าง {{ getFloorLayout(floorSelectorProject, floor.id).available }}
+                    </span>
+                  </span>
+                  <span class="fsc-floor-meta-row">
+                    <span class="fsc-meta-pill">ทั้งหมด {{ getFloorLayout(floorSelectorProject, floor.id).total }} แผง</span>
+                    <span class="fsc-meta-pill">ติดจอง {{ getFloorLayout(floorSelectorProject, floor.id).reserved }} แผง</span>
+                  </span>
+                </span>
+                <span class="fsc-action-col">
+                  <span class="fsc-select-action-btn">ดูผัง <span>→</span></span>
+                </span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </transition>
+
       <!-- Drill-down Panel: แสดงเมื่อคลิกเข้าโครงการ (แผงย่อยวาดอยู่ในกรอบบนแผนที่) -->
       <transition name="smp-slide">
         <aside v-if="!previewMode && activeProject && activeLayout" class="stall-mode-panel" aria-label="รายละเอียดโครงการ">
-          <button id="btn-back-overview" type="button" class="smp-back-btn" @click="exitProject">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            <span>กลับผังรวม 30 โครงการ</span>
-          </button>
+          <div class="smp-back-section">
+            <button id="btn-back-overview" type="button" class="smp-back-btn" @click="exitProject">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <span>ดูผังรวมตลาด</span>
+            </button>
+          </div>
 
           <div class="smp-title-row">
             <span class="smp-dot" :style="{ backgroundColor: activeProject.color }"></span>
@@ -167,9 +297,46 @@
           </div>
           <div class="smp-category">{{ activeProject.category }}</div>
 
+          <!-- Multi-floor Selector: เรียบง่าย กดสลับชั้นได้ทันทีในแถบด้านข้าง ไม่บังหน้าจอ -->
+          <div v-if="activeProjectFloors.length > 1" class="smp-floor-section">
+            <div class="smp-floor-header">
+              <div class="smp-floor-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 20h20"></path>
+                  <path d="M5 20V4h14v16"></path>
+                  <path d="M9 8h2M9 12h2M9 16h2M13 8h2M13 12h2M13 16h2"></path>
+                </svg>
+                <span>ระดับชั้นอาคาร</span>
+              </div>
+              <span class="smp-floor-count">{{ activeProjectFloors.length }} ชั้น</span>
+            </div>
+            <div
+              class="smp-floor-segmented-row"
+              :class="{
+                'has-many-floors': activeProjectFloors.length >= 3,
+                'has-five-or-more-floors': activeProjectFloors.length >= 5
+              }"
+            >
+              <button
+                v-for="fl in activeProjectFloors"
+                :key="fl.id"
+                type="button"
+                class="smp-floor-segmented-btn"
+                :class="{ active: currentFloorId === fl.id }"
+                @click="switchFloor(fl.id)"
+              >
+                <span class="smp-seg-badge">{{ fl.shortLabel }}</span>
+                <div class="smp-seg-info">
+                  <span class="smp-seg-name">{{ fl.shortLabel === '1F' ? 'ชั้น 1' : fl.shortLabel === '2F' ? 'ชั้น 2' : fl.shortLabel === '3F' ? 'ชั้น 3' : fl.name }}</span>
+                  <span class="smp-seg-avail">ว่าง {{ getFloorAvailCount(fl.id) }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div class="smp-area-box">
             <div class="smp-area-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
               <span>พื้นที่ในกรอบโครงการ</span>
             </div>
             <div class="smp-area-value">{{ activeProject.realAreaSqm.toLocaleString() }} <span>ตร.ม.</span></div>
@@ -202,17 +369,25 @@
           </div>
 
           <div class="smp-hint">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            <span>แผงละ 2.5 × 2 ม. (5 ตร.ม.) — คลิกแผงสีเขียวหรือสีเหลืองบนแผนที่เพื่อเลือก</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span>แผงละ 2.5 × 2 ม. (5 ตร.ม.) — คลิกแผงสีเขียวหรือสีเหลืองบนผังแผนที่เพื่อเลือก</span>
           </div>
         </aside>
       </transition>
 
-      <!-- Quick Map Hint Overlay -->
-      <div v-if="!activeProject" class="map-hint-pill">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        <span>คลิกในกรอบโครงการเพื่อดูแผงย่อยและเลือกจอง</span>
-      </div>
+      <!-- First-visit guidance: disappears as soon as a project is selected. -->
+      <transition name="fade">
+        <div v-if="!previewMode && !activeProject" class="map-project-guidance" aria-live="polite">
+          <span class="map-project-guidance-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5l7-3 7 3v16"></path><path d="M9 9h1M14 9h1M9 13h1M14 13h1"></path></svg>
+          </span>
+          <span>
+            <strong>เลือกโครงการที่ต้องการจอง</strong>
+            <small>คลิกพื้นที่กรอบสีบนแผนที่เพื่อดูแผงว่าง</small>
+          </span>
+          <svg class="map-project-guidance-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+        </div>
+      </transition>
     </div>
 
     <!-- Color Legend (read-only): สีไหนคือโครงการอะไร -->
@@ -234,13 +409,6 @@
             <span class="color-legend-projects">โครงการ {{ cat.projectNumbers.join(', ') }}</span>
           </div>
         </li>
-        <li class="color-legend-item">
-          <span class="color-legend-swatch" style="background-color:#94a3b8;border-color:#64748b"></span>
-          <div class="color-legend-text">
-            <span class="color-legend-name">โครงการที่แผงเต็มแล้ว</span>
-            <span class="color-legend-projects">ไม่มีแผงว่างให้จอง</span>
-          </div>
-        </li>
       </ul>
     </section>
   </div>
@@ -248,10 +416,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { CHATUCHAK_PROJECTS, type ProjectZone } from './chatuchak_real_polygons'
-import { getProjectStallLayout, type MapStall } from './chatuchak_stall_layout'
+import AppSelect, { type SelectOption } from './AppSelect.vue'
+import { CHATUCHAK_PROJECTS, type ProjectZone, type ProjectFloor } from './chatuchak_real_polygons'
+import { getProjectStallLayout, getAllFloorLayoutsForProject, type MapStall } from './chatuchak_stall_layout'
 
-export type { ProjectZone }
+export type { ProjectZone, ProjectFloor }
 
 const props = withDefaults(defineProps<{
   containerId?: string
@@ -299,6 +468,9 @@ const setMapStyle = (mode: 'standard' | 'satellite') => {
 
 // Live search state
 const searchQuery = ref('')
+const rentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
+const availabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
+const showAdvancedFilters = ref(false)
 
 // 9 Categories matching official layout
 const categories = [
@@ -321,6 +493,37 @@ const projects: ProjectZone[] = CHATUCHAK_PROJECTS.map(p => {
   return { ...p, totalStalls: l.total, stallsAvailable: l.available }
 })
 
+const matchesStallFilters = (stall: MapStall) => {
+  if (availabilityFilter.value !== 'all' && stall.status !== availabilityFilter.value) return false
+  if (rentFilter.value === 'under-2000' && stall.monthlyRent >= 2000) return false
+  if (rentFilter.value === '2000-3000' && (stall.monthlyRent < 2000 || stall.monthlyRent > 3000)) return false
+  if (rentFilter.value === 'over-3000' && stall.monthlyRent <= 3000) return false
+  return true
+}
+
+const projectHasMatchingStall = (project: ProjectZone) => {
+  return Array.from(getAllFloorLayoutsForProject(project).values())
+    .some(layout => layout.stalls.some(matchesStallFilters))
+}
+
+const projectMatchesAllFilters = (project: ProjectZone) => {
+  const matchesCategory = !props.categoryFilter || project.category === props.categoryFilter
+  return matchesCategory && matchesSearch(project) && projectHasMatchingStall(project)
+}
+
+const filteredProjectCount = computed(() => projects.filter(projectMatchesAllFilters).length)
+const filteredStallCount = computed(() => projects.reduce((count, project) => {
+  if (!(!props.categoryFilter || project.category === props.categoryFilter) || !matchesSearch(project)) return count
+  return count + Array.from(getAllFloorLayoutsForProject(project).values())
+    .reduce((floorCount, layout) => floorCount + layout.stalls.filter(matchesStallFilters).length, 0)
+}, 0))
+
+const hasActiveFilters = computed(() => Boolean(
+  props.categoryFilter || searchQuery.value.trim() || rentFilter.value !== 'all' || availabilityFilter.value !== 'all'
+))
+const advancedFilterCount = computed(() => [props.categoryFilter, rentFilter.value !== 'all', availabilityFilter.value !== 'all'].filter(Boolean).length)
+const hasAdvancedFilters = computed(() => advancedFilterCount.value > 0)
+
 // Category legend (read-only): สี → หมวดหมู่ → เลขโครงการ
 const categoryStats = computed(() => {
   return categories
@@ -335,9 +538,36 @@ const categoryStats = computed(() => {
     .filter(cat => cat.projectCount > 0)
 })
 
+const categoryOptions = computed<SelectOption[]>(() => [
+  { value: '', label: `ทุกหมวดหมู่ (${projects.length} โครงการ)` },
+  ...categoryStats.value.map(cat => ({
+    value: cat.name,
+    label: `${cat.name} (${cat.projectCount})`
+  }))
+])
+
+const rentOptions: SelectOption[] = [
+  { value: 'all', label: 'ทั้งหมด' },
+  { value: 'under-2000', label: 'ต่ำกว่า ฿2,000' },
+  { value: '2000-3000', label: '฿2,000–3,000' },
+  { value: 'over-3000', label: 'มากกว่า ฿3,000' },
+]
+
+const availabilityOptions: SelectOption[] = [
+  { value: 'all', label: 'ทุกสถานะ' },
+  { value: 'available', label: 'แผงว่าง (จองได้)' },
+  { value: 'reserved', label: 'ติดจอง (คิวสำรอง)' },
+]
+
+const handleCategoryChange = (val: string | number) => {
+  emit('update:categoryFilter', val ? String(val) : null)
+}
+
 // ---------------- Project drill-down state ----------------
 const hoveredProject = ref<ProjectZone | null>(null)
 const activeProjectId = ref<string | null>(null)
+const currentFloorId = ref<string>('1')
+const floorSelectorProject = ref<ProjectZone | null>(null)
 
 // จำโครงการที่แผงถูกเลือกไว้ (สำหรับปุ่มกลับมาดูแผงตัวเองใน Step 3)
 const initialBookedProjectId = ref<string | null>(props.selectedProjectId || null)
@@ -359,13 +589,96 @@ const isNotViewingBookedProject = computed(() => {
 })
 
 const activeProject = computed(() => projects.find(p => p.id === activeProjectId.value) || null)
-const activeLayout = computed(() => (activeProjectId.value ? layouts.get(activeProjectId.value) || null : null))
+
+// Multi-floor management for active project
+const activeProjectFloors = computed<ProjectFloor[]>(() => {
+  if (!activeProject.value?.floors || activeProject.value.floors.length <= 1) return []
+  return activeProject.value.floors
+})
+
+const activeProjectFloorsReversed = computed<ProjectFloor[]>(() => {
+  // Physical building stack: highest floor on top (3F, 2F, 1F)
+  return [...activeProjectFloors.value].sort((a, b) => b.level - a.level)
+})
+
+const currentFloorObject = computed<ProjectFloor | null>(() => {
+  if (!activeProject.value?.floors || activeProject.value.floors.length === 0) return null
+  return activeProject.value.floors.find(f => f.id === currentFloorId.value) || activeProject.value.floors[0] || null
+})
+
+const activeLayout = computed(() => {
+  if (!activeProjectId.value || !activeProject.value) return null
+  return getProjectStallLayout(activeProject.value, currentFloorId.value)
+})
+
+const getFloorAvailCount = (floorId: string): number => {
+  if (!activeProject.value) return 0
+  const layout = getProjectStallLayout(activeProject.value, floorId)
+  return layout.available
+}
+
+const getFloorLayout = (project: ProjectZone, floorId: string) => {
+  return getProjectStallLayout(project, floorId)
+}
+
+const switchFloor = (floorId: string) => {
+  if (currentFloorId.value === floorId) return
+  currentFloorId.value = floorId
+  hoverPopup?.remove()
+  refreshSources()
+  renderSelectedStallPins()
+}
 
 const currentProjectInfo = computed<ProjectZone | null>(() => {
   return activeProject.value || hoveredProject.value || projects.find(p => p.id === 'proj-01') || projects[0] || null
 })
 
 const currentProjectLayout = computed(() => (currentProjectInfo.value ? layouts.get(currentProjectInfo.value.id) || null : null))
+
+// Stall search and filter states in side panel
+const stallSearchQuery = ref('')
+const stallFilterTab = ref<'all' | 'available' | 'reserved'>('all')
+
+const filteredStalls = computed(() => {
+  if (!activeLayout.value?.stalls) return []
+  let list = activeLayout.value.stalls
+  if (stallFilterTab.value === 'available') {
+    list = list.filter(s => s.status === 'available')
+  } else if (stallFilterTab.value === 'reserved') {
+    list = list.filter(s => s.status === 'reserved')
+  }
+  if (stallSearchQuery.value.trim()) {
+    const q = stallSearchQuery.value.trim().toLowerCase()
+    list = list.filter(s => s.code.toLowerCase().includes(q))
+  }
+  return list
+})
+
+const isStallSelected = (code: string) => {
+  return (props.selectedStallCodes || []).includes(code)
+}
+
+const handleStallCardHover = (stall: MapStall) => {
+  if (!map || !hoverPopup) return
+  map.getCanvas().style.cursor = stall.status === 'occupied' ? 'not-allowed' : 'pointer'
+  showPopupForStall(stall)
+}
+
+const handleStallCardLeave = () => {
+  if (!map) return
+  map.getCanvas().style.cursor = ''
+  hoverPopup?.remove()
+}
+
+const handleStallCardClick = (stall: MapStall) => {
+  if (stall.status === 'occupied') return
+  const { coordinates, center, ...stallModel } = stall
+  emit('selectStall', stallModel)
+}
+
+watch([stallSearchQuery, stallFilterTab], () => {
+  refreshSources()
+})
 
 // ================================================================
 // MAPLIBRE GL JS ENGINE IMPLEMENTATION
@@ -623,26 +936,19 @@ const initMap = () => {
 
 // ---------------- GeoJSON builders ----------------
 const isProjectDimmed = (p: ProjectZone) => {
-  const isFull = p.stallsAvailable === 0
-  const byFilter = (props.categoryFilter && p.category !== props.categoryFilter) ||
-    (searchQuery.value.trim() && !matchesSearch(p))
-  return Boolean(byFilter || (props.onlyAvailable && isFull))
+  const matchesCategory = !props.categoryFilter || p.category === props.categoryFilter
+  return !(matchesCategory && matchesSearch(p))
 }
 
 const getProjectsGeoJson = () => {
   return {
     type: 'FeatureCollection',
     features: projects.map((p, index) => {
-      const isFull = p.stallsAvailable === 0
       const isActive = activeProjectId.value === p.id
       const isOtherWhileActive = Boolean(activeProjectId.value) && !isActive
 
-      let fillColor = p.color
-      let strokeColor = p.color
-      if (isFull) {
-        fillColor = '#94a3b8'
-        strokeColor = '#64748b'
-      }
+      const fillColor = p.color
+      const strokeColor = p.color
 
       return {
         type: 'Feature',
@@ -654,8 +960,9 @@ const getProjectsGeoJson = () => {
         properties: {
           id: p.id,
           fillColor,
-          strokeColor: isActive ? '#1d4ed8' : strokeColor,
+          strokeColor: isActive || hoveredProject.value?.id === p.id ? '#2563eb' : strokeColor,
           isActive,
+          isHovered: hoveredProject.value?.id === p.id,
           isDimmed: isProjectDimmed(p) || isOtherWhileActive
         }
       }
@@ -678,8 +985,9 @@ const getStallsGeoJson = () => {
           code: s.code,
           status: s.status,
           isSelected,
-          // จางเฉพาะเมื่อเปิดตัวกรองเฉพาะแผงว่าง (ไม่ทำให้แผงอื่นจางเมื่อมีการเลือกแผง)
-          isDimmed: props.onlyAvailable && s.status !== 'available'
+          floor: s.floor,
+          floorName: s.floorName,
+          isDimmed: !matchesStallFilters(s)
         }
       }
     })
@@ -710,6 +1018,7 @@ const setupProjectLayers = () => {
       'fill-opacity': [
         'case',
         ['boolean', ['get', 'isActive'], false], 0.14,
+        ['boolean', ['get', 'isHovered'], false], 0.24,
         ['boolean', ['get', 'isDimmed'], false], 0.1,
         0.42
       ]
@@ -724,8 +1033,8 @@ const setupProjectLayers = () => {
     layout: { 'line-join': 'round' },
     paint: {
       'line-color': '#ffffff',
-      'line-width': ['case', ['boolean', ['get', 'isActive'], false], 8, 5],
-      'line-opacity': ['case', ['boolean', ['get', 'isDimmed'], false], 0.3, 0.95]
+      'line-width': ['case', ['boolean', ['get', 'isActive'], false], 8, ['boolean', ['get', 'isHovered'], false], 8, 5],
+      'line-opacity': ['case', ['boolean', ['get', 'isHovered'], false], 1, ['boolean', ['get', 'isDimmed'], false], 0.3, 0.95]
     }
   })
 
@@ -737,8 +1046,8 @@ const setupProjectLayers = () => {
     layout: { 'line-join': 'round' },
     paint: {
       'line-color': ['get', 'strokeColor'],
-      'line-width': ['case', ['boolean', ['get', 'isActive'], false], 4.5, 2.5],
-      'line-opacity': ['case', ['boolean', ['get', 'isDimmed'], false], 0.3, 1]
+      'line-width': ['case', ['boolean', ['get', 'isActive'], false], 4.5, ['boolean', ['get', 'isHovered'], false], 4.5, 2.5],
+      'line-opacity': ['case', ['boolean', ['get', 'isHovered'], false], 1, ['boolean', ['get', 'isDimmed'], false], 0.3, 1]
     }
   })
 
@@ -868,7 +1177,15 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
   const occupied = Math.max(total - available - reserved, 0)
   const pct = (n: number) => (total ? (n / total) * 100 : 0)
   const isFull = available === 0
-  const accent = isFull ? '#94a3b8' : p.color
+  const accent = p.color
+
+  const hasFloors = p.floors && p.floors.length > 1
+  const floorBadge = hasFloors
+    ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.68rem;padding:2px 7px;border-radius:4px;background:#eff6ff;color:#2563eb;font-weight:700;border:1px solid #bfdbfe;margin-left:4px;">อาคาร ${p.floors.length} ชั้น</span>`
+    : ''
+  const hintText = hasFloors
+    ? '✨ อาคารนี้มี ' + p.floors.length + ' ชั้น: คลิกเพื่อเลือกระดับชั้นก่อนเลือกแผงค้า'
+    : (isFull ? 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเข้าคิวสำรอง' : 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเลือกจอง')
 
   hoverPopup.setLngLat(lngLat).setHTML(`
     <div class="mlp" style="--mlp-accent:${accent}">
@@ -877,6 +1194,7 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
           <div class="mlp-title">
             <span class="mlp-dot"></span>
             <strong>${p.name}</strong>
+            ${floorBadge}
           </div>
           <span class="mlp-pill ${isFull ? 'is-full' : 'is-open'}">${isFull ? 'เต็มแล้ว' : `ว่าง ${available} แผง`}</span>
         </div>
@@ -910,7 +1228,7 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
           </div>
         </div>
 
-        <div class="mlp-hint">${isFull ? 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเข้าคิวสำรอง' : 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเลือกจอง'}</div>
+        <div class="mlp-hint">${hintText}</div>
       </div>
     </div>
   `).addTo(map)
@@ -972,14 +1290,19 @@ const showPopupForStall = (s: MapStall) => {
             </svg>
             ภาพแผงจริง
           </span>
-          <span class="mlp-photo-zone-tag">${s.zone || activeProject.value?.name || 'จตุจักร'}</span>
         </div>
       </div>
       <div class="mlp-body">
+        <div class="mlp-project-context">
+          <span>${activeProject.value?.name || s.zone || 'โครงการ'}</span>
+          ${s.floorName ? `<i>•</i><span>${s.floorName}</span>` : ''}
+        </div>
         <div class="mlp-head">
           <div class="mlp-title">
-            <span class="mlp-dot"></span>
-            <strong>แผง ${s.code}</strong>
+            <span class="mlp-stall-heading">
+              <span class="mlp-dot"></span>
+              <strong>แผง ${s.code}</strong>
+            </span>
           </div>
           <span class="mlp-pill ${isReserved ? 'is-reserved' : ''}" style="background:${selected ? '#eff6ff' : meta.bg};color:${selected ? '#2563eb' : meta.fg}">
             ${statusLabel}
@@ -1033,8 +1356,15 @@ const renderSelectedStallPins = () => {
 
   // 1. หากอยู่ในโครงการที่เลือกจอง ให้แสดงหมุดเครื่องหมายถูกตรงกลางแผงแต่ละแผง
   if (activeProjectId.value && activeProjectId.value === bookedProjectId.value) {
-    const layout = layouts.get(activeProjectId.value) || activeLayout.value
-    const selectedStallsList = (layout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
+    const selectedStallsList: MapStall[] = []
+    if (activeProject.value) {
+      (props.selectedStallCodes || []).forEach(code => {
+        const s = findStall(code)
+        if (s && (!s.floor || s.floor === currentFloorId.value)) {
+          selectedStallsList.push(s)
+        }
+      })
+    }
 
     selectedStallsList.forEach(s => {
       const el = document.createElement('div')
@@ -1084,6 +1414,15 @@ const renderSelectedStallPins = () => {
 const focusBookedStalls = () => {
   const targetProject = bookedProject.value
   if (!targetProject) return
+  if (targetProject.floors && targetProject.floors.length > 0 && props.selectedStallCodes?.length) {
+    for (const fl of targetProject.floors) {
+      const flLayout = getProjectStallLayout(targetProject, fl.id)
+      if (flLayout.stalls.some(s => props.selectedStallCodes.includes(s.code))) {
+        currentFloorId.value = fl.id
+        break
+      }
+    }
+  }
   enterProject(targetProject)
 }
 
@@ -1116,10 +1455,38 @@ const recenterMapView = () => {
   }
 }
 
-const enterProject = (p: ProjectZone) => {
+const openProject = (p: ProjectZone) => {
+  if (!props.previewMode && (p.floors?.length || 0) > 1) {
+    hoverPopup?.remove()
+    floorSelectorProject.value = p
+    return
+  }
+  enterProject(p)
+}
+
+const closeFloorSelector = () => {
+  floorSelectorProject.value = null
+}
+
+const selectFloorFromDialog = (floorId: string) => {
+  const project = floorSelectorProject.value
+  if (!project) return
+  floorSelectorProject.value = null
+  enterProject(project, floorId)
+}
+
+const enterProject = (p: ProjectZone, directToFloor?: string) => {
+  floorSelectorProject.value = null
   hoverPopup?.remove()
   activeProjectId.value = p.id
   hoveredProject.value = null
+
+  if (directToFloor) {
+    currentFloorId.value = directToFloor
+  } else if (!currentFloorId.value || !p.floors?.some(f => f.id === currentFloorId.value)) {
+    currentFloorId.value = p.floors?.[0]?.id || '1'
+  }
+
   refreshSources()
   setBuildingsOpacity(BUILDINGS_OPACITY_DRILL)
 
@@ -1141,8 +1508,10 @@ const enterProject = (p: ProjectZone) => {
 }
 
 const exitProject = () => {
+  floorSelectorProject.value = null
   hoverPopup?.remove()
   activeProjectId.value = null
+  currentFloorId.value = '1'
   refreshSources()
   setBuildingsOpacity(BUILDINGS_OPACITY)
   map?.flyTo({
@@ -1156,16 +1525,41 @@ const exitProject = () => {
 }
 
 // Called from the info banner button
-const selectProject = (p: ProjectZone) => enterProject(p)
+const selectProject = (p: ProjectZone) => openProject(p)
 
-const findStall = (code: string) => activeLayout.value?.stalls.find(s => s.code === code) || null
+const findStall = (code: string): MapStall | null => {
+  if (!activeProject.value) return null
+  const inCurrent = activeLayout.value?.stalls.find(s => s.code === code)
+  if (inCurrent) return inCurrent
+  if (activeProject.value.floors && activeProject.value.floors.length > 1) {
+    for (const fl of activeProject.value.floors) {
+      const flLayout = getProjectStallLayout(activeProject.value, fl.id)
+      const found = flLayout.stalls.find(s => s.code === code)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const setHoveredProject = (project: ProjectZone | null) => {
+  if (hoveredProject.value?.id === project?.id) return
+  hoveredProject.value = project
+  // Update just the project source so the polygon outline follows the cursor.
+  map?.getSource('projects-polygons')?.setData(getProjectsGeoJson())
+}
 
 const bindMapEvents = () => {
+  map.on('zoomend', () => {
+    // Labels are adaptive: redraw only when the map settles after zooming.
+    renderZoneLabels()
+  })
+
   map.on('mousemove', (e: any) => {
     const stallHit = map.getLayer('stalls-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['stalls-fill'] })
       : []
     if (stallHit.length) {
+      setHoveredProject(null)
       const s = findStall(stallHit[0].properties.code)
       map.getCanvas().style.cursor = s && s.status !== 'occupied' ? 'pointer' : 'not-allowed'
       if (s) showPopupForStall(s)
@@ -1178,21 +1572,22 @@ const bindMapEvents = () => {
     const p = projHit.length ? projects.find(item => item.id === projHit[0].properties.id) : null
     if (p && p.id !== activeProjectId.value) {
       map.getCanvas().style.cursor = 'pointer'
-      hoveredProject.value = activeProjectId.value ? null : p
+      setHoveredProject(p)
       showPopupForProject(p, [e.lngLat.lng, e.lngLat.lat])
     } else {
       map.getCanvas().style.cursor = ''
-      hoveredProject.value = null
+      setHoveredProject(null)
       hoverPopup.remove()
     }
   })
 
   map.on('mouseout', () => {
-    hoveredProject.value = null
+    setHoveredProject(null)
     hoverPopup?.remove()
   })
 
   map.on('click', (e: any) => {
+
     const stallHit = map.getLayer('stalls-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['stalls-fill'] })
       : []
@@ -1214,7 +1609,7 @@ const bindMapEvents = () => {
       : []
     if (projHit.length) {
       const p = projects.find(item => item.id === projHit[0].properties.id)
-      if (p && p.id !== activeProjectId.value) enterProject(p)
+      if (p && p.id !== activeProjectId.value) openProject(p)
     }
   })
 }
@@ -1225,22 +1620,28 @@ const renderZoneLabels = () => {
   projectMarkers.forEach(m => m.remove())
   projectMarkers = []
 
-  projects.forEach((p) => {
-    // While drilled into a project, hide its own badge so stalls stay visible
-    if (p.id === activeProjectId.value) return
+  const zoom = map.getZoom()
+  const visibleProjects = projects.filter(p => p.id !== activeProjectId.value && !isProjectDimmed(p))
+  const useCompactLabels = zoom < 18.2
+
+  // At broad zoom, use only small project numbers. They preserve the map context
+  // while making it explicit that each coloured frame is a selectable project.
+  if (zoom < 15.5) return
+
+  visibleProjects.forEach((p) => {
 
     const el = document.createElement('div')
     el.className = 'maplibre-zone-number-badge'
-    if (isProjectDimmed(p) || activeProjectId.value) el.classList.add('is-dimmed')
+    if (useCompactLabels) el.classList.add('is-compact')
 
     el.innerHTML = `
       <div class="zone-badge-inner">
-        <span class="badge-num">โครงการที่ ${p.sectionNumber}</span>
+        <span class="badge-num">${useCompactLabels ? p.sectionNumber : `โครงการที่ ${p.sectionNumber}`}</span>
       </div>
     `
     el.addEventListener('click', (ev) => {
       ev.stopPropagation()
-      enterProject(p)
+      openProject(p)
     })
 
     const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
@@ -1280,20 +1681,20 @@ const clearSearch = () => {
   }
 }
 
+const clearAllFilters = () => {
+  searchQuery.value = ''
+  rentFilter.value = 'all'
+  availabilityFilter.value = 'all'
+  emit('update:categoryFilter', null)
+  refreshSources()
+}
+
 const toggleCategoryFilter = (catName: string) => {
   if (props.categoryFilter === catName) {
     emit('update:categoryFilter', null)
   } else {
     emit('update:categoryFilter', catName)
   }
-}
-
-const totalAvailableStallsCount = computed(() => {
-  return projects.reduce((sum, p) => sum + (p.stallsAvailable || 0), 0)
-})
-
-const toggleOnlyAvailable = () => {
-  emit('update:onlyAvailable', !props.onlyAvailable)
 }
 
 const handleCategorySelect = (e: Event) => {
@@ -1309,7 +1710,18 @@ watch(() => props.mapStyle, (newStyle) => {
   }
 })
 
-watch(() => [props.onlyAvailable, props.categoryFilter], () => refreshSources())
+watch(() => [props.categoryFilter, rentFilter.value, availabilityFilter.value], () => refreshSources())
+
+watch(availabilityFilter, (status) => {
+  // Keep the parent state compatible with the existing map/stall UI.
+  emit('update:onlyAvailable', status === 'available')
+})
+
+watch(() => props.onlyAvailable, (onlyAvailable) => {
+  // The quick checkbox beside the Step 1 heading controls the default view.
+  if (onlyAvailable) availabilityFilter.value = 'available'
+  else if (availabilityFilter.value === 'available') availabilityFilter.value = 'all'
+})
 
 watch(() => props.selectedStallCodes, () => {
   map?.getSource('project-stalls')?.setData(getStallsGeoJson())
@@ -1360,18 +1772,19 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 16px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
 }
 
 /* Top bar with map mode switcher on the left and search on the right */
 .master-map-top-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  width: 100%;
   flex-wrap: wrap;
 }
 
@@ -1381,6 +1794,16 @@ onUnmounted(() => {
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.master-map-tools-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
 
 /* Filter Pill Button: เฉพาะแผงว่าง */
 .map-filter-pill-btn {
@@ -1434,6 +1857,88 @@ onUnmounted(() => {
   opacity: 0.85;
 }
 
+.map-advanced-filter-wrap { position: relative; }
+.map-advanced-filter-btn { display: inline-flex; align-items: center; gap: 6px; height: 35px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #475569; font-family: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.map-advanced-filter-btn:hover, .map-advanced-filter-btn.active { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
+.map-advanced-count { display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: #2563eb; color: #fff; font-size: .65rem; }
+.map-advanced-filter-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  z-index: 45;
+  width: min(320px, calc(100vw - 64px));
+  padding: 16px;
+  border: 1px solid #dbe5f2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+.map-filter-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #0f172a;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.map-filter-panel-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.map-filter-panel-head button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.filter-field-group {
+  margin-top: 10px;
+}
+.filter-field-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.map-advanced-filter-panel :deep(.app-select-trigger) {
+  min-height: 38px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.84rem;
+  border-radius: 8px;
+}
+.map-advanced-filter-panel :deep(.app-select-menu) {
+  z-index: 100;
+  max-height: 220px;
+}
+.map-advanced-filter-panel :deep(.app-select-option) {
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+.map-filter-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 0.74rem;
+}
+.map-filter-panel-footer strong { color: #1d4ed8; }
+.map-filter-panel-footer button { border: 0; background: transparent; color: #2563eb; font: inherit; font-weight: 800; cursor: pointer; }
+
 /* Category Select Dropdown */
 .map-category-select-wrapper {
   position: relative;
@@ -1468,6 +1973,27 @@ onUnmounted(() => {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+
+.map-filter-select {
+  height: 35px;
+  max-width: 175px;
+  padding: 6px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #475569;
+  font-family: 'Bai Jamjuree', sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.map-filter-select:hover { border-color: #94a3b8; color: #1e293b; }
+.map-filter-select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .1); }
+.map-filter-result { color: #64748b; font-size: .76rem; white-space: nowrap; }
+.map-filter-result strong { color: #1e40af; font-weight: 800; }
+.map-clear-filters-btn { border: 0; padding: 4px 2px; background: transparent; color: #2563eb; font-family: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.map-clear-filters-btn:hover { color: #1d4ed8; text-decoration: underline; }
 
 .category-select-icon {
   position: absolute;
@@ -1522,6 +2048,11 @@ onUnmounted(() => {
   align-items: center;
   width: 320px;
   max-width: 100%;
+}
+
+@media (max-width: 680px) {
+  .master-map-tools-right { width: 100%; margin-left: 0; }
+  .search-input-group { flex: 1; width: auto; }
 }
 
 .search-icon {
@@ -1595,21 +2126,65 @@ onUnmounted(() => {
   height: 100%;
 }
 
-.map-hint-pill {
+.map-project-guidance {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
+  top: 18px;
+  left: 18px;
   z-index: 10;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
-  font-size: 0.76rem;
+  gap: 10px;
+  max-width: min(360px, calc(100% - 160px));
+  padding: 11px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+  color: #1e3a8a;
   pointer-events: none;
+}
+
+.map-project-guidance-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+
+.map-project-guidance > span:nth-child(2) {
+  display: grid;
+  gap: 1px;
+}
+
+.map-project-guidance strong {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.map-project-guidance small {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.map-project-guidance-arrow {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: #2563eb;
+}
+
+@media (max-width: 680px) {
+  .map-project-guidance {
+    top: 12px;
+    left: 12px;
+    max-width: calc(100% - 24px);
+  }
 }
 
 /* Color Legend (read-only) */
@@ -1989,6 +2564,12 @@ onUnmounted(() => {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
+.smp-back-section {
+  width: 100%;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #e8eef6;
+}
+
 .smp-back-btn {
   display: inline-flex;
   align-items: center;
@@ -1996,18 +2577,20 @@ onUnmounted(() => {
   align-self: flex-start;
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
   font-family: inherit;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .smp-back-btn:hover {
-  background: #dbeafe;
+  background: #1d4ed8;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
   transform: translateX(-2px);
 }
 
@@ -2015,6 +2598,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 2px;
 }
 
 .smp-dot {
@@ -2036,6 +2620,868 @@ onUnmounted(() => {
   font-size: 0.76rem;
   color: #64748b;
   line-height: 1.4;
+}
+
+/* Multi-floor Selector inside Stall Mode Panel */
+.smp-floor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.smp-floor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.smp-floor-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.smp-floor-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+
+.smp-floor-segmented-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.smp-floor-segmented-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 9px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.smp-floor-segmented-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.smp-floor-segmented-btn.active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+}
+
+.smp-seg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.smp-floor-segmented-btn.active .smp-seg-badge {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.smp-seg-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.smp-seg-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.smp-floor-segmented-btn.active .smp-seg-name {
+  color: #1d4ed8;
+}
+
+.smp-seg-avail {
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: #16a34a;
+  white-space: nowrap;
+}
+
+.smp-floor-segmented-btn.active .smp-seg-avail {
+  color: #15803d;
+  font-weight: 700;
+}
+
+/* Three or more floors share the narrow side panel: stack each tab's content
+   so its label never competes horizontally with the floor badge. */
+.smp-floor-segmented-row.has-many-floors {
+  gap: 4px;
+}
+
+.has-many-floors .smp-floor-segmented-btn {
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 3px 6px;
+  text-align: center;
+}
+
+.has-many-floors .smp-seg-info {
+  align-items: center;
+}
+
+.has-many-floors .smp-seg-name {
+  display: none;
+}
+
+.has-many-floors .smp-seg-avail {
+  font-size: 0.62rem;
+}
+
+/* Large buildings keep floor selection usable without making the panel taller
+   than the map: two readable columns with an internal scroll area. */
+.smp-floor-segmented-row.has-five-or-more-floors {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 178px;
+  overflow-y: auto;
+  padding-right: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.has-five-or-more-floors .smp-floor-segmented-btn {
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 7px 9px;
+  text-align: left;
+}
+
+.has-five-or-more-floors .smp-seg-info {
+  align-items: flex-start;
+}
+
+.has-five-or-more-floors .smp-seg-avail {
+  font-size: 0.67rem;
+}
+
+/* Compact project status and searchable stall list */
+.smp-stats-compact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.smp-sc-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #64748b;
+  font-size: 0.67rem;
+  white-space: nowrap;
+}
+
+.smp-sc-item strong {
+  color: #1e293b;
+  font-size: 0.72rem;
+}
+
+.smp-sc-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 9999px;
+}
+
+.smp-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.smp-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.smp-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.smp-search-input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 31px 0 31px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 0.78rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.smp-search-input::placeholder { color: #94a3b8; }
+
+.smp-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+}
+
+.smp-search-clear {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.smp-search-clear:hover { background: #f1f5f9; color: #475569; }
+
+.smp-filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.smp-filter-tab {
+  min-width: 0;
+  padding: 5px 3px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #64748b;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.smp-filter-tab:hover { border-color: #93c5fd; color: #2563eb; }
+.smp-filter-tab.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+.smp-filter-tab.is-avail.active { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+.smp-filter-tab.is-res.active { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+
+.smp-stall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0;
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 2px 3px 2px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.smp-stall-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.smp-stall-card:hover { border-color: #93c5fd; box-shadow: 0 3px 9px rgba(37, 99, 235, 0.1); transform: translateY(-1px); }
+.smp-stall-card.is-selected { border-color: #2563eb; background: #eff6ff; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.16); }
+.smp-stall-card.is-occupied { background: #f8fafc; cursor: not-allowed; opacity: 0.76; }
+
+.smp-card-top, .smp-card-bottom, .smp-card-code-grp, .smp-card-specs, .smp-card-action {
+  display: flex;
+  align-items: center;
+}
+
+.smp-card-top, .smp-card-bottom { justify-content: space-between; gap: 8px; }
+.smp-card-code-grp { min-width: 0; gap: 5px; }
+.smp-card-code { color: #0f172a; font-size: 0.82rem; white-space: nowrap; }
+.smp-card-floor-badge { padding: 2px 5px; border-radius: 4px; background: #f1f5f9; color: #475569; font-size: 0.62rem; font-weight: 700; white-space: nowrap; }
+
+.smp-card-status-badge, .smp-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 9999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-available { background: #dcfce7; color: #15803d; }
+.badge-reserved { background: #fef3c7; color: #b45309; }
+.badge-occupied { background: #e2e8f0; color: #475569; }
+.badge-selected { background: #2563eb; color: #ffffff; }
+
+.smp-card-specs { min-width: 0; gap: 5px; color: #64748b; font-size: 0.67rem; }
+.smp-spec-sep { color: #cbd5e1; }
+.smp-spec-rent { color: #1e293b; font-weight: 700; white-space: nowrap; }
+.smp-spec-rent small { color: #64748b; font-size: 0.6rem; font-weight: 500; }
+.smp-card-action { margin-left: auto; }
+.smp-action-pill.is-selected { background: #dbeafe; color: #1d4ed8; }
+.smp-action-pill.is-avail { background: #dcfce7; color: #15803d; }
+.smp-action-pill.is-wait { background: #fef3c7; color: #b45309; }
+.smp-action-pill.is-occ { background: #e2e8f0; color: #64748b; }
+
+.smp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 22px 10px;
+  color: #64748b;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.smp-reopen-floor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  font-family: inherit;
+}
+
+.smp-reopen-floor-btn:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* ========================================================== */
+/* FLOATING ACTIVE FLOOR BADGE ON MAP CANVAS                 */
+/* ========================================================== */
+.map-floating-active-floor-badge {
+  position: absolute;
+  top: 14px;
+  left: 170px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid #bfdbfe;
+  border-radius: 9999px;
+  padding: 5px 8px 5px 12px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-floating-active-floor-badge:hover {
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.2);
+  transform: translateY(-1px);
+}
+
+.mf-floor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #1e293b;
+}
+
+.mf-floor-tag svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.mf-floor-tag strong {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.mf-change-floor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  cursor: pointer;
+  pointer-events: none; /* Whole capsule is clickable */
+}
+
+/* ========================================================== */
+/* FLOOR SELECTION PERSPECTIVE (MODAL / OVERLAY)             */
+/* ========================================================== */
+.floor-selector-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.floor-selector-panel {
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fscScaleUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fscScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.fsc-top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.fsc-top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fsc-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.fsc-building-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid;
+}
+
+.fsc-proj-code {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 3px 9px;
+  border-radius: 9999px;
+}
+
+.fsc-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 2px 0 0;
+  line-height: 1.3;
+}
+
+.fsc-desc {
+  font-size: 0.84rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.fsc-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+}
+
+.fsc-close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: rotate(90deg);
+}
+
+/* Guidance Card */
+.fsc-guidance-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.fsc-guidance-icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+
+.fsc-guidance-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fsc-step-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #1d4ed8;
+  letter-spacing: 0.02em;
+}
+
+.fsc-step-hint {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+/* Floor Stack */
+.fsc-floors-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 3px 7px 5px 3px;
+  box-sizing: border-box;
+}
+
+.fsc-floor-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.fsc-floor-item:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1);
+  transform: translateY(-2px);
+}
+
+.fsc-floor-item.is-active-preview {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.14);
+}
+
+.fsc-pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.fsc-pillar-level {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.fsc-pillar-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.fsc-floor-item.is-active-preview .fsc-pillar,
+.fsc-floor-item:hover .fsc-pillar {
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+.fsc-floor-item.is-active-preview .fsc-pillar .fsc-pillar-level,
+.fsc-floor-item.is-active-preview .fsc-pillar .fsc-pillar-badge,
+.fsc-floor-item:hover .fsc-pillar .fsc-pillar-level,
+.fsc-floor-item:hover .fsc-pillar .fsc-pillar-badge {
+  color: #ffffff;
+}
+
+.fsc-floor-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fsc-floor-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fsc-floor-title-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fsc-avail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  flex-shrink: 0;
+}
+
+.fsc-avail-chip.is-none {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
+.fsc-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fsc-floor-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fsc-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.fsc-meta-pill svg {
+  color: #94a3b8;
+}
+
+.fsc-action-col {
+  flex-shrink: 0;
+}
+
+.fsc-select-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  font-family: inherit;
+}
+
+.fsc-floor-item:hover .fsc-select-action-btn {
+  background: #1d4ed8;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  transform: translateX(2px);
+}
+
+/* Actions Bar */
+.fsc-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.fsc-back-to-overview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  font-family: inherit;
+}
+
+.fsc-back-to-overview-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #94a3b8;
+}
+
+.fsc-footer-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.fsc-footer-tip svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+/* Fade Transition */
+.fsc-fade-enter-active,
+.fsc-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.fsc-fade-enter-from,
+.fsc-fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .floor-selector-panel {
+    padding: 18px 16px;
+  }
+  .fsc-floor-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .fsc-action-col {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .map-floating-active-floor-badge {
+    left: 14px;
+    top: 54px;
+  }
 }
 
 .smp-area-box {
@@ -2243,6 +3689,15 @@ onUnmounted(() => {
   opacity: 0.18;
 }
 
+/* At mid zoom, a small project number keeps the map readable without hiding polygons. */
+.maplibre-zone-number-badge.is-compact {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 50%;
+  font-size: 9px;
+}
+
 /* Custom Popup Content (hover cards) */
 .mlp-popup {
   pointer-events: none;
@@ -2316,7 +3771,7 @@ onUnmounted(() => {
   left: 8px;
   right: 8px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   pointer-events: none;
 }
@@ -2335,17 +3790,10 @@ onUnmounted(() => {
 .mlp-photo-badge svg {
   color: #93c5fd;
 }
-.mlp-photo-zone-tag {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  color: #1e293b;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
 .mlp-body { padding: 14px 16px 12px; }
+.mlp-project-context { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; overflow: hidden; color: #64748b; font-size: .68rem; font-weight: 700; white-space: nowrap; }
+.mlp-project-context span { overflow: hidden; text-overflow: ellipsis; }
+.mlp-project-context i { flex: 0 0 auto; color: #94a3b8; font-style: normal; }
 
 .mlp-head {
   display: flex;
@@ -2358,7 +3806,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.mlp-stall-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 .mlp-title strong {
   font-size: 1rem;
@@ -2596,6 +4052,59 @@ onUnmounted(() => {
 .map-floating-recenter-btn svg {
   color: #2563eb;
   flex-shrink: 0;
+}
+
+.map-floating-floor-preview-pill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
+.floor-preview-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.floor-preview-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.floor-preview-tab {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.floor-preview-tab:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+.floor-preview-tab.active {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
 /* Preview Mode Styles */
