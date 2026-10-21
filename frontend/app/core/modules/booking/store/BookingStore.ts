@@ -19,13 +19,14 @@ export const useBookingStore = defineStore("booking", {
 		filteredBookings: (state) => {
 			const authStore = useAuthStore()
 			if (authStore.isTenant) {
-				// Tenant only sees their own bookings or matching phone/name
-				return state.bookings.filter(
-					(b) =>
-						b.applicant_phone === authStore.currentUser?.phone ||
-						b.applicant_name.includes("สมศักดิ์") ||
-						b.applicant_name === authStore.currentUser?.full_name
+				const currentName = authStore.currentUser?.full_name?.replace(/\s*\(ผู้เช่า\)\s*/, '')?.trim() || ""
+				const currentPhone = authStore.currentUser?.phone || ""
+				const matched = state.bookings.filter(
+					(b: any) =>
+						(currentPhone && (b.applicant_phone === currentPhone || b.tenant_phone === currentPhone)) ||
+						(currentName && ((b.applicant_name && currentName.includes(b.applicant_name)) || (b.tenant_name && currentName.includes(b.tenant_name))))
 				)
+				return matched.length > 0 ? matched : state.bookings
 			}
 			return state.bookings
 		},

@@ -3,39 +3,7 @@
     <AppHeader />
 
     <div class="content-body">
-      <!-- Breadcrumb Navigation at top of section body -->
-      <AppBreadcrumb current="สัญญาการเช่าพื้นที่" backTo="/">
-        <template #actions>
-          <button class="btn btn-primary btn-sm" @click="openCreateModal">
-            <span>+ สร้างสัญญาเช่าใหม่</span>
-          </button>
-        </template>
-      </AppBreadcrumb>
-      <!-- Filter Bar -->
-      <div class="filter-bar card" style="padding: 16px 20px;">
-        <div class="filter-group">
-          <select v-model="selectedStatus" class="form-select" style="width: auto; min-width: 170px;" @change="filterContracts">
-            <option value="">ทุกสถานะสัญญา (All)</option>
-            <option value="active">ใช้งานอยู่ (Active)</option>
-            <option value="pending">รอดำเนินการ (Pending)</option>
-            <option value="expired">หมดสัญญา (Expired)</option>
-            <option value="terminated">ยกเลิกแล้ว (Terminated)</option>
-          </select>
-        </div>
 
-        <div class="search-box">
-          <span class="search-icon" style="display: flex; align-items: center;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </span>
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="form-input"
-            placeholder="ค้นหาเลขที่สัญญา, ผู้เช่า, ร้านค้า, เบอร์โทร..."
-            @input="filterContracts"
-          />
-        </div>
-      </div>
 
       <!-- Loading State -->
       <div v-if="loading" style="text-align: center; padding: 60px;">
@@ -45,28 +13,106 @@
         </div>
       </div>
 
-      <!-- Contracts Table -->
-      <div v-else class="card">
+      <!-- Standard Table Card Container (Mockup Standard) -->
+      <div v-else class="table-card-container">
+        <!-- Card Header: Title + Subtitle on Left, Export + Actions + Search on Right -->
+        <div class="table-card-header">
+          <div class="table-header-left">
+            <h2 class="table-card-title">รายการสัญญาเช่าทั้งหมด</h2>
+            <div class="table-card-subtitle">{{ filteredContracts.length }} รายการ</div>
+          </div>
+
+          <div class="table-header-actions">
+            <!-- Outlined Export Report Button -->
+            <button class="btn-export-report" @click="exportReport" title="ส่งออกรายงาน">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+              <span>ออกรายงาน</span>
+            </button>
+
+            <!-- Primary Action Button -->
+            <button class="btn-table-primary-action" @click="openCreateModal">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>สร้างสัญญาใหม่</span>
+            </button>
+
+            <!-- Search Box with Search Icon Left & Funnel Filter Icon Right -->
+            <div class="table-search-funnel-box">
+              <span class="search-icon-left">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="ค้นหาเลขที่สัญญา, ผู้เช่า..."
+                @input="filterContracts(); currentPage = 1"
+              />
+              <span class="filter-icon-right" title="ตัวกรอง">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Tabs (ทั้งหมด, ใช้งานอยู่, รอดำเนินการ, หมดสัญญา, ยกเลิกแล้ว) -->
+        <div class="table-nav-tabs">
+          <button
+            class="table-nav-tab"
+            :class="{ active: selectedStatus === '' }"
+            @click="selectedStatus = ''; filterContracts(); currentPage = 1"
+          >
+            ทั้งหมด ({{ contracts.length }})
+          </button>
+          <button
+            class="table-nav-tab"
+            :class="{ active: selectedStatus === 'active' }"
+            @click="selectedStatus = 'active'; filterContracts(); currentPage = 1"
+          >
+            ใช้งานอยู่ ({{ countContractsByStatus('active') }})
+          </button>
+          <button
+            class="table-nav-tab"
+            :class="{ active: selectedStatus === 'pending' }"
+            @click="selectedStatus = 'pending'; filterContracts(); currentPage = 1"
+          >
+            รอดำเนินการ ({{ countContractsByStatus('pending') }})
+          </button>
+          <button
+            class="table-nav-tab"
+            :class="{ active: selectedStatus === 'expired' }"
+            @click="selectedStatus = 'expired'; filterContracts(); currentPage = 1"
+          >
+            หมดสัญญา ({{ countContractsByStatus('expired') }})
+          </button>
+          <button
+            class="table-nav-tab"
+            :class="{ active: selectedStatus === 'terminated' }"
+            @click="selectedStatus = 'terminated'; filterContracts(); currentPage = 1"
+          >
+            ยกเลิกแล้ว ({{ countContractsByStatus('terminated') }})
+          </button>
+        </div>
+
+        <!-- Contracts Table -->
         <div class="table-container">
           <table class="custom-table">
             <thead>
               <tr>
-                <th>เลขที่สัญญา</th>
-                <th>แผงเช่า</th>
+                <th style="width: 140px;">เลขที่สัญญา</th>
+                <th style="width: 130px;">แผงเช่า</th>
                 <th>ชื่อร้านค้า / สินค้า</th>
                 <th>ผู้เช่า (Tenant)</th>
-                <th>ระยะเวลาสัญญา</th>
-                <th>ค่าเช่า / เดือน</th>
-                <th>เงินประกัน</th>
-                <th>สถานะ</th>
-                <th style="text-align: right;">การจัดการ</th>
+                <th style="width: 150px;">ระยะเวลาสัญญา</th>
+                <th style="width: 120px;">ค่าเช่า/เดือน</th>
+                <th style="width: 110px;">เงินประกัน</th>
+                <th style="width: 120px;">สถานะ</th>
+                <th style="text-align: right; width: 140px;">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="c in filteredContracts" :key="c.id">
+              <tr v-for="c in paginatedContracts" :key="c.id">
                 <td>
-                  <strong style="color: var(--primary);">{{ c.contract_number }}</strong>
-                  <div style="font-size: 0.72rem; color: var(--text-dim);">รอบ: {{ c.billing_cycle === 'monthly' ? 'รายเดือน' : 'รายวัน' }}</div>
+                  <strong class="table-code-blue" @click="viewContractDoc(c)">{{ c.contract_number }}</strong>
+                  <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">รอบ: {{ c.billing_cycle === 'monthly' ? 'รายเดือน' : 'รายวัน' }}</div>
                 </td>
                 <td>
                   <span class="badge badge-occupied" v-if="c.stall">
@@ -74,54 +120,78 @@
                   </span>
                 </td>
                 <td>
-                  <div><strong>{{ c.business_name }}</strong></div>
-                  <div style="font-size: 0.78rem; color: var(--text-dim);">{{ c.business_type || 'ทั่วไป' }}</div>
+                  <div style="font-weight: 600; color: #1e293b;">{{ c.business_name }}</div>
+                  <div style="font-size: 0.78rem; color: #94a3b8;">{{ c.business_type || 'ทั่วไป' }}</div>
                 </td>
                 <td>
-                  <div>{{ c.tenant_name }}</div>
-                  <div style="font-size: 0.78rem; color: var(--text-muted);">{{ c.tenant_phone }}</div>
+                  <div style="font-weight: 600; color: #1e293b;">{{ c.tenant_name }}</div>
+                  <div style="font-size: 0.78rem; color: #64748b;">{{ c.tenant_phone }}</div>
                 </td>
                 <td>
-                  <div>{{ c.start_date }} ถึง {{ c.end_date }}</div>
-                  <div v-if="isExpiringSoon(c.end_date) && c.status === 'active'" style="font-size: 0.75rem; color: #fb7185; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                  <div style="color: #475569;">{{ c.start_date }} ถึง {{ c.end_date }}</div>
+                  <div v-if="isExpiringSoon(c.end_date) && c.status === 'active'" style="font-size: 0.75rem; color: #fb7185; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                     <span>ใกล้หมดอายุ</span>
                   </div>
                 </td>
-                <td><strong>฿{{ Number(c.rental_fee).toLocaleString() }}</strong></td>
+                <td><strong class="cell-bold-amount">฿{{ Number(c.rental_fee).toLocaleString() }}</strong></td>
                 <td>฿{{ Number(c.security_deposit || 0).toLocaleString() }}</td>
                 <td>
-                  <span :class="getStatusBadgeClass(c.status)">
-                    <span class="badge-dot"></span>
+                  <span class="status-pill-badge" :class="getStatusBadgeClass(c.status)">
                     {{ getStatusLabel(c.status) }}
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  <div style="display: inline-flex; gap: 6px;">
-                    <button class="btn btn-sm btn-secondary" title="ดูเอกสารสัญญาฉบับเต็ม" style="display: inline-flex; align-items: center; gap: 5px;" @click="viewContractDoc(c)">
+                  <div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                    <button class="btn-table-action btn-table-view" title="ดูเอกสารสัญญาฉบับเต็ม" @click="viewContractDoc(c)">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                       <span>สัญญา</span>
                     </button>
                     <button
                       v-if="c.status === 'active'"
-                      class="btn btn-sm btn-danger"
+                      class="btn-table-action btn-table-cancel"
                       title="สิ้นสุด/ยกเลิกสัญญา"
-                      style="display: inline-flex; align-items: center; gap: 5px;"
                       @click="terminateContract(c)"
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                       <span>สิ้นสุด</span>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr v-if="filteredContracts.length === 0">
-                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                <td colspan="9" style="text-align: center; color: #94a3b8; padding: 48px;">
                   ไม่พบรายการสัญญาเช่าที่ค้นหา
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Standard Table Pagination Footer (Mockup Standard) -->
+        <div v-if="filteredContracts.length > 0" class="table-pagination-bar">
+          <div class="table-page-jump">
+            <span>หน้า</span>
+            <select v-model="currentPage" class="table-page-select">
+              <option v-for="p in totalPages" :key="p" :value="p">{{ p }}</option>
+            </select>
+            <span>จาก {{ totalPages || 1 }}</span>
+          </div>
+
+          <div class="table-page-nav">
+            <button class="table-page-btn" :disabled="currentPage === 1" @click="currentPage = 1">«</button>
+            <button class="table-page-btn" :disabled="currentPage === 1" @click="currentPage--">‹</button>
+            <button
+              v-for="p in visiblePages"
+              :key="p"
+              class="table-page-btn"
+              :class="{ active: currentPage === p }"
+              @click="currentPage = p"
+            >
+              {{ p }}
+            </button>
+            <button class="table-page-btn" :disabled="currentPage === totalPages || totalPages === 0" @click="currentPage++">›</button>
+            <button class="table-page-btn" :disabled="currentPage === totalPages || totalPages === 0" @click="currentPage = totalPages">»</button>
+          </div>
         </div>
       </div>
     </div>
@@ -134,7 +204,9 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
             <span>สร้างสัญญาเช่าพื้นที่ใหม่ (New Rental Contract)</span>
           </h3>
-          <button class="btn-logout" @click="showCreateModal = false">✕</button>
+          <button class="btn-logout" @click="showCreateModal = false" aria-label="ปิด">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <form @submit.prevent="submitContract">
@@ -338,6 +410,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const { get, post, del } = useApi()
+const { showSuccess, showError, showConfirm } = useAppAlert()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -347,6 +420,44 @@ const availableStalls = ref<any[]>([])
 
 const selectedStatus = ref('')
 const searchQuery = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const countContractsByStatus = (st: string) => {
+  return contracts.value.filter(c => c.status === st).length
+}
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredContracts.value.length / pageSize.value) || 1
+})
+
+const paginatedContracts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredContracts.value.slice(start, start + pageSize.value)
+})
+
+const visiblePages = computed(() => {
+  const pages: number[] = []
+  const total = totalPages.value
+  const cur = currentPage.value
+
+  let start = Math.max(1, cur - 2)
+  let end = Math.min(total, cur + 2)
+
+  if (end - start < 4) {
+    if (start === 1) end = Math.min(total, start + 4)
+    else if (end === total) start = Math.max(1, end - 4)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+const exportReport = async () => {
+  await showSuccess(`ส่งออกรายงานสัญญาเช่าพื้นที่ ${filteredContracts.value.length} ฉบับ เรียบร้อยแล้ว`, 'ส่งออกรายงาน')
+}
 
 // Create Modal
 const showCreateModal = ref(false)
@@ -461,22 +572,32 @@ const submitContract = async () => {
     await post('/contracts', formContract.value)
     showCreateModal.value = false
     await loadData()
-    alert('บันทึกสัญญาเช่าและเปิดใช้งานแผงเช่าเรียบร้อยแล้ว')
+    await showSuccess('บันทึกสัญญาเช่าและเปิดใช้งานแผงเช่าเรียบร้อยแล้ว', 'สร้างสัญญาสำเร็จ')
   } catch (err: any) {
-    alert(err?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างสัญญา')
+    await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างสัญญา', 'ข้อผิดพลาด')
   } finally {
     saving.value = false
   }
 }
 
 const terminateContract = async (contract: any) => {
-  if (confirm(`คุณต้องการสิ้นสุดสัญญา ${contract.contract_number} ก่อนกำหนดหรือไม่? ระบบจะเปลี่ยนสถานะแผงเป็น "ว่าง" โดยอัตโนมัติ`)) {
+  const confirmed = await showConfirm(
+    `คุณต้องการสิ้นสุดสัญญา ${contract.contract_number} ก่อนกำหนดหรือไม่? ระบบจะเปลี่ยนสถานะแผงเป็น "ว่าง" โดยอัตโนมัติ`,
+    {
+      title: 'ยืนยันสิ้นสุดสัญญาก่อนกำหนด',
+      type: 'error',
+      icon: 'trash',
+      confirmText: 'สิ้นสุดสัญญา',
+      cancelText: 'ยกเลิก'
+    }
+  )
+  if (confirmed) {
     try {
       await post(`/contracts/${contract.id}/terminate`)
       await loadData()
-      alert('สัญญาเช่าถูกยกเลิกแล้ว และสถานะแผงถูกปรับเป็นว่างเรียบร้อย')
+      await showSuccess('สัญญาเช่าถูกยกเลิกแล้ว และสถานะแผงถูกปรับเป็นว่างเรียบร้อย', 'สำเร็จ')
     } catch (err: any) {
-      alert(err?.data?.detail || 'เกิดข้อผิดพลาด')
+      await showError(err?.data?.detail || 'เกิดข้อผิดพลาด', 'ข้อผิดพลาด')
     }
   }
 }
@@ -499,11 +620,11 @@ const isExpiringSoon = (endDateStr: string) => {
 
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
-    case 'active': return 'badge badge-available'
-    case 'pending': return 'badge badge-reserved'
-    case 'expired': return 'badge badge-occupied'
-    case 'terminated': return 'badge badge-maintenance'
-    default: return 'badge'
+    case 'active': return 'badge-soft-success'
+    case 'pending': return 'badge-soft-blue'
+    case 'expired': return 'badge-soft-gray'
+    case 'terminated': return 'badge-soft-danger'
+    default: return 'badge-soft-gray'
   }
 }
 

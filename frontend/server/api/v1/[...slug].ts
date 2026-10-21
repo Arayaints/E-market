@@ -44,8 +44,8 @@ const MARKETS_DATA = [
     available_stalls: 12,
     starting_price_daily: 120,
     starting_price_monthly: 1800,
-    image_url: '/images/chatuchak_entrance.jpg',
-    tags: ['🛒 ตลาดนัดสุดสัปดาห์', '🚇 BTS หมอชิต / MRT สวนจตุจักร', '🅿️ มีที่จอดรถ 800+ คัน'],
+    image_url: '/images/markets/chatuchak.jpg',
+    tags: ['ตลาดนัดสุดสัปดาห์', 'BTS หมอชิต / MRT สวนจตุจักร', 'มีที่จอดรถ 800+ คัน'],
     category: 'weekend',
     operating_hours: 'เสาร์ - อาทิตย์ 09:00 - 18:00 น.',
     description: 'ศูนย์รวมการค้าปลีกกลางแจ้งที่ใหญ่ที่สุดในโลก สินค้าแฟชั่น ของแต่งบ้าน งานคราฟต์ อาหาร และต้นไม้',
@@ -66,8 +66,8 @@ const MARKETS_DATA = [
     available_stalls: 8,
     starting_price_daily: 150,
     starting_price_monthly: 2200,
-    image_url: '/images/market_hall_front.jpg',
-    tags: ['🍲 อาหารปรุงสำเร็จ', '🥦 ผักผลไม้สด', '🚌 รถเมล์สาย 67, 70'],
+    image_url: '/images/markets/pracha_niwet.jpg',
+    tags: ['อาหารปรุงสำเร็จ', 'ผักผลไม้สด', 'รถเมล์สาย 67, 70'],
     category: 'fresh_market',
     operating_hours: 'ทุกวัน 05:00 - 19:00 น.',
     description: 'ตลาดสดและอาหารสำเร็จรูปชื่อดังย่านประชานิเวศน์ สะอาด ปลอดภัย สินค้าคุณภาพดีเพื่อคนเมือง',
@@ -88,8 +88,8 @@ const MARKETS_DATA = [
     available_stalls: 15,
     starting_price_daily: 100,
     starting_price_monthly: 1500,
-    image_url: '/images/market_hall_front.jpg',
-    tags: ['🚝 รถไฟฟ้าสายสีชมพู (สถานีตลาดมีนบุรี)', '🛍️ ศูนย์ค้าปลีก-ส่ง', '🅿️ มีที่จอดรถ'],
+    image_url: '/images/markets/min_buri.jpg',
+    tags: ['รถไฟฟ้าสายสีชมพู (สถานีตลาดมีนบุรี)', 'ศูนย์ค้าปลีก-ส่ง', 'มีที่จอดรถ'],
     category: 'metro',
     operating_hours: 'ทุกวัน 04:00 - 20:00 น.',
     description: 'ศูนย์กลางตลาดค้าส่ง-ปลีกฝั่งกรุงเทพฯ ตะวันออก เชื่อมต่อการเดินทางด้วยรถไฟฟ้าสายสีชมพู',
@@ -110,8 +110,8 @@ const MARKETS_DATA = [
     available_stalls: 4,
     starting_price_daily: 180,
     starting_price_monthly: 2500,
-    image_url: '/images/market_promo_hero.jpg',
-    tags: ['🚇 MRT ศูนย์สิริกิติ์', '🏙️ ย่านธุรกิจสุขุมวิท', '☕ อาหารและเครื่องดื่ม'],
+    image_url: '/images/markets/singhanat.jpg',
+    tags: ['MRT ศูนย์สิริกิติ์', 'ย่านธุรกิจสุขุมวิท', 'อาหารและเครื่องดื่ม'],
     category: 'metro',
     operating_hours: 'จันทร์ - ศุกร์ 06:00 - 15:00 น.',
     description: 'ตลาดชุมชนใจกลางสุขุมวิท 22 รองรับกลุ่มคนทำงานออฟฟิศ นักท่องเที่ยว และผู้อยู่อาศัยในพื้นที่',
@@ -132,7 +132,7 @@ const MARKETS_DATA = [
     available_stalls: 7,
     starting_price_daily: 120,
     starting_price_monthly: 1800,
-    image_url: '/images/market_hall_front.jpg',
+    image_url: '/images/markets/thewarat.jpg',
     tags: ['🚤 ท่าเรือเทเวศร์', '🌸 ไม้ดอกไม้ประดับ', '🥦 ผักสดปลอดสาร'],
     category: 'fresh_market',
     operating_hours: 'ทุกวัน 04:00 - 18:00 น.',
@@ -154,7 +154,7 @@ const MARKETS_DATA = [
     available_stalls: 6,
     starting_price_daily: 90,
     starting_price_monthly: 1400,
-    image_url: '/images/market_promo_hero.jpg',
+    image_url: '/images/markets/rat_burana.jpg',
     tags: ['🦀 อาหารทะเลสด', '🌊 ทำเลริมแม่น้ำ', '🚌 สาย 6, 17, 37'],
     category: 'fresh_market',
     operating_hours: 'ทุกวัน 05:00 - 19:00 น.',
@@ -176,7 +176,7 @@ const MARKETS_DATA = [
     available_stalls: 11,
     starting_price_daily: 130,
     starting_price_monthly: 1900,
-    image_url: '/images/market_hall_front.jpg',
+    image_url: '/images/markets/bang_kapi.jpg',
     tags: ['🚝 MRT สายสีเหลือง (สถานีบางกะปิ)', '🚤 ท่าเรือเดอะมอลล์บางกะปิ', '👔 เสื้อผ้าแฟชั่น'],
     category: 'metro',
     operating_hours: 'ทุกวัน 06:00 - 21:00 น.',
@@ -198,7 +198,7 @@ const MARKETS_DATA = [
     available_stalls: 0,
     starting_price_daily: 160,
     starting_price_monthly: 2400,
-    image_url: '/images/market_hall_front.jpg',
+    image_url: '/images/markets/wongwian_lek.jpg',
     tags: ['🚝 รถไฟฟ้าสายสีทอง (สถานีคลองสาน)', '🏺 ศูนย์รวมพระเครื่อง', '🔴 ติดจองเต็ม'],
     category: 'popular',
     operating_hours: 'ทุกวัน 08:00 - 17:00 น.',
@@ -220,7 +220,7 @@ const MARKETS_DATA = [
     available_stalls: 14,
     starting_price_daily: 80,
     starting_price_monthly: 1200,
-    image_url: '/images/market_hall_front.jpg',
+    image_url: '/images/markets/nong_chok.jpg',
     tags: ['🕌 อาหารฮาลาล', '🌾 ผลผลิตเกษตรชุมชน', '🅿️ จอดรถสะดวก'],
     category: 'fresh_market',
     operating_hours: 'ทุกวัน 05:00 - 18:00 น.',
@@ -242,7 +242,7 @@ const MARKETS_DATA = [
     available_stalls: 9,
     starting_price_daily: 140,
     starting_price_monthly: 2000,
-    image_url: '/images/market_promo_hero.jpg',
+    image_url: '/images/markets/ratchada.jpg',
     tags: ['🚝 BTS ตลาดพลู / BRT ราชพฤกษ์', '🍱 สตรีทฟู้ด', '🥐 ขนมไทยโบราณ'],
     category: 'metro',
     operating_hours: 'ทุกวัน 06:00 - 20:00 น.',
@@ -264,7 +264,7 @@ const MARKETS_DATA = [
     available_stalls: 22,
     starting_price_daily: 100,
     starting_price_monthly: 1500,
-    image_url: '/images/market_hall_front.jpg',
+    image_url: '/images/markets/thonburi.jpg',
     tags: ['🐶 โซนสัตว์เลี้ยง', '🪴 ตลาดต้นไม้ใหญ่', '🅿️ ที่จอดรถกว่า 1,200 คัน'],
     category: 'popular',
     operating_hours: 'ทุกวัน 08:00 - 18:00 น.',
@@ -286,7 +286,7 @@ const MARKETS_DATA = [
     available_stalls: 5,
     starting_price_daily: 110,
     starting_price_monthly: 1600,
-    image_url: '/images/market_promo_hero.jpg',
+    image_url: '/images/markets/bang_khae.jpg',
     tags: ['🌳 ติดสวนสาธารณะ', '🏃‍♂️ ตลาดคนรักสุขภาพ', '🚇 MRT หลักสอง (5 นาที)'],
     category: 'popular',
     operating_hours: 'ทุกวัน 06:00 - 20:00 น.',
@@ -308,7 +308,7 @@ const EVENTS_DATA = [
     vacancies_count: 12,
     is_open: true,
     badge: 'รับสมัครผู้ค้า',
-    image_url: '/images/chatuchak_entrance.jpg'
+    image_url: '/images/markets/chatuchak.jpg'
   },
   {
     id: 2,
@@ -320,7 +320,7 @@ const EVENTS_DATA = [
     vacancies_count: 18,
     is_open: true,
     badge: 'รับสมัครผู้ค้า',
-    image_url: '/images/market_hall_front.jpg'
+    image_url: '/images/markets/thonburi.jpg'
   },
   {
     id: 3,
@@ -332,7 +332,7 @@ const EVENTS_DATA = [
     vacancies_count: 3,
     is_open: true,
     badge: 'รับสมัครผู้ค้า',
-    image_url: '/images/market_promo_hero.jpg'
+    image_url: '/images/markets/thewarat.jpg'
   }
 ]
 
@@ -345,7 +345,7 @@ const generateStalls = () => {
     for (let i = 1; i <= 15; i++) {
       const numStr = i < 10 ? `0${i}` : `${i}`
       const stallNumber = `${zone}-${numStr}`
-      const status = i === 1 || i === 7 ? 'reserved' : i === 2 || i === 5 || i === 11 ? 'occupied' : 'available'
+      const status = 'available'
       stalls.push({
         id: id++,
         stall_number: stallNumber,
@@ -368,76 +368,232 @@ const generateStalls = () => {
 
 const STALLS_DATA = generateStalls()
 
-const BOOKINGS_DATA: any[] = [
+const INITIAL_BOOKINGS: any[] = [
   {
-    id: 1,
-    booking_number: 'BK-2026-0042',
-    stall_id: 1,
+    id: 3002,
+    booking_number: '#3002',
+    market_name: 'ตลาดนัดจตุจักร',
     stall_number: 'A-01',
+    stall_count: 2,
     stall_monthly_rate: 2500,
-    market_name: 'ตลาดนัดจตุจักร',
+    stall_zone_name: 'โซนแฟชั่น เสื้อผ้า',
     tenant_name: 'สมชาย ใจดี',
-    tenant_phone: '081-444-5566',
-    tenant_email: 'somchai@example.com',
-    intended_business: 'เสื้อผ้าและแฟชั่นวินเทจ',
-    visit_date: '2026-10-25',
-    visit_time_slot: '10:00 - 12:00',
+    tenant_phone: '081-234-5678',
+    tenant_id_card: '1-1004-99887-12-3',
+    intended_business: 'เสื้อผ้าแฟชั่นและเครื่องประดับ',
+    visit_date: 'จันทร์ 19 ตุลาคม 2569',
+    visit_time_slot: '13.00 - 14.00 น.',
+    meeting_point: 'หน้ากองอำนวยการตลาด เสาธง 1',
+    escort_officer: 'นายธนากร สมบูรณ์',
     status: 'approved',
-    officer_notes: 'อนุมัตินัดหมาย ให้เจ้าหน้าที่เวรพาเดินชมแผงโซน A',
-    created_at: '2026-10-18T10:30:00Z'
+    holding_stall: true,
+    created_at: '2026-10-07T10:30:00'
   },
   {
-    id: 2,
-    booking_number: 'BK-2026-0043',
-    stall_id: 4,
-    stall_number: 'B-04',
-    stall_monthly_rate: 1800,
-    market_name: 'ตลาดประชานิเวศน์ 1',
-    tenant_name: 'สมหญิง รักการค้า',
-    tenant_phone: '089-123-4567',
-    tenant_email: 'somying@example.com',
-    intended_business: 'อาหารพร้อมทานและเบเกอรี่',
-    visit_date: '2026-10-26',
-    visit_time_slot: '14:00 - 16:00',
-    status: 'pending_approval',
-    created_at: '2026-10-19T09:15:00Z'
-  },
-  {
-    id: 3,
-    booking_number: 'BK-2026-0044',
-    stall_id: 8,
-    stall_number: 'A-08',
-    stall_monthly_rate: 2500,
+    id: 3003,
+    booking_number: '#3003',
     market_name: 'ตลาดนัดจตุจักร',
-    tenant_name: 'นายกิตติคุณ มั่งคั่ง',
-    tenant_phone: '082-998-1122',
-    tenant_email: 'kittikun@example.com',
-    intended_business: 'ร้านกาแฟโบราณและเครื่องดื่ม',
-    visit_date: '2026-10-20',
-    visit_time_slot: '10:00 - 12:00',
-    status: 'visited',
-    officer_notes: 'นำชมแผงเรียบร้อย ผู้ขอจองมีความสนใจยื่นสัญญาเช่า',
-    created_at: '2026-10-17T11:00:00Z'
+    stall_number: 'B-03',
+    stall_count: 2,
+    stall_monthly_rate: 3200,
+    stall_zone_name: 'โซนงานฝีมือและของที่ระลึก',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    tenant_id_card: '1-1004-99887-12-3',
+    intended_business: 'ของตกแต่งบ้านเซรามิก',
+    visit_date: 'จันทร์ 19 ตุลาคม 2569',
+    visit_time_slot: '13.00 - 14.00 น.',
+    meeting_point: 'หน้ากองอำนวยการตลาด เสาธง 1',
+    escort_officer: 'นายธนากร สมบูรณ์',
+    status: 'interested',
+    holding_stall: true,
+    created_at: '2026-10-07T10:30:00'
+  },
+  {
+    id: 3004,
+    booking_number: '#3004',
+    market_name: 'ตลาดนัดจตุจักร',
+    stall_number: 'C-08',
+    stall_count: 1,
+    stall_monthly_rate: 2800,
+    stall_zone_name: 'โซนเครื่องดื่มและเบเกอรี่',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    tenant_id_card: '1-1004-99887-12-3',
+    intended_business: 'ร้านกาแฟสดและเบเกอรี่',
+    visit_date: 'พุธ 21 ตุลาคม 2569',
+    visit_time_slot: '10.30 - 11.30 น.',
+    status: 'pending_approval',
+    holding_stall: true,
+    created_at: '2026-10-08T14:15:00'
+  },
+  {
+    id: 3005,
+    booking_number: '#3005',
+    market_name: 'ตลาดบางแคภิรมย์',
+    stall_number: 'BK-01',
+    stall_count: 1,
+    stall_monthly_rate: 2200,
+    stall_zone_name: 'โซนอาหารปรุงสุก',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'ก๋วยเตี๋ยวเรืออยุธยา',
+    visit_date: 'พฤหัสบดี 22 ตุลาคม 2569',
+    visit_time_slot: '11.00 - 12.00 น.',
+    status: 'waiting_queue',
+    queue_position: 1,
+    holding_stall: false,
+    created_at: '2026-10-09T09:00:00'
+  },
+  {
+    id: 3006,
+    booking_number: '#3006',
+    market_name: 'ตลาดบางแคภิรมย์',
+    stall_number: 'BK-05',
+    stall_count: 1,
+    stall_monthly_rate: 2000,
+    stall_zone_name: 'โซนผักผลไม้สด',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'ผลไม้นำเข้าและตามฤดูกาล',
+    visit_date: 'ศุกร์ 23 ตุลาคม 2569',
+    visit_time_slot: '14.00 - 15.00 น.',
+    status: 'approved',
+    holding_stall: true,
+    created_at: '2026-10-09T11:20:00'
+  },
+  {
+    id: 3007,
+    booking_number: '#3007',
+    market_name: 'ตลาดบางแคภิรมย์',
+    stall_number: 'BK-12',
+    stall_count: 2,
+    stall_monthly_rate: 2400,
+    stall_zone_name: 'โซนเบ็ดเตล็ด',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'เครื่องใช้ในครัวเรือน',
+    status: 'lease_applied',
+    application_number: 'APP-2026-0089',
+    holding_stall: true,
+    created_at: '2026-10-10T13:45:00'
+  },
+  {
+    id: 3008,
+    booking_number: '#3008',
+    market_name: 'ตลาดบางแคภิรมย์',
+    stall_number: 'BK-15',
+    stall_count: 1,
+    stall_monthly_rate: 2100,
+    stall_zone_name: 'โซนเสื้อผ้า',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'เสื้อผ้าเด็กสำเร็จรูป',
+    status: 'completed',
+    holding_stall: true,
+    created_at: '2026-10-10T16:00:00'
+  },
+  {
+    id: 3009,
+    booking_number: '#3009',
+    market_name: 'ตลาดบางแคภิรมย์',
+    stall_number: 'BK-20',
+    stall_count: 1,
+    stall_monthly_rate: 1900,
+    stall_zone_name: 'โซนบริการ',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'ร้านซ่อมนาฬิกา',
+    status: 'cancelled',
+    holding_stall: false,
+    created_at: '2026-10-11T10:00:00'
+  },
+  {
+    id: 3010,
+    booking_number: '#3010',
+    market_name: 'ตลาดพระเครื่อง',
+    stall_number: 'PK-02',
+    stall_count: 1,
+    stall_monthly_rate: 3500,
+    stall_zone_name: 'โซนพระบูชาและเหรียญคณาจารย์',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'ศูนย์พระเครื่องและวัตถุมงคล',
+    visit_date: 'เสาร์ 24 ตุลาคม 2569',
+    visit_time_slot: '13.00 - 14.30 น.',
+    status: 'approved',
+    holding_stall: true,
+    created_at: '2026-10-12T11:15:00'
+  },
+  {
+    id: 3011,
+    booking_number: '#3011',
+    market_name: 'ตลาดพระเครื่อง',
+    stall_number: 'PK-07',
+    stall_count: 1,
+    stall_monthly_rate: 3000,
+    stall_zone_name: 'โซนหนังสือและตลับพระ',
+    tenant_name: 'สมชาย ใจดี',
+    tenant_phone: '081-234-5678',
+    intended_business: 'อุปกรณ์เลี่ยมกรอบพระ',
+    status: 'rejected',
+    holding_stall: false,
+    rejection_reason: 'ประเภทสินค้าไม่ตรงกับผังการจัดโซนของตลาด',
+    created_at: '2026-10-12T15:30:00'
   }
 ]
 
+const BOOKINGS_DATA: any[] = JSON.parse(JSON.stringify(INITIAL_BOOKINGS))
+let bookingsExplicitlyCleared = false
+
 const APPLICATIONS_DATA: any[] = [
   {
-    id: 1,
-    application_number: 'APP-2026-0015',
-    tenant_name: 'สมชาย ใจดี',
-    tenant_phone: '081-444-5566',
-    tenant_id_card: '1-1004-99887-12-3',
+    id: 101,
+    application_number: 'APP-2026-0089',
     stall_id: 1,
-    stall_number: 'A-01',
+    stall_number: 'BK-12',
+    market_name: 'ตลาดบางแคภิรมย์',
+    applicant_name: 'สมชาย ใจดี',
+    tenant_name: 'สมชาย ใจดี',
+    applicant_phone: '081-234-5678',
+    tenant_phone: '081-234-5678',
+    applicant_id_card: '1-1004-99887-12-3',
+    tenant_id_card: '1-1004-99887-12-3',
+    shop_name: 'สมชายของใช้ในบ้าน',
+    business_name: 'สมชายของใช้ในบ้าน',
+    product_type: 'เครื่องใช้ในครัวเรือน',
+    business_type: 'เครื่องใช้ในครัวเรือน',
+    requested_start_date: '2026-11-01',
+    requested_period_months: 12,
+    stage: 'officer_review',
+    status: 'pending_officer',
+    created_at: '2026-10-10T13:45:00'
+  },
+  {
+    id: 102,
+    application_number: 'APP-2026-0078',
+    stall_id: 2,
+    stall_number: 'A-02',
     market_name: 'ตลาดนัดจตุจักร',
-    business_name: 'ร้านเสื้อผ้าวินเทจสมชาย',
-    business_type: 'แฟชั่นและเครื่องแต่งกาย',
-    stage: 'approved',
-    status: 'approved',
-    created_at: '2026-10-19T14:20:00Z'
+    applicant_name: 'กิตติคุณ มั่งคั่ง',
+    tenant_name: 'กิตติคุณ มั่งคั่ง',
+    applicant_phone: '082-998-1122',
+    tenant_phone: '082-998-1122',
+    applicant_id_card: '1-1004-99887-12-3',
+    tenant_id_card: '1-1004-99887-12-3',
+    shop_name: 'ร้านกาแฟโบราณลุงกิต',
+    business_name: 'ร้านกาแฟโบราณลุงกิต',
+    product_type: 'อาหารและเครื่องดื่ม',
+    business_type: 'อาหารและเครื่องดื่ม',
+    requested_start_date: '2026-10-15',
+    requested_period_months: 12,
+    stage: 'director_review',
+    status: 'pending_market_director',
+    officer_comment: 'ตรวจสอบหลักฐานบัตรประชาชนและเอกสารร้านค้าเรียบร้อย',
+    created_at: '2026-10-08T09:30:00'
   }
 ]
+
 
 const CONTRACTS_DATA: any[] = [
   {
@@ -533,33 +689,50 @@ export default defineEventHandler(async (event) => {
     return STALLS_DATA
   }
 
-  // --- /stalls/geojson ---
-  if (cleanSlug === 'stalls/geojson') {
+  // --- /stalls/geojson and /stalls/gis-geojson ---
+  if (cleanSlug === 'stalls/geojson' || cleanSlug === 'stalls/gis-geojson') {
     return {
       type: 'FeatureCollection',
-      features: STALLS_DATA.slice(0, 30).map((s, idx) => ({
-        type: 'Feature',
-        id: s.id,
-        properties: {
+      features: STALLS_DATA.slice(0, 36).map((s, idx) => {
+        const col = idx % 6
+        const row = Math.floor(idx / 6)
+        const lng = 100.5500 + col * 0.0003
+        const lat = 13.7997 + row * 0.0003
+        const booking = BOOKINGS_DATA.find(b => b.stall_id === s.id && ['pending', 'approved', 'pending_decision', 'lease_applied'].includes(b.status))
+
+        return {
+          type: 'Feature',
           id: s.id,
-          stall_number: s.stall_number,
-          zone_code: s.zone_code,
-          status: s.status,
-          monthly_rate: s.monthly_rate,
-          daily_rate: s.daily_rate,
-          size_sqm: s.size_sqm
-        },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [[
-            [100.5501 + (idx % 6) * 0.0003, 13.7998 + Math.floor(idx / 6) * 0.0003],
-            [100.5503 + (idx % 6) * 0.0003, 13.7998 + Math.floor(idx / 6) * 0.0003],
-            [100.5503 + (idx % 6) * 0.0003, 13.8000 + Math.floor(idx / 6) * 0.0003],
-            [100.5501 + (idx % 6) * 0.0003, 13.8000 + Math.floor(idx / 6) * 0.0003],
-            [100.5501 + (idx % 6) * 0.0003, 13.7998 + Math.floor(idx / 6) * 0.0003]
-          ]]
+          properties: {
+            id: s.id,
+            stall_number: s.stall_number,
+            zone_id: s.zone_id,
+            zone_code: s.zone_code,
+            zone_name: s.zone_name,
+            category: s.category,
+            status: booking ? 'reserved' : s.status,
+            monthly_rate: s.monthly_rate,
+            daily_rate: s.daily_rate,
+            size_width: 3.0,
+            size_length: s.size_sqm / 3.0,
+            area_sqm: s.size_sqm,
+            lat: lat + 0.0001,
+            lng: lng + 0.0001,
+            has_active_booking: !!booking,
+            active_booking_number: booking ? booking.booking_number : null
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[
+              [lng, lat],
+              [lng + 0.00022, lat],
+              [lng + 0.00022, lat + 0.00022],
+              [lng, lat + 0.00022],
+              [lng, lat]
+            ]]
+          }
         }
-      }))
+      })
     }
   }
 
@@ -595,94 +768,359 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Queue helper to auto-shift next queue item when a stall is released
+  function shiftQueueForStall(stallNumber: string) {
+    const queueItems = BOOKINGS_DATA.filter(b => b.stall_number === stallNumber && b.status === 'waiting_queue')
+      .sort((a, b) => (a.queue_position || 99) - (b.queue_position || 99))
+
+    if (queueItems.length > 0) {
+      const nextHolder = queueItems[0]
+      nextHolder.status = 'pending_slot'
+      nextHolder.holding_stall = true
+      delete nextHolder.queue_position
+      nextHolder.slot_selection_deadline = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10) + 'T23:59:59'
+      nextHolder.timeline = nextHolder.timeline || []
+      nextHolder.timeline.push({
+        action: 'เลื่อนคิวขึ้นเป็นผู้ถือแผง (รอเลือกวันนัด)',
+        actor_role: 'system',
+        actor_name: 'ระบบคิวอัตโนมัติ (Queue Engine)',
+        timestamp: new Date().toISOString(),
+        note: 'ผู้ถือแผงคนก่อนหน้าปล่อยสิทธิ์ คิวที่ 1 ได้รับสิทธิ์ถือแผง กรุณาเลือกวันนัดภายใน 3 วัน'
+      })
+
+      // Shift other waiting queue numbers
+      for (let i = 1; i < queueItems.length; i++) {
+        queueItems[i].queue_position = i
+        queueItems[i].timeline = queueItems[i].timeline || []
+        queueItems[i].timeline.push({
+          action: 'เลื่อนลำดับคิวขึ้น',
+          actor_role: 'system',
+          actor_name: 'ระบบคิวอัตโนมัติ (Queue Engine)',
+          timestamp: new Date().toISOString(),
+          note: `ลำดับคิวของคุณขยับขึ้นเป็นคิวที่ ${i}`
+        })
+      }
+    } else {
+      const activeHolders = BOOKINGS_DATA.filter(b => b.stall_number === stallNumber && b.holding_stall && !['rejected', 'not_interested', 'cancelled', 'no_show'].includes(b.status))
+      if (activeHolders.length === 0) {
+        const stall = STALLS_DATA.find(s => s.stall_number === stallNumber)
+        if (stall) stall.status = 'available'
+      }
+    }
+  }
+
   // --- /bookings or /bookings/:id/... ---
   if (cleanSlug.startsWith('bookings')) {
     const parts = cleanSlug.split('/').filter(Boolean)
 
-    // 1. /bookings/:id/approve
+    // 1. POST /bookings/:id/approve (Officer approve)
     if (parts.length === 3 && parts[2] === 'approve' && method === 'POST') {
       const bId = Number(parts[1])
       const body = await readBody(event).catch(() => ({}))
       const booking = BOOKINGS_DATA.find(b => b.id === bId)
       if (booking) {
         booking.status = 'approved'
+        booking.meeting_point = body.meeting_point || booking.meeting_point || 'หน้ากองอำนวยการตลาด เสาธง 1'
+        booking.escort_officer = body.escort_officer || 'นายธนากร สมบูรณ์ (เจ้าหน้าที่พาชม)'
         booking.officer_notes = body.officer_notes || 'อนุมัตินัดหมาย ให้เจ้าหน้าที่เวรนำชมแผง'
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'อนุมัตินัดหมายเข้าชม',
+          actor_role: 'officer',
+          actor_name: 'เจ้าหน้าที่ผู้ดูแลตลาด',
+          timestamp: new Date().toISOString(),
+          note: `จุดนัดพบ: ${booking.meeting_point} | ผู้พาชม: ${booking.escort_officer}`
+        })
       }
       return { status: true, code: 200, message: 'อนุมัตินัดหมายเรียบร้อย', data: booking }
     }
 
-    // 2. /bookings/:id/reject
+    // 2. POST /bookings/:id/reject (Officer reject -> shifts queue)
     if (parts.length === 3 && parts[2] === 'reject' && method === 'POST') {
       const bId = Number(parts[1])
       const body = await readBody(event).catch(() => ({}))
       const booking = BOOKINGS_DATA.find(b => b.id === bId)
       if (booking) {
         booking.status = 'rejected'
-        booking.rejection_reason = body.rejection_reason || 'ไม่อนุมัติคำขอ'
+        booking.holding_stall = false
+        booking.rejection_reason = body.rejection_reason || 'ไม่อนุมัติคำขอจอง'
+        booking.officer_notes = body.officer_notes || ''
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'ไม่อนุมัตินัดหมาย (ปล่อยสิทธิ์)',
+          actor_role: 'officer',
+          actor_name: 'เจ้าหน้าที่ผู้ดูแลตลาด',
+          timestamp: new Date().toISOString(),
+          note: `เหตุผล: ${booking.rejection_reason} ${booking.officer_notes ? '(' + booking.officer_notes + ')' : ''}`
+        })
+        // Shift queue for this stall
+        shiftQueueForStall(booking.stall_number)
       }
-      return { status: true, code: 200, message: 'ปฏิเสธคำขอเรียบร้อย', data: booking }
+      return { status: true, code: 200, message: 'ปฏิเสธคำขอและปล่อยสิทธิ์ให้คิวถัดไปเรียบร้อย', data: booking }
     }
 
-    // 3. /bookings/:id/decide
+    // 3. POST /bookings/:id/mark-visited (Officer confirms visit done -> moves directly to interested for lease application)
+    if (parts.length === 3 && (parts[2] === 'mark-visited' || parts[2] === 'visited') && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        booking.status = 'interested'
+        booking.officer_notes = body.officer_notes || 'ผู้เช่ามาตามนัดหมายดูแผงหน้างานเรียบร้อย เข้าสู่ขั้นตอนการยื่นคำร้อง'
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'มาตามนัดหมาย (พร้อมยื่นคำร้องขอเช่า)',
+          actor_role: 'officer',
+          actor_name: body.officer_name || 'จนท. นำชมแผง',
+          timestamp: new Date().toISOString(),
+          note: 'เจ้าหน้าที่ยืนยันผู้เช่ามาตามนัดหมายดูแผงหน้างานเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที'
+        })
+      }
+      return { status: true, code: 200, message: 'บันทึกการมาตามนัดเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที', data: booking }
+    }
+
+    // 3.1 POST /bookings/:id/no-show (Officer records that tenant did not attend appointment)
+    if (parts.length === 3 && (parts[2] === 'no-show' || parts[2] === 'noshow') && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        const wasHolding = booking.holding_stall
+        booking.status = 'no_show'
+        booking.holding_stall = false
+        booking.officer_notes = body.officer_notes || 'ผู้เช่าไม่มาตามนัดหมายดูแผงหน้างาน'
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'ไม่มาตามนัดหมาย (สละสิทธิ์)',
+          actor_role: 'officer',
+          actor_name: body.officer_name || 'จนท. ตรวจสอบการนัด',
+          timestamp: new Date().toISOString(),
+          note: body.officer_notes || 'ผู้เช่าไม่มาตามวันเวลาที่นัดหมาย สละสิทธิ์ส่งต่อคิวถัดไป'
+        })
+        if (wasHolding) {
+          shiftQueueForStall(booking.stall_number)
+        }
+      }
+      return { status: true, code: 200, message: 'บันทึกสถานะไม่มาตามนัดหมายเรียบร้อย', data: booking }
+    }
+
+    // 4. POST /bookings/:id/decide (Tenant decision: interested or not_interested)
     if (parts.length === 3 && parts[2] === 'decide' && method === 'POST') {
       const bId = Number(parts[1])
       const body = await readBody(event).catch(() => ({}))
       const booking = BOOKINGS_DATA.find(b => b.id === bId)
       if (booking) {
+        booking.timeline = booking.timeline || []
         if (body.decision === 'interested') {
-          booking.status = 'visited'
+          booking.status = 'interested'
+          // 7 days deadline to submit lease application
+          const appDate = new Date(Date.now() + 7 * 86400000)
+          booking.application_deadline = `${appDate.toISOString().slice(0, 10)}T23:59:59`
+          booking.timeline.push({
+            action: 'ยืนยันสนใจเช่าแผง (รอยื่นคำร้อง)',
+            actor_role: 'tenant',
+            actor_name: booking.tenant_name,
+            timestamp: new Date().toISOString(),
+            note: `ยืนยันสนใจเช่าแผง กรุณายื่นคำร้องขอเช่าภายใน 7 วัน (สิ้นสุด ${booking.application_deadline.slice(0, 10)} 23:59 น.)`
+          })
         } else {
-          booking.status = 'cancelled'
+          booking.status = 'not_interested'
+          booking.holding_stall = false
+          booking.not_interested_reason = body.reason || 'ทำเลไม่เหมาะกับประเภทสินค้า'
+          booking.timeline.push({
+            action: 'แจ้งไม่สนใจเช่า (สละสิทธิ์)',
+            actor_role: 'tenant',
+            actor_name: booking.tenant_name,
+            timestamp: new Date().toISOString(),
+            note: `เหตุผล: ${booking.not_interested_reason} ปล่อยสิทธิ์ให้คิวถัดไป`
+          })
+          shiftQueueForStall(booking.stall_number)
         }
       }
       return { status: true, code: 200, message: 'บันทึกการตัดสินใจเรียบร้อย', data: booking }
     }
 
-    // 4. /bookings/waiting-queue/:stallIdent
-    if (parts.length === 3 && parts[1] === 'waiting-queue') {
+    // 5. POST /bookings/:id/officer-record-proxy (Officer record decision on behalf of tenant)
+    if (parts.length === 3 && parts[2] === 'officer-record-proxy' && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        booking.proxy_recorded_by = body.officer_name || 'เจ้าหน้าที่ธุรการตลาด'
+        booking.proxy_channel = body.channel || 'phone'
+        booking.timeline = booking.timeline || []
+
+        const channelLabel = body.channel === 'phone' ? 'ทางโทรศัพท์' : body.channel === 'onsite' ? 'แจ้ง ณ จุดบริการหน้างาน' : 'ช่องทางอื่น'
+
+        if (body.decision === 'interested') {
+          booking.status = 'interested'
+          const appDate = new Date(Date.now() + 7 * 86400000)
+          booking.application_deadline = `${appDate.toISOString().slice(0, 10)}T23:59:59`
+          booking.timeline.push({
+            action: `จนท. บันทึกผลแทนผู้เช่า (${channelLabel}): สนใจเช่า`,
+            actor_role: 'officer',
+            actor_name: booking.proxy_recorded_by,
+            timestamp: new Date().toISOString(),
+            note: `บันทึกแทนผู้เช่า ยืนยันสนใจเช่าแผง ${body.notes ? '(' + body.notes + ')' : ''}`
+          })
+        } else {
+          booking.status = 'not_interested'
+          booking.holding_stall = false
+          booking.not_interested_reason = body.reason || 'ผู้เช่าแจ้งไม่ประสงค์เช่า'
+          booking.timeline.push({
+            action: `จนท. บันทึกผลแทนผู้เช่า (${channelLabel}): ไม่สนใจ`,
+            actor_role: 'officer',
+            actor_name: booking.proxy_recorded_by,
+            timestamp: new Date().toISOString(),
+            note: `เหตุผล: ${booking.not_interested_reason}. ปล่อยสิทธิ์ให้คิวถัดไป`
+          })
+          shiftQueueForStall(booking.stall_number)
+        }
+      }
+      return { status: true, code: 200, message: 'บันทึกผลแทนผู้เช่าเรียบร้อย', data: booking }
+    }
+
+    // 6. POST /bookings/:id/select-slot (Tenant reaches queue #1 or changes slot)
+    if (parts.length === 3 && parts[2] === 'select-slot' && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        booking.visit_date = body.visit_date || new Date().toISOString().slice(0, 10)
+        booking.visit_time_slot = body.visit_time_slot || '10:00 - 11:30'
+        booking.status = 'pending_approval'
+        booking.holding_stall = true
+        delete booking.slot_selection_deadline
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'เลือกวันและเวลานัดชมแผง',
+          actor_role: 'tenant',
+          actor_name: booking.tenant_name,
+          timestamp: new Date().toISOString(),
+          note: `นัดหมายวันที่ ${booking.visit_date} เวลา ${booking.visit_time_slot} (รอ จนท. อนุมัติ)`
+        })
+      }
+      return { status: true, code: 200, message: 'บันทึกวันนัดหมายเรียบร้อย รอเจ้าหน้าที่อนุมัติ', data: booking }
+    }
+
+    // 7. POST /bookings/:id/cancel (Cancel booking)
+    if (parts.length === 3 && parts[2] === 'cancel' && method === 'POST') {
+      const bId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const booking = BOOKINGS_DATA.find(b => b.id === bId)
+      if (booking) {
+        const wasHolding = booking.holding_stall
+        booking.status = 'cancelled'
+        booking.holding_stall = false
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'ยกเลิกการจอง',
+          actor_role: body.by_officer ? 'officer' : 'tenant',
+          actor_name: body.by_officer ? 'เจ้าหน้าที่ตลาด' : booking.tenant_name,
+          timestamp: new Date().toISOString(),
+          note: body.reason || 'ยกเลิกคำขอจอง'
+        })
+        if (wasHolding) {
+          shiftQueueForStall(booking.stall_number)
+        }
+      }
+      return { status: true, code: 200, message: 'ยกเลิกรายการเรียบร้อย', data: booking }
+    }
+
+    // Clear all bookings & reset stalls to available
+    if (parts.length === 2 && parts[1] === 'clear') {
+      bookingsExplicitlyCleared = true
+      BOOKINGS_DATA.length = 0
+      APPLICATIONS_DATA.length = 0
+      CONTRACTS_DATA.length = 0
+      STALLS_DATA.forEach(s => { s.status = 'available' })
+      return { status: true, code: 200, message: 'ล้างข้อมูลการจองและคำร้องทั้งหมดเรียบร้อย' }
+    }
+
+    // 8. GET /bookings/stall-queue/:stallIdent
+    if (parts.length === 3 && parts[1] === 'stall-queue') {
       const stallIdent = decodeURIComponent(parts[2])
-      const queues = BOOKINGS_DATA.filter(b => b.stall_number === stallIdent && (b.status === 'pending_approval' || b.status === 'pending'))
+      const activeHolder = BOOKINGS_DATA.find(b => b.stall_number === stallIdent && b.holding_stall && !['rejected', 'not_interested', 'cancelled'].includes(b.status))
+      const waitingQueues = BOOKINGS_DATA.filter(b => b.stall_number === stallIdent && b.status === 'waiting_queue')
+        .sort((a, b) => (a.queue_position || 99) - (b.queue_position || 99))
+
       return {
-        stall_code: stallIdent,
-        total_in_queue: queues.length,
-        current_queue: queues.length > 0 ? 1 : 0,
-        estimated_wait_days: queues.length * 3,
-        can_queue: true
+        stall_number: stallIdent,
+        current_holder: activeHolder ? {
+          booking_number: activeHolder.booking_number,
+          status: activeHolder.status,
+          deadline: activeHolder.decision_deadline || activeHolder.application_deadline || activeHolder.visit_date,
+          masked_name: activeHolder.tenant_name.slice(0, 2) + '*** ' + (activeHolder.tenant_name.split(' ')[1]?.slice(0, 2) || '') + '***',
+          tenant_name: activeHolder.tenant_name,
+          tenant_phone: activeHolder.tenant_phone
+        } : null,
+        total_waiting: waitingQueues.length,
+        queues: waitingQueues.map(q => ({
+          id: q.id,
+          booking_number: q.booking_number,
+          queue_position: q.queue_position,
+          waiting_since: q.waiting_since || q.created_at,
+          masked_name: q.tenant_name.slice(0, 2) + '*** ' + (q.tenant_name.split(' ')[1]?.slice(0, 2) || '') + '***',
+          tenant_name: q.tenant_name,
+          tenant_phone: q.tenant_phone,
+          intended_business: q.intended_business
+        }))
       }
     }
 
-    // 5. POST /bookings (Create new booking)
+    // 9. POST /bookings (Create new booking or queue)
     if (parts.length === 1 && method === 'POST') {
       const body = await readBody(event).catch(() => ({}))
       const stallId = Number(body.stall_id) || 1
       const stall = STALLS_DATA.find(s => s.id === stallId) || STALLS_DATA[0]
       const randomNum = Math.floor(1000 + Math.random() * 9000)
       const bookingNumber = `BK-${new Date().getFullYear()}-${randomNum}`
+      const isQueue = Boolean(body.is_queue)
+
+      // Count existing queues
+      const stallNumber = body.stall_number || stall?.stall_number || `A-${stallId}`
+      const existingQueues = BOOKINGS_DATA.filter(b => b.stall_number === stallNumber && b.status === 'waiting_queue')
+      const queuePos = existingQueues.length + 1
 
       const newBooking = {
         id: Date.now(),
         booking_number: bookingNumber,
         stall_id: stall?.id || stallId,
-        stall_number: stall?.stall_number || `A-${stallId}`,
+        stall_number: stallNumber,
         stall_monthly_rate: stall?.monthly_rate || 2500,
-        market_name: stall?.market_name || 'ตลาดนัดจตุจักร',
-        tenant_name: body.tenant_name || 'ผู้ขอจองเข้าชม',
-        tenant_phone: body.tenant_phone || '081-000-0000',
-        tenant_email: body.tenant_email || '',
-        tenant_id_card: body.tenant_id_card || '',
-        visit_date: body.visit_date || new Date().toISOString().slice(0, 10),
-        visit_time_slot: body.visit_time_slot || '10:00 - 12:00',
+        stall_category: stall?.category_name || 'ทั่วไป',
+        stall_zone_name: stall?.zone || 'โซนทั่วไป',
+        market_name: body.market_name || stall?.market_name || 'ตลาดนัดจตุจักร',
+        market_district: stall?.district || 'กรุงเทพมหานคร',
+        meeting_point: 'หน้ากองอำนวยการตลาด เสาธง 1',
+        tenant_name: body.tenant_name || 'คุณสมศักดิ์ ค้าขายดี',
+        tenant_phone: body.tenant_phone || '081-999-8877',
+        tenant_email: body.tenant_email || 'somsak@example.com',
+        tenant_id_card: body.tenant_id_card || '1-1004-88991-23-4',
         intended_business: body.intended_business || 'จำหน่ายสินค้าทั่วไป',
-        status: 'pending_approval',
+        visit_date: isQueue ? undefined : (body.visit_date || new Date().toISOString().slice(0, 10)),
+        visit_time_slot: isQueue ? undefined : (body.visit_time_slot || '10:00 - 11:30'),
+        status: isQueue ? 'waiting_queue' : 'pending_approval',
+        holding_stall: !isQueue,
+        queue_position: isQueue ? queuePos : undefined,
+        total_in_queue: isQueue ? queuePos : undefined,
+        waiting_since: isQueue ? new Date().toISOString() : undefined,
+        timeline: [
+          {
+            action: isQueue ? `เข้าต่อคิวแผงติดจอง (คิวที่ ${queuePos})` : 'ยื่นขอนัดดูแผง (รอเจ้าหน้าที่อนุมัติ)',
+            actor_role: 'tenant',
+            actor_name: body.tenant_name || 'คุณสมศักดิ์ ค้าขายดี',
+            timestamp: new Date().toISOString(),
+            note: isQueue ? `ต่อคิวลำดับที่ ${queuePos}` : `เลือกวันนัด ${body.visit_date} เวลา ${body.visit_time_slot} (รอเจ้าหน้าที่อนุมัติ)`
+          }
+        ],
         created_at: new Date().toISOString()
       }
 
-      // Mark stall status as reserved
-      if (stall) {
+      if (!isQueue && stall) {
         stall.status = 'reserved'
       }
 
-      // Store in memory so it appears immediately in GET /bookings
       BOOKINGS_DATA.unshift(newBooking)
 
       return {
@@ -693,7 +1131,12 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 6. GET /bookings
+    // 10. GET /bookings
+    if (!bookingsExplicitlyCleared && BOOKINGS_DATA.length === 0) {
+      INITIAL_BOOKINGS.forEach(ib => {
+        BOOKINGS_DATA.push({ ...ib })
+      })
+    }
     return BOOKINGS_DATA
   }
 
@@ -742,30 +1185,104 @@ export default defineEventHandler(async (event) => {
 
   // --- /applications ---
   if (cleanSlug.startsWith('applications')) {
+    const parts = cleanSlug.split('/').filter(Boolean)
+
+    // POST /applications/:id/action (Officer / Director approval workflow)
+    if (parts.length === 3 && parts[2] === 'action' && method === 'POST') {
+      const appId = Number(parts[1])
+      const body = await readBody(event).catch(() => ({}))
+      const app = APPLICATIONS_DATA.find(a => a.id === appId)
+      if (app) {
+        if (body.action === 'reject') {
+          app.status = 'rejected'
+          app.officer_comment = body.comment || 'ไม่อนุมัติคำร้อง'
+        } else if (body.action === 'approve') {
+          if (app.status === 'pending_officer') {
+            app.status = 'pending_market_director'
+            app.officer_comment = body.comment || 'เจ้าหน้าที่ตรวจสอบเอกสารครบถ้วน ส่งต่อ ผอ.ตลาด'
+          } else if (app.status === 'pending_market_director') {
+            app.status = 'pending_bureau_director'
+            app.market_director_comment = body.comment || 'ผอ.ตลาด พิจารณาอนุมัติคำร้อง'
+          } else if (app.status === 'pending_bureau_director') {
+            app.status = 'approved'
+            app.bureau_director_comment = body.comment || 'ผอ.สำนักตลาด พิจารณาอนุมัติคำร้องเรียบร้อย'
+          }
+        }
+        return { status: true, code: 200, message: 'บันทึกผลการพิจารณาเรียบร้อย', data: app }
+      }
+      return { status: false, code: 404, message: 'ไม่พบคำร้อง' }
+    }
+
+    // Clear all applications
+    if (cleanSlug === 'applications/clear' || (cleanSlug === 'applications' && method === 'DELETE')) {
+      APPLICATIONS_DATA.length = 0
+      return { status: true, code: 200, message: 'ล้างข้อมูลคำร้องทั้งหมดเรียบร้อย' }
+    }
+
     if (method === 'POST') {
       const body = await readBody(event).catch(() => ({}))
       const randomNum = Math.floor(1000 + Math.random() * 9000)
       const appNumber = `APP-${new Date().getFullYear()}-${randomNum}`
       const stallId = Number(body.stall_id) || 1
       const stall = STALLS_DATA.find(s => s.id === stallId) || STALLS_DATA[0]
+      const stallNumber = body.stall_number || stall?.stall_number || `A-${stallId}`
+      const marketName = body.market_name || stall?.market_name || 'ตลาดนัดจตุจักร'
+      const applicantName = body.applicant_name || body.tenant_name || 'ผู้ยื่นคำร้อง'
+      const applicantPhone = body.applicant_phone || body.tenant_phone || ''
+      const applicantIdCard = body.applicant_id_card || body.id_card_number || body.tenant_id_card || ''
+      const shopName = body.shop_name || body.intended_product_type || body.business_name || 'ร้านค้า'
+      const productType = body.product_type || body.business_type || 'ทั่วไป'
+      const requestedStartDate = body.requested_start_date || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 
       const newApp = {
         id: Date.now(),
         application_number: appNumber,
-        tenant_name: body.applicant_name || body.tenant_name || 'ผู้ยื่นคำร้อง',
-        tenant_phone: body.applicant_phone || body.tenant_phone || '',
-        tenant_id_card: body.id_card_number || body.tenant_id_card || '',
+        tenant_name: applicantName,
+        applicant_name: applicantName,
+        tenant_phone: applicantPhone,
+        applicant_phone: applicantPhone,
+        tenant_id_card: applicantIdCard,
+        applicant_id_card: applicantIdCard,
+        applicant_address: body.applicant_address || '',
         stall_id: stallId,
-        stall_number: stall?.stall_number || `A-${stallId}`,
-        market_name: stall?.market_name || 'ตลาดนัดจตุจักร',
-        business_name: body.intended_product_type || body.business_name || 'ร้านค้า',
-        business_type: body.business_type || 'ทั่วไป',
-        stage: 'submitted',
-        status: 'pending',
+        stall_number: stallNumber,
+        market_name: marketName,
+        business_name: shopName,
+        shop_name: shopName,
+        business_type: productType,
+        product_type: productType,
+        requested_start_date: requestedStartDate,
+        requested_period_months: body.requested_period_months || 12,
+        stall_monthly_rate: stall?.monthly_rate || stall?.stall_monthly_rate || 2500,
+        stage: 'officer_review',
+        status: 'pending_officer',
         created_at: new Date().toISOString()
       }
 
       APPLICATIONS_DATA.unshift(newApp)
+
+      // Automatically link and update Booking status to 'lease_applied'
+      const bookingId = Number(body.booking_id)
+      const booking = BOOKINGS_DATA.find(b =>
+        (bookingId && b.id === bookingId) ||
+        (body.stall_number && b.stall_number === body.stall_number) ||
+        b.stall_id === stallId ||
+        b.stall_number === stall?.stall_number
+      )
+      if (booking) {
+        booking.status = 'lease_applied'
+        booking.application_number = appNumber
+        booking.application_id = newApp.id
+        booking.timeline = booking.timeline || []
+        booking.timeline.push({
+          action: 'ยื่นคำร้องขอเช่าแผงค้า',
+          actor_role: 'tenant',
+          actor_name: applicantName,
+          timestamp: new Date().toISOString(),
+          note: `ยื่นคำร้องขอเช่าเลขที่ ${appNumber} เรียบร้อยแล้ว อยู่ระหว่างเจ้าหน้าที่ตลาดและ ผอ. ตรวจสอบ`
+        })
+      }
+
       return { status: true, code: 200, data: newApp, ...newApp }
     }
     return APPLICATIONS_DATA

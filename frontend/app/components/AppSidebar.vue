@@ -24,7 +24,7 @@
         to="/"
         class="nav-icon-link"
         :class="{ active: route.path === '/' || route.path.startsWith('/stalls') }"
-        :title="isExpanded ? '' : (user?.role === 'tenant' ? 'แผนที่และจองแผงเช่า' : 'หน้าหลัก (12 ตลาด กทม.)')"
+        :title="isExpanded ? '' : 'หน้าแรก'"
       >
         <span class="nav-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -32,9 +32,7 @@
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
         </span>
-        <span v-if="isExpanded" class="nav-label">
-          {{ user?.role === 'tenant' ? 'แผนที่แผงเช่า (จองแผง)' : 'หน้าหลัก (12 ตลาด)' }}
-        </span>
+        <span v-if="isExpanded" class="nav-label">หน้าแรก</span>
       </NuxtLink>
 
       <!-- 2. Bookings -->
@@ -42,7 +40,7 @@
         to="/bookings"
         class="nav-icon-link"
         :class="{ active: route.path.startsWith('/bookings') }"
-        :title="isExpanded ? '' : (user?.role === 'tenant' ? 'การจองของฉัน' : 'การจองและอนุมัติดูแผง')"
+        :title="isExpanded ? '' : 'การจอง'"
       >
         <span class="nav-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -50,9 +48,7 @@
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
         </span>
-        <span v-if="isExpanded" class="nav-label">
-          {{ user?.role === 'tenant' ? 'การจองของฉัน' : 'การจองดูแผง' }}
-        </span>
+        <span v-if="isExpanded" class="nav-label">การจอง</span>
       </NuxtLink>
 
       <!-- 3. Applications -->
@@ -60,7 +56,7 @@
         to="/applications"
         class="nav-icon-link"
         :class="{ active: route.path.startsWith('/applications') }"
-        :title="isExpanded ? '' : (user?.role === 'tenant' ? 'คำร้องขอเช่าแผงของฉัน' : 'คำร้องขอเช่าแผง')"
+        :title="isExpanded ? '' : 'คำร้อง'"
       >
         <span class="nav-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -71,9 +67,7 @@
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
         </span>
-        <span v-if="isExpanded" class="nav-label">
-          {{ user?.role === 'tenant' ? 'คำร้องขอเช่าของฉัน' : 'คำร้องขอเช่าแผง' }}
-        </span>
+        <span v-if="isExpanded" class="nav-label">คำร้อง</span>
       </NuxtLink>
 
       <!-- 4. Contracts -->
@@ -132,8 +126,14 @@
 <script setup lang="ts">
 const route = useRoute()
 const { user, logout } = useAuth()
-const { isExpanded } = useSidebar()
+const { isExpanded, collapse } = useSidebar()
 const { showConfirm } = useAppAlert()
+
+watch(() => route.fullPath, () => {
+  if (process.client && window.innerWidth <= 768) {
+    collapse()
+  }
+})
 
 const handleLogout = async () => {
   const confirmed = await showConfirm('คุณต้องการออกจากระบบหรือไม่?', 'ยืนยันออกจากระบบ')

@@ -2,11 +2,6 @@
   <div class="bma-gis-wrapper card" style="padding: 0; position: relative; overflow: hidden; border-radius: var(--radius-xl);">
     <!-- Map Header Overlay Controls -->
     <div class="bma-gis-overlay">
-      <div class="bma-gis-badge">
-        <span class="badge-dot" style="background-color: var(--primary);"></span>
-        <span>แผนที่ GIS 12 ตลาดในสังกัดกรุงเทพมหานคร</span>
-      </div>
-
       <div class="bma-gis-controls">
         <button class="gis-ctrl-btn" @click="recenterMap" title="กลับสู่ศูนย์กลาง กทม." style="display: inline-flex; align-items: center; gap: 5px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -14,19 +9,43 @@
           </svg>
           <span>ศูนย์กลาง กทม.</span>
         </button>
-        <button class="gis-ctrl-btn" @click="toggleLayer" style="display: inline-flex; align-items: center; gap: 5px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-          <span>{{ isSatellite ? 'โหมดแผนที่ถนน' : 'โหมดดาวเทียม' }}</span>
-        </button>
+
+        <!-- Segmented 2-Mode Switcher: แผนที่ vs ดาวเทียม -->
+        <div class="gis-mode-segmented">
+          <button
+            type="button"
+            class="gis-mode-tab"
+            :class="{ active: currentMode === 'street' }"
+            @click="setMapMode('street')"
+            title="มุมมองแผนที่ถนน (Street Map)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>แผนที่</span>
+          </button>
+          <button
+            type="button"
+            class="gis-mode-tab"
+            :class="{ active: currentMode === 'satellite' }"
+            @click="setMapMode('satellite')"
+            title="มุมมองภาพถ่ายดาวเทียม (Satellite Imagery)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span>ดาวเทียม</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Leaflet Map Container -->
-    <div id="bma-markets-map" style="height: 520px; width: 100%; z-index: 1;"></div>
+    <!-- MapLibre Map Canvas Container -->
+    <div id="bma-markets-map" class="maplibre-container" style="width: 100%; position: relative;"></div>
 
     <!-- Map Legend Bar -->
     <div class="bma-gis-legend">
@@ -55,31 +74,102 @@ const emit = defineEmits<{
   (e: 'selectMarket', market: any): void
 }>()
 
-let L: any = null
+let maplibregl: any = null
 let map: any = null
-let streetLayer: any = null
-let satelliteLayer: any = null
-let markersGroup: any = null
-const isSatellite = ref(false)
+const markers: any[] = []
+const currentMode = ref<'street' | 'satellite'>('street')
 
-const bmaCenter = [13.7563, 100.5250] // Central Bangkok
+// Central Bangkok coordinates in [lng, lat] for MapLibre
+const bmaCenter: [number, number] = [100.5250, 13.7563]
+
+// MapLibre Raster Tile Styles
+const streetStyle: any = {
+  version: 8,
+  sources: {
+    'osm-street': {
+      type: 'raster',
+      tiles: [
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+      ],
+      tileSize: 256,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxzoom: 19
+    }
+  },
+  layers: [
+    {
+      id: 'osm-street-layer',
+      type: 'raster',
+      source: 'osm-street',
+      minzoom: 0,
+      maxzoom: 19
+    }
+  ]
+}
+
+const satelliteStyle: any = {
+  version: 8,
+  sources: {
+    'esri-satellite': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    },
+    'esri-labels': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      attribution: 'Tiles &copy; Esri'
+    }
+  },
+  layers: [
+    {
+      id: 'esri-satellite-layer',
+      type: 'raster',
+      source: 'esri-satellite',
+      minzoom: 0,
+      maxzoom: 20
+    },
+    {
+      id: 'esri-labels-layer',
+      type: 'raster',
+      source: 'esri-labels',
+      minzoom: 0,
+      maxzoom: 20
+    }
+  ]
+}
 
 onMounted(async () => {
   if (process.client) {
-    L = await import('leaflet')
+    (window as any).$navigateToMarket = (marketId: number | string, action: 'book' | 'stalls') => {
+      if (action === 'book') {
+        navigateTo(`/stalls/book?market=${marketId}`)
+      } else {
+        navigateTo(`/stalls?market=${marketId}`)
+      }
+    }
+
+    const ml = await import('maplibre-gl')
+    maplibregl = ml
     initMap()
-    renderMarkers()
   }
 })
 
 onBeforeUnmount(() => {
   if (map) {
     map.remove()
+    map = null
   }
 })
 
 watch(() => props.markets, () => {
-  if (map && L) {
+  if (map && maplibregl) {
     renderMarkers()
   }
 }, { deep: true })
@@ -87,86 +177,88 @@ watch(() => props.markets, () => {
 watch(() => props.selectedMarketId, (newId) => {
   if (map && newId && props.markets) {
     const target = props.markets.find(m => m.id === newId)
-    if (target) {
-      map.flyTo([target.lat, target.lng], 14, { duration: 1.2 })
+    if (target && target.lat && target.lng) {
+      map.flyTo({
+        center: [target.lng, target.lat],
+        zoom: 15,
+        essential: true,
+        duration: 1500
+      })
     }
   }
 })
 
 const initMap = () => {
   const container = document.getElementById('bma-markets-map')
-  if (!container || map) return
+  if (!container || map || !maplibregl) return
 
-  streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 19
-  })
-
-  satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '&copy; Esri World Imagery',
-    maxZoom: 19
-  })
-
-  map = L.map('bma-markets-map', {
+  map = new maplibregl.Map({
+    container: 'bma-markets-map',
+    style: streetStyle,
     center: bmaCenter,
     zoom: 11,
-    minZoom: 10,
-    maxZoom: 18,
-    layers: [streetLayer]
+    minZoom: 9,
+    maxZoom: 19
+  })
+
+  // Add standard navigation controls (zoom, pitch, compass)
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+
+  map.on('load', () => {
+    renderMarkers()
   })
 }
 
-const toggleLayer = () => {
-  if (!map) return
-  isSatellite.value = !isSatellite.value
-  if (isSatellite.value) {
-    map.removeLayer(streetLayer)
-    map.addLayer(satelliteLayer)
-  } else {
-    map.removeLayer(satelliteLayer)
-    map.addLayer(streetLayer)
-  }
+const setMapMode = (mode: 'street' | 'satellite') => {
+  if (currentMode.value === mode || !map) return
+  currentMode.value = mode
+  map.setStyle(mode === 'satellite' ? satelliteStyle : streetStyle)
+  map.once('style.load', () => {
+    renderMarkers()
+  })
 }
 
 const recenterMap = () => {
   if (map) {
-    map.flyTo(bmaCenter, 11, { duration: 1 })
+    map.flyTo({
+      center: bmaCenter,
+      zoom: 11,
+      pitch: 0,
+      bearing: 0,
+      essential: true,
+      duration: 1200
+    })
   }
 }
 
 const renderMarkers = () => {
-  if (!map || !L) return
+  if (!map || !maplibregl || !props.markets) return
 
-  if (markersGroup) {
-    map.removeLayer(markersGroup)
-  }
-
-  markersGroup = L.featureGroup()
+  // Clear existing markers
+  markers.forEach(m => m.remove())
+  markers.length = 0
 
   props.markets.forEach((m) => {
+    if (!m.lat || !m.lng) return
     const isAvail = m.status === 'open' && m.available_stalls > 0
     const pinColor = isAvail ? '#10b981' : '#ef4444'
-    const pinBg = isAvail ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'
+    const pinBg = isAvail ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'
 
-    const customIcon = L.divIcon({
-      className: 'custom-bma-marker',
-      html: `
-        <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); cursor: pointer;">
-          <div style="background: ${pinColor}; color: #ffffff; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Bai Jamjuree', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.18); white-space: nowrap; border: 2px solid #ffffff; display: flex; align-items: center; gap: 4px;">
-            <span>${m.name}</span>
-            <span style="background: rgba(255,255,255,0.25); padding: 1px 6px; border-radius: 10px; font-size: 10px;">${isAvail ? `ว่าง ${m.available_stalls}` : 'เต็ม'}</span>
-          </div>
-          <div style="width: 14px; height: 14px; background: ${pinColor}; transform: rotate(45deg); margin-top: -6px; border: 2px solid #ffffff; border-top: none; border-left: none;"></div>
-          <div style="width: 24px; height: 8px; border-radius: 50%; background: ${pinBg}; filter: blur(2px); margin-top: -2px;"></div>
+    const el = document.createElement('div')
+    el.className = 'custom-maplibre-marker'
+    el.style.cursor = 'pointer'
+    el.innerHTML = `
+      <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
+        <div style="background: ${pinColor}; color: #ffffff; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Bai Jamjuree', sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,0.25); white-space: nowrap; border: 2px solid #ffffff; display: flex; align-items: center; gap: 5px; transition: transform 0.2s ease;">
+          <span>${m.name}</span>
+          <span style="background: rgba(255,255,255,0.25); padding: 1px 6px; border-radius: 10px; font-size: 10px;">${isAvail ? `ว่าง ${m.available_stalls}` : 'เต็ม'}</span>
         </div>
-      `,
-      iconSize: [0, 0]
-    })
+        <div style="width: 14px; height: 14px; background: ${pinColor}; transform: rotate(45deg); margin-top: -6px; border: 2px solid #ffffff; border-top: none; border-left: none;"></div>
+        <div style="width: 24px; height: 8px; border-radius: 50%; background: ${pinBg}; filter: blur(2px); margin-top: -2px;"></div>
+      </div>
+    `
 
-    const marker = L.marker([m.lat, m.lng], { icon: customIcon })
-
-    // Popup content
-    const popupContent = `
+    const popupHtml = `
       <div style="font-family: 'Bai Jamjuree', sans-serif; width: 240px; padding: 4px;">
         <div style="border-radius: 8px; overflow: hidden; height: 110px; margin-bottom: 8px; position: relative;">
           <img src="${m.image_url}" style="width: 100%; height: 100%; object-fit: cover;" alt="${m.name}" />
@@ -177,29 +269,37 @@ const renderMarkers = () => {
         <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">${m.name}</strong>
         <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">เขต ${m.district}</div>
         <div style="font-size: 11px; color: #334155; margin-bottom: 10px;">
-          ค่าเช่าเริ่มต้น: <strong style="color: #059669;">฿${m.starting_price_daily}/วัน</strong> (฿${m.starting_price_monthly.toLocaleString()}/ด.)
+          ค่าเช่าเริ่มต้น: <strong style="color: #059669;">฿${m.starting_price_daily}/วัน</strong> (฿${Number(m.starting_price_monthly).toLocaleString()}/ด.)
         </div>
         <div style="display: flex; gap: 6px;">
-          <a href="/stalls/book?market=${m.id}" style="flex: 1; text-align: center; background: #4361ee; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">
-            จองแผง ➔
-          </a>
-          <a href="/stalls?market=${m.id}" style="text-align: center; background: #f1f5f9; color: #334155; text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+          <button type="button" onclick="window.$navigateToMarket('${m.id}', 'book')" style="flex: 1; text-align: center; background: #4361ee; color: #fff; border: none; padding: 7px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
+            จองแผง &rarr;
+          </button>
+          <button type="button" onclick="window.$navigateToMarket('${m.id}', 'stalls')" style="text-align: center; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; padding: 7px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
             ผังตลาด
-          </a>
+          </button>
         </div>
       </div>
     `
 
-    marker.bindPopup(popupContent, { maxWidth: 280, className: 'bma-market-popup' })
+    const popup = new maplibregl.Popup({
+      offset: 15,
+      closeButton: true,
+      maxWidth: '280px',
+      className: 'bma-maplibre-popup'
+    }).setHTML(popupHtml)
 
-    marker.on('click', () => {
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat([m.lng, m.lat])
+      .setPopup(popup)
+      .addTo(map)
+
+    el.addEventListener('click', () => {
       emit('selectMarket', m)
     })
 
-    markersGroup.addLayer(marker)
+    markers.push(marker)
   })
-
-  markersGroup.addTo(map)
 }
 </script>
 
@@ -216,31 +316,16 @@ const renderMarkers = () => {
   right: 14px;
   z-index: 10;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   pointer-events: none;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.bma-gis-badge {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #0f172a;
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-}
-
 .bma-gis-controls {
   display: flex;
+  align-items: center;
   gap: 8px;
   pointer-events: auto;
 }
@@ -250,7 +335,7 @@ const renderMarkers = () => {
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   color: #334155;
-  padding: 8px 14px;
+  padding: 7px 14px;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
   font-weight: 600;
@@ -265,6 +350,43 @@ const renderMarkers = () => {
   border-color: var(--primary);
 }
 
+/* 2-Mode Segmented Control */
+.gis-mode-segmented {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+  gap: 2px;
+}
+
+.gis-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gis-mode-tab:hover {
+  color: #0f172a;
+}
+
+.gis-mode-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.35);
+}
+
 .bma-gis-legend {
   position: absolute;
   bottom: 16px;
@@ -276,5 +398,52 @@ const renderMarkers = () => {
   border-radius: var(--radius-md);
   padding: 10px 14px;
   box-shadow: var(--shadow-md);
+}
+
+.maplibre-container {
+  height: 540px;
+}
+
+:deep(.maplibregl-popup-content) {
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border: 1px solid #e2e8f0;
+}
+
+:deep(.maplibregl-popup-close-button) {
+  font-size: 16px;
+  color: #64748b;
+  padding: 4px 8px;
+}
+
+@media (max-width: 640px) {
+  .bma-gis-overlay {
+    position: static;
+    padding: 10px 12px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bma-gis-controls {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .gis-ctrl-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+  .gis-mode-tab {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  .maplibre-container {
+    height: 400px !important;
+  }
+  .bma-gis-legend {
+    position: static;
+    margin: 10px 12px;
+    font-size: 0.72rem;
+  }
 }
 </style>

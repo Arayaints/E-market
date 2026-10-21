@@ -14,17 +14,6 @@
           <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
-
-      <!-- Subtitle & BMA Emblem Tag -->
-      <div class="navbar-brand-tag">
-        <span class="bma-pill-badge">
-          <span class="bma-dot"></span>
-          <span>สำนักงานตลาด กทม.</span>
-        </span>
-        <div v-if="subtitle" class="navbar-subtitle-text">
-          {{ subtitle }}
-        </div>
-      </div>
     </div>
 
     <div class="navbar-right">
@@ -37,34 +26,6 @@
         <span class="notification-badge-dot"></span>
       </button>
 
-      <!-- Quick Role Switcher Pill -->
-      <div class="role-switcher-container">
-        <button
-          type="button"
-          class="role-switch-btn"
-          :class="{ active: user?.role === 'tenant' }"
-          @click.stop="switchRole('tenant')"
-          title="สลับเป็นบทบาทผู้เช่า (จองแผง, ติดตามคำร้อง, ดูแผงของตนเอง)"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>ผู้เช่า (Tenant)</span>
-        </button>
-        <button
-          type="button"
-          class="role-switch-btn"
-          :class="{ active: user?.role !== 'tenant' }"
-          @click.stop="switchRole('admin')"
-          title="สลับเป็นบทบาทเจ้าหน้าที่/แอดมิน (อนุมัติการจอง, บริหารสัญญาและคำร้อง)"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>เจ้าหน้าที่ (Admin)</span>
-        </button>
-      </div>
 
       <!-- User Profile Badge -->
       <div class="user-profile-badge" @click="toggleMenu" style="position: relative; cursor: pointer;">
@@ -74,7 +35,7 @@
         <div class="user-info-text">
           <span class="user-name-text">{{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}</span>
           <span class="user-role-text" :style="user?.role === 'tenant' ? 'color: #059669; font-weight: 700;' : 'color: #2563eb; font-weight: 700;'">
-            {{ user?.role === 'tenant' ? '👤 ผู้เช่าแผงค้า' : '🛡️ ผู้ดูแลระบบ (Admin)' }}
+            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'ผู้ดูแลระบบ (Admin)' }}
           </span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="user-dropdown-arrow" :class="{ open: showDropdown }">
@@ -121,7 +82,7 @@ const props = defineProps<{
   subtitle?: string
 }>()
 
-const { user, logout } = useAuth()
+const { user, logout, switchRole: authSwitchRole } = useAuth()
 const { isExpanded, toggle: toggleSidebar } = useSidebar()
 const showDropdown = ref(false)
 
@@ -130,25 +91,8 @@ const toggleMenu = () => {
 }
 
 const switchRole = (newRole: 'tenant' | 'admin') => {
-  if (newRole === 'tenant') {
-    user.value = {
-      id: 3,
-      username: 'tenant',
-      email: 'somchai@tenant.com',
-      full_name: 'สมชาย ใจดี (ผู้เช่าแผงค้า)',
-      role: 'tenant'
-    }
-  } else {
-    user.value = {
-      id: 1,
-      username: 'admin',
-      email: 'admin@emarket.com',
-      full_name: 'ผู้ดูแลระบบ (System Admin)',
-      role: 'admin'
-    }
-  }
-  if (process.client) {
-    localStorage.setItem('emarket_user', JSON.stringify(user.value))
+  if (authSwitchRole) {
+    authSwitchRole(newRole)
   }
 }
 
@@ -195,36 +139,6 @@ const handleLogout = async () => {
   font-weight: 500;
 }
 
-.role-switcher-container {
-  display: flex;
-  align-items: center;
-  background: #f1f5f9;
-  padding: 3px;
-  border-radius: 24px;
-  border: 1px solid #e2e8f0;
-}
-
-.role-switch-btn {
-  border: none;
-  background: transparent;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.role-switch-btn.active {
-  background: #ffffff;
-  color: #1e3a8a;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-}
 
 .user-dropdown-arrow {
   color: #94a3b8;

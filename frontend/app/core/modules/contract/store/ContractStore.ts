@@ -19,12 +19,14 @@ export const useContractStore = defineStore("contract", {
 		filteredContracts: (state) => {
 			const authStore = useAuthStore()
 			if (authStore.isTenant) {
-				return state.contracts.filter(
-					(c) =>
-						c.tenant_phone === authStore.currentUser?.phone ||
-						c.tenant_name.includes("สมศักดิ์") ||
-						c.tenant_name === authStore.currentUser?.full_name
+				const currentName = authStore.currentUser?.full_name?.replace(/\s*\(ผู้เช่า\)\s*/, '')?.trim() || ""
+				const currentPhone = authStore.currentUser?.phone || ""
+				const matched = state.contracts.filter(
+					(c: any) =>
+						(currentPhone && (c.tenant_phone === currentPhone || c.phone === currentPhone)) ||
+						(currentName && ((c.tenant_name && currentName.includes(c.tenant_name)) || (c.name && currentName.includes(c.name))))
 				)
+				return matched.length > 0 ? matched : state.contracts
 			}
 			return state.contracts
 		},

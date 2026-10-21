@@ -7,6 +7,9 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   telemetry: false,
   ssr: false,
+  experimental: {
+    appManifest: false
+  },
   components: [
     { path: '~/components', pathPrefix: false },
     { path: '~/components/buttons', pathPrefix: false },
@@ -14,7 +17,7 @@ export default defineNuxtConfig({
     { path: '~/components/modals', pathPrefix: false },
     { path: '~/components/extras', pathPrefix: false },
   ],
-  css: ['leaflet/dist/leaflet.css', '~/assets/css/main.css'],
+  css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/css/main.css'],
   app: {
     head: {
       title: 'e-Market | ระบบจัดการแผงเช่าตลาดและสัญญาการเช่า',

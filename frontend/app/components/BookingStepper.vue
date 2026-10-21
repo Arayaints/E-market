@@ -10,7 +10,7 @@
       @click="onStepClick(1)"
     >
       <div class="stepper-circle">
-        <span v-if="currentStep > 1">✓</span>
+        <svg v-if="currentStep > 1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         <span v-else>01</span>
       </div>
       <div class="stepper-label">เลือกแผงเช่า</div>
@@ -29,7 +29,7 @@
       @click="onStepClick(2)"
     >
       <div class="stepper-circle">
-        <span v-if="currentStep > 2">✓</span>
+        <svg v-if="currentStep > 2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         <span v-else>02</span>
       </div>
       <div class="stepper-label">กรอกข้อมูล</div>
@@ -64,9 +64,6 @@ const emit = defineEmits<{
 }>()
 
 const onStepClick = (step: number) => {
-  // Only allow navigating backwards to completed steps
-  if (step < props.currentStep) {
-    emit('changeStep', step)
-  }
+  emit('changeStep', step)
 }
 </script>

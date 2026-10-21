@@ -5,7 +5,8 @@
       <div class="gis-controls-left">
         <span class="gis-badge">
           <span class="badge-dot" style="background-color: var(--primary);"></span>
-          GIS Map: ตลาดกลางชุมชน (Chatuchak Market Area)
+          <span>GIS Map: ผังแผงค้าในตลาด</span>
+          <span class="gis-engine-pill">MapLibre GL</span>
         </span>
 
         <!-- Zone Selector -->
@@ -24,24 +25,48 @@
       </div>
 
       <div class="gis-controls-right">
+        <!-- 2-Mode Segmented Control: แผนที่ vs ดาวเทียม -->
+        <div class="gis-mode-segmented">
+          <button
+            type="button"
+            class="gis-mode-tab"
+            :class="{ active: currentMode === 'street' }"
+            @click="setMapMode('street')"
+            title="มุมมองแผนที่ถนน (Street Map)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>แผนที่</span>
+          </button>
+          <button
+            type="button"
+            class="gis-mode-tab"
+            :class="{ active: currentMode === 'satellite' }"
+            @click="setMapMode('satellite')"
+            title="มุมมองภาพถ่ายดาวเทียม (Satellite Imagery)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span>ดาวเทียม</span>
+          </button>
+        </div>
+
         <button class="gis-btn" @click="recenterMap" title="กลับสู่จุดศูนย์กลางตลาด" style="display: inline-flex; align-items: center; gap: 6px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>
           </svg>
           <span>รีเซ็ตมุมมอง</span>
         </button>
-        <button class="gis-btn" @click="toggleMapLayer" style="display: inline-flex; align-items: center; gap: 6px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-          <span>{{ currentLayerName === 'street' ? 'โหมดแผนที่ดาวเทียม' : 'โหมดแผนที่ถนน' }}</span>
-        </button>
       </div>
     </div>
 
-    <!-- The Leaflet Map Canvas -->
+    <!-- The MapLibre Canvas Container -->
     <div id="gis-map-canvas" class="map-canvas"></div>
 
     <!-- Selected Stall Drawer / Floating Popup Card -->
@@ -56,21 +81,23 @@
               </span>
             </div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-              โซน {{ selectedStall.zone_code }}: {{ selectedStall.category }}
+              โซน {{ selectedStall.zone_code }}: {{ selectedStall.category || selectedStall.zone_name }}
             </div>
           </div>
-          <button class="btn-logout" @click="selectedStall = null" style="font-size: 1.1rem;">✕</button>
+          <button class="btn-logout" @click="selectedStall = null" aria-label="ปิด">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <div class="gis-card-body">
           <div class="gis-detail-grid">
             <div>
               <span class="gis-label">ขนาดพื้นที่:</span>
-              <strong>{{ selectedStall.size_width }} × {{ selectedStall.size_length }} ม. ({{ selectedStall.area_sqm }} ตร.ม.)</strong>
+              <strong>{{ selectedStall.size_width || 3 }} × {{ selectedStall.size_length || 4 }} ม. ({{ selectedStall.area_sqm || selectedStall.size_sqm }} ตร.ม.)</strong>
             </div>
             <div>
               <span class="gis-label">ค่าเช่ารายเดือน:</span>
-              <strong style="color: #34d399; font-size: 1.05rem;">฿{{ Number(selectedStall.monthly_rate).toLocaleString() }}</strong>
+              <strong style="color: #059669; font-size: 1.05rem;">฿{{ Number(selectedStall.monthly_rate).toLocaleString() }}</strong>
             </div>
             <div>
               <span class="gis-label">ค่าเช่ารายวัน:</span>
@@ -78,7 +105,7 @@
             </div>
             <div>
               <span class="gis-label">พิกัด GIS:</span>
-              <span style="font-family: monospace; font-size: 0.78rem;">{{ selectedStall.lat?.toFixed(5) }}, {{ selectedStall.lng?.toFixed(5) }}</span>
+              <span style="font-family: monospace; font-size: 0.78rem;">{{ Number(selectedStall.lat || 13.80).toFixed(5) }}, {{ Number(selectedStall.lng || 100.55).toFixed(5) }}</span>
             </div>
           </div>
 
@@ -130,19 +157,19 @@
       <div class="legend-title">สัญลักษณ์สถานะแผง (GIS Legend)</div>
       <div class="legend-items">
         <div class="legend-item">
-          <span class="legend-color" style="background-color: #10b981; border: 2px solid #059669;"></span>
+          <span class="legend-color" style="background-color: #10b981; border: 1px solid #059669;"></span>
           <span>ว่างพร้อมจอง (Available)</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background-color: #f59e0b; border: 2px solid #d97706;"></span>
+          <span class="legend-color" style="background-color: #f59e0b; border: 1px solid #d97706;"></span>
           <span>มีผู้เช่าแล้ว (Occupied)</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background-color: #8b5cf6; border: 2px solid #7c3aed;"></span>
+          <span class="legend-color" style="background-color: #8b5cf6; border: 1px solid #7c3aed;"></span>
           <span>ติดจอง/รออนุมัติ (Pending)</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background-color: #f43f5e; border: 2px solid #e11d48;"></span>
+          <span class="legend-color" style="background-color: #f43f5e; border: 1px solid #e11d48;"></span>
           <span>ปิดปรับปรุง (Maintenance)</span>
         </div>
       </div>
@@ -162,24 +189,81 @@ const emit = defineEmits<{
 
 const { get } = useApi()
 
-let L: any = null
+let maplibregl: any = null
 let map: any = null
-let geoJsonLayer: any = null
-let streetLayer: any = null
-let satelliteLayer: any = null
+let hoverPopup: any = null
 
 const selectedZoneId = ref('')
 const onlyAvailable = ref(false)
-const currentLayerName = ref<'street' | 'satellite'>('street')
+const currentMode = ref<'street' | 'satellite'>('street')
 const selectedStall = ref<any>(null)
 const geojsonData = ref<any>(null)
 
-const marketCenter = [13.7998, 100.5501] // Bangkok Chatuchak Area
+// Market Center: [lng, lat] for MapLibre
+const marketCenter: [number, number] = [100.5504, 13.8000]
+
+// Base Unified MapLibre Raster Style containing both Street & Satellite layers
+const mapLibreStyle: any = {
+  version: 8,
+  sources: {
+    'osm-street': {
+      type: 'raster',
+      tiles: [
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+      ],
+      tileSize: 256,
+      attribution: '&copy; OpenStreetMap contributors',
+      maxzoom: 19
+    },
+    'esri-satellite': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      attribution: 'Tiles &copy; Esri'
+    },
+    'esri-labels': {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      attribution: 'Tiles &copy; Esri'
+    }
+  },
+  layers: [
+    {
+      id: 'esri-satellite-layer',
+      type: 'raster',
+      source: 'esri-satellite',
+      layout: { visibility: 'none' },
+      minzoom: 0,
+      maxzoom: 20
+    },
+    {
+      id: 'osm-street-layer',
+      type: 'raster',
+      source: 'osm-street',
+      layout: { visibility: 'visible' },
+      minzoom: 0,
+      maxzoom: 19
+    },
+    {
+      id: 'esri-labels-layer',
+      type: 'raster',
+      source: 'esri-labels',
+      layout: { visibility: 'none' },
+      minzoom: 0,
+      maxzoom: 20
+    }
+  ]
+}
 
 onMounted(async () => {
   if (process.client) {
-    L = await import('leaflet')
-    await initMap()
+    maplibregl = await import('maplibre-gl')
+    initMap()
     await loadStallsGeoJson()
   }
 })
@@ -187,160 +271,228 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (map) {
     map.remove()
+    map = null
   }
 })
 
-const initMap = async () => {
-  if (!document.getElementById('gis-map-canvas')) return
+const initMap = () => {
+  if (!maplibregl || !document.getElementById('gis-map-canvas')) return
 
-  // Base Tiles
-  streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 20
-  })
-
-  satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '&copy; Esri World Imagery',
-    maxZoom: 19
-  })
-
-  map = L.map('gis-map-canvas', {
+  map = new maplibregl.Map({
+    container: 'gis-map-canvas',
+    style: mapLibreStyle,
     center: marketCenter,
-    zoom: 18,
-    maxZoom: 20,
-    minZoom: 15,
-    layers: [streetLayer]
+    zoom: 17.5,
+    minZoom: 14,
+    maxZoom: 21,
+    pitch: 25
   })
 
-  // Add Market Footprint Boundary Polygon
-  const marketBounds = [
-    [13.8005, 100.5498],
-    [13.8005, 100.5508],
-    [13.7991, 100.5508],
-    [13.7991, 100.5498]
-  ]
+  // Add zoom and pitch navigation controls
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right')
 
-  L.polygon(marketBounds, {
-    color: '#3B82F6',
-    weight: 2,
-    dashArray: '6, 6',
-    fillColor: '#3B82F6',
-    fillOpacity: 0.04
-  }).addTo(map).bindPopup('ขอบเขตพื้นที่ตลาด e-Market Community Center')
+  hoverPopup = new maplibregl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    offset: 12
+  })
+
+  map.on('load', () => {
+    // Add market perimeter boundary
+    map.addSource('market-bounds-src', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [100.5496, 13.7993],
+            [100.5518, 13.7993],
+            [100.5518, 13.8010],
+            [100.5496, 13.8010],
+            [100.5496, 13.7993]
+          ]]
+        }
+      }
+    })
+
+    map.addLayer({
+      id: 'market-bounds-fill',
+      type: 'fill',
+      source: 'market-bounds-src',
+      paint: {
+        'fill-color': '#2563eb',
+        'fill-opacity': 0.05
+      }
+    })
+
+    map.addLayer({
+      id: 'market-bounds-line',
+      type: 'line',
+      source: 'market-bounds-src',
+      paint: {
+        'line-color': '#2563eb',
+        'line-width': 2,
+        'line-dasharray': [4, 4]
+      }
+    })
+
+    // Setup stalls source and layers
+    setupStallsLayers()
+  })
+}
+
+const setupStallsLayers = () => {
+  if (!map) return
+
+  const filtered = getFilteredGeoJson()
+
+  if (!map.getSource('stalls-src')) {
+    map.addSource('stalls-src', {
+      type: 'geojson',
+      data: filtered
+    })
+
+    // Stalls Fill Layer
+    map.addLayer({
+      id: 'stalls-fill',
+      type: 'fill',
+      source: 'stalls-src',
+      paint: {
+        'fill-color': [
+          'case',
+          ['boolean', ['get', 'has_active_booking'], false], '#8b5cf6',
+          ['==', ['get', 'status'], 'available'], '#10b981',
+          ['==', ['get', 'status'], 'occupied'], '#f59e0b',
+          ['==', ['get', 'status'], 'reserved'], '#8b5cf6',
+          ['==', ['get', 'status'], 'maintenance'], '#f43f5e',
+          '#64748b'
+        ],
+        'fill-opacity': 0.82
+      }
+    })
+
+    // Stalls Outline Layer
+    map.addLayer({
+      id: 'stalls-line',
+      type: 'line',
+      source: 'stalls-src',
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 1.5
+      }
+    })
+
+    // Interactive Hover on Stalls
+    map.on('mousemove', 'stalls-fill', (e: any) => {
+      if (!e.features || !e.features.length) return
+      map.getCanvas().style.cursor = 'pointer'
+      const f = e.features[0]
+      const p = f.properties
+
+      const coordinates = e.lngLat
+      const statusLabel = getStatusLabel(p.status)
+
+      hoverPopup.setLngLat(coordinates).setHTML(`
+        <div style="font-family: 'Bai Jamjuree', sans-serif; padding: 4px; font-size: 12px; line-height: 1.4;">
+          <div style="font-weight: 700; color: #0f172a; font-size: 13px;">
+            แผง ${p.stall_number} <span style="font-weight: 500; font-size: 11px; color: #64748b;">(โซน ${p.zone_code})</span>
+          </div>
+          <div style="color: #475569; font-size: 11px; margin-bottom: 2px;">
+            ${p.category || p.zone_name || ''}
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 4px;">
+            <span style="font-weight: 700; color: #059669;">฿${Number(p.monthly_rate).toLocaleString()}/ด.</span>
+            <span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f1f5f9; color: #334155;">${statusLabel}</span>
+          </div>
+        </div>
+      `).addTo(map)
+    })
+
+    map.on('mouseleave', 'stalls-fill', () => {
+      map.getCanvas().style.cursor = ''
+      hoverPopup.remove()
+    })
+
+    // Click on Stall
+    map.on('click', 'stalls-fill', (e: any) => {
+      if (!e.features || !e.features.length) return
+      const p = e.features[0].properties
+      selectedStall.value = p
+      if (p.lng && p.lat) {
+        map.flyTo({
+          center: [Number(p.lng), Number(p.lat)],
+          zoom: 18.5,
+          speed: 1.2
+        })
+      }
+    })
+  } else {
+    (map.getSource('stalls-src') as any).setData(filtered)
+  }
+}
+
+const getFilteredGeoJson = () => {
+  if (!geojsonData.value) {
+    return { type: 'FeatureCollection', features: [] }
+  }
+
+  let features = geojsonData.value.features || []
+  if (selectedZoneId.value) {
+    features = features.filter((f: any) => String(f.properties.zone_id) === String(selectedZoneId.value))
+  }
+  if (onlyAvailable.value) {
+    features = features.filter((f: any) => f.properties.status === 'available')
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features
+  }
 }
 
 const loadStallsGeoJson = async () => {
   try {
     const data = await get('/stalls/gis-geojson')
     geojsonData.value = data
-    renderGeoJsonLayer()
+    if (map && map.isStyleLoaded()) {
+      setupStallsLayers()
+    }
   } catch (err) {
     console.error('Failed to load GIS GeoJSON:', err)
   }
 }
 
-const getStallColor = (status: string, hasBooking: boolean) => {
-  if (hasBooking) return { fill: '#8b5cf6', stroke: '#7c3aed' } // Purple for pending booking
-  switch (status) {
-    case 'available': return { fill: '#10b981', stroke: '#059669' } // Emerald Green
-    case 'occupied': return { fill: '#f59e0b', stroke: '#d97706' } // Amber
-    case 'reserved': return { fill: '#8b5cf6', stroke: '#7c3aed' } // Purple
-    case 'maintenance': return { fill: '#f43f5e', stroke: '#e11d48' } // Rose Red
-    default: return { fill: '#6b7280', stroke: '#4b5563' }
+const setMapMode = (mode: 'street' | 'satellite') => {
+  if (currentMode.value === mode || !map) return
+  currentMode.value = mode
+
+  if (mode === 'street') {
+    map.setLayoutProperty('osm-street-layer', 'visibility', 'visible')
+    map.setLayoutProperty('esri-satellite-layer', 'visibility', 'none')
+    map.setLayoutProperty('esri-labels-layer', 'visibility', 'none')
+  } else {
+    map.setLayoutProperty('osm-street-layer', 'visibility', 'none')
+    map.setLayoutProperty('esri-satellite-layer', 'visibility', 'visible')
+    map.setLayoutProperty('esri-labels-layer', 'visibility', 'visible')
   }
-}
-
-const renderGeoJsonLayer = () => {
-  if (!map || !L || !geojsonData.value) return
-
-  if (geoJsonLayer) {
-    map.removeLayer(geoJsonLayer)
-  }
-
-  // Filter features
-  let features = geojsonData.value.features || []
-  if (selectedZoneId.value) {
-    features = features.filter((f: any) => f.properties.zone_id === Number(selectedZoneId.value))
-  }
-  if (onlyAvailable.value) {
-    features = features.filter((f: any) => f.properties.status === 'available')
-  }
-
-  const filteredCollection = {
-    type: 'FeatureCollection',
-    features
-  }
-
-  geoJsonLayer = L.geoJSON(filteredCollection, {
-    style: (feature: any) => {
-      const colors = getStallColor(feature.properties.status, feature.properties.has_active_booking)
-      return {
-        fillColor: colors.fill,
-        weight: 2,
-        opacity: 1,
-        color: colors.stroke,
-        fillOpacity: 0.75
-      }
-    },
-    onEachFeature: (feature: any, layer: any) => {
-      const p = feature.properties
-
-      // Interactive tooltip on hover
-      layer.bindTooltip(
-        `<div style="font-family: 'Bai Jamjuree', sans-serif; font-size: 12px; font-weight: 600;">
-          <strong>แผง ${p.stall_number}</strong> (${p.zone_code})<br/>
-          <span style="font-size: 11px; color: #475569;">${p.category}</span><br/>
-          <span style="color: #059669;">฿${Number(p.monthly_rate).toLocaleString()}/ด.</span>
-        </div>`,
-        { permanent: false, direction: 'top', className: 'gis-tooltip' }
-      )
-
-      // Hover and Click events
-      layer.on({
-        mouseover: (e: any) => {
-          const l = e.target
-          l.setStyle({
-            weight: 4,
-            color: '#ffffff',
-            fillOpacity: 0.95
-          })
-          l.bringToFront()
-        },
-        mouseout: (e: any) => {
-          geoJsonLayer.resetStyle(e.target)
-        },
-        click: (e: any) => {
-          selectedStall.value = p
-          map.panTo([p.lat, p.lng])
-        }
-      })
-    }
-  }).addTo(map)
 }
 
 const applyFilters = () => {
-  renderGeoJsonLayer()
+  if (map && map.getSource('stalls-src')) {
+    (map.getSource('stalls-src') as any).setData(getFilteredGeoJson())
+  }
 }
 
 const recenterMap = () => {
   if (map) {
-    map.setView(marketCenter, 18)
-  }
-}
-
-const toggleMapLayer = () => {
-  if (!map) return
-  if (currentLayerName.value === 'street') {
-    map.removeLayer(streetLayer)
-    map.addLayer(satelliteLayer)
-    currentLayerName.value = 'satellite'
-  } else {
-    map.removeLayer(satelliteLayer)
-    map.addLayer(streetLayer)
-    currentLayerName.value = 'street'
-  }
-  if (geoJsonLayer) {
-    geoJsonLayer.bringToFront()
+    map.flyTo({
+      center: marketCenter,
+      zoom: 17.5,
+      pitch: 25,
+      bearing: 0,
+      speed: 1.2
+    })
   }
 }
 
@@ -360,7 +512,7 @@ const getStatusLabel = (status: string) => {
     case 'occupied': return 'มีผู้เช่าแล้ว'
     case 'reserved': return 'ติดจอง'
     case 'maintenance': return 'ปิดปรับปรุง'
-    default: return status
+    default: return status || 'ว่าง'
   }
 }
 
@@ -383,8 +535,8 @@ defineExpose({
 .map-canvas {
   width: 100%;
   height: 100%;
-  background: #111827;
-  z-index: 1;
+  background: #0f172a;
+  position: relative;
 }
 
 /* Overlay Header Controls */
@@ -424,6 +576,16 @@ defineExpose({
   box-shadow: var(--shadow-md);
 }
 
+.gis-engine-pill {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #059669;
+  font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+
 .gis-select {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
@@ -452,6 +614,42 @@ defineExpose({
   gap: 8px;
   cursor: pointer;
   box-shadow: var(--shadow-md);
+}
+
+/* 2-Mode Segmented Control */
+.gis-mode-segmented {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.gis-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gis-mode-tab:hover {
+  color: #0f172a;
+}
+
+.gis-mode-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 
 .gis-btn {
@@ -575,5 +773,38 @@ defineExpose({
 .slide-up-enter-from, .slide-up-leave-to {
   transform: translateY(20px);
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .gis-map-wrapper {
+    height: 520px;
+  }
+  .gis-overlay-header {
+    position: static;
+    padding: 10px 12px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .gis-controls-left, .gis-controls-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .gis-stall-card {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 80vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    z-index: 99 !important;
+    box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.25) !important;
+  }
+  .gis-legend {
+    display: none;
+  }
 }
 </style>

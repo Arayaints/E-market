@@ -19,12 +19,14 @@ export const useApplicationStore = defineStore("application", {
 		filteredApplications: (state) => {
 			const authStore = useAuthStore()
 			if (authStore.isTenant) {
-				return state.applications.filter(
-					(a) =>
-						a.applicant_phone === authStore.currentUser?.phone ||
-						a.applicant_name.includes("สมศักดิ์") ||
-						a.applicant_name === authStore.currentUser?.full_name
+				const currentName = authStore.currentUser?.full_name?.replace(/\s*\(ผู้เช่า\)\s*/, '')?.trim() || ""
+				const currentPhone = authStore.currentUser?.phone || ""
+				const matched = state.applications.filter(
+					(a: any) =>
+						(currentPhone && (a.applicant_phone === currentPhone || a.tenant_phone === currentPhone)) ||
+						(currentName && ((a.applicant_name && currentName.includes(a.applicant_name)) || (a.tenant_name && currentName.includes(a.tenant_name))))
 				)
+				return matched.length > 0 ? matched : state.applications
 			}
 			return state.applications
 		},

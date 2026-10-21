@@ -30,34 +30,6 @@
         <span class="notification-badge-dot"></span>
       </button>
 
-      <!-- Quick Role Switcher Pill -->
-      <div class="role-switcher-pill" style="display: flex; align-items: center; background: #f1f5f9; padding: 3px; border-radius: 20px; border: 1px solid #cbd5e1;">
-        <button
-          type="button"
-          class="role-switch-btn"
-          :class="{ active: user?.role === 'tenant' }"
-          @click.stop="switchRole('tenant')"
-          title="สลับเป็นบทบาทผู้เช่า (จองแผง, ติดตามคำร้อง, ดูแผงของตนเอง)"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span>ผู้เช่า (Tenant)</span>
-        </button>
-        <button
-          type="button"
-          class="role-switch-btn"
-          :class="{ active: user?.role !== 'tenant' }"
-          @click.stop="switchRole('admin')"
-          title="สลับเป็นบทบาทเจ้าหน้าที่/แอดมิน (อนุมัติการจอง, บริหารสัญญาและคำร้อง)"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>เจ้าหน้าที่ (Admin)</span>
-        </button>
-      </div>
 
       <!-- User Profile Badge -->
       <div class="user-profile-badge" @click="toggleMenu" style="position: relative; cursor: pointer;">
@@ -67,7 +39,7 @@
         <div class="user-info-text">
           <span class="user-name-text">{{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}</span>
           <span class="user-role-text" :style="user?.role === 'tenant' ? 'color: #059669; font-weight: 700;' : 'color: #2563eb; font-weight: 700;'">
-            {{ user?.role === 'tenant' ? '👤 ผู้เช่าแผงค้า' : '🛡️ ผู้ดูแลระบบ (Admin)' }}
+            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'ผู้ดูแลระบบ (Admin)' }}
           </span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8; margin-left: 2px;">
@@ -148,27 +120,6 @@ const handleLogout = async () => {
   margin-left: 6px;
 }
 
-.role-switch-btn {
-  border: none;
-  background: transparent;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #64748b;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.15s ease;
-}
-
-.role-switch-btn.active {
-  background: #ffffff;
-  color: #1e3a8a;
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
 
 @media (max-width: 768px) {
   .navbar-subtitle-text {

@@ -3,14 +3,6 @@
     <AppHeader />
 
     <div class="content-body">
-      <!-- Breadcrumb Navigation at top of section body -->
-      <AppBreadcrumb current="ตั้งค่าโซนตลาดและข้อมูลระบบ" backTo="/">
-        <template #actions>
-          <button class="btn btn-primary btn-sm" @click="openCreateZoneModal">
-            <span>+ เพิ่มโซนตลาดใหม่</span>
-          </button>
-        </template>
-      </AppBreadcrumb>
       <!-- Zones Management Card -->
       <div class="card" style="margin-bottom: 30px;">
         <div class="card-header">
@@ -18,10 +10,16 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
             <span>โซนพื้นที่ตลาด (Market Zones)</span>
           </div>
-          <button class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 5px;" @click="loadZones">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            <span>รีเฟรช</span>
-          </button>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn btn-primary btn-sm" @click="openCreateZoneModal" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>เพิ่มโซนตลาดใหม่</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 5px;" @click="loadZones">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>รีเฟรช</span>
+            </button>
+          </div>
         </div>
 
         <div class="table-container">
@@ -145,7 +143,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3 style="font-size: 1.15rem;">{{ isEditing ? 'แก้ไขข้อมูลโซน' : 'เพิ่มโซนตลาดใหม่' }}</h3>
-          <button class="btn-logout" @click="showZoneModal = false">✕</button>
+          <button class="btn-logout" @click="showZoneModal = false" aria-label="ปิด">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         <form @submit.prevent="saveZone">
@@ -191,6 +191,7 @@
 
 <script setup lang="ts">
 const { get, post, put, del } = useApi()
+const { showSuccess, showError, showConfirm } = useAppAlert()
 
 const zones = ref<any[]>([])
 const loading = ref(true)
@@ -251,20 +252,32 @@ const saveZone = async () => {
     }
     showZoneModal.value = false
     await loadZones()
+    await showSuccess('บันทึกข้อมูลโซนเรียบร้อยแล้ว', 'สำเร็จ')
   } catch (err: any) {
-    alert(err?.data?.detail || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล')
+    await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'ข้อผิดพลาด')
   } finally {
     saving.value = false
   }
 }
 
 const deleteZone = async (z: any) => {
-  if (confirm(`คุณต้องการลบโซน ${z.code} - ${z.name} หรือไม่?`)) {
+  const confirmed = await showConfirm(
+    `คุณต้องการลบโซน ${z.code} - ${z.name} หรือไม่?`,
+    {
+      title: 'ยืนยันลบโซน',
+      type: 'error',
+      icon: 'trash',
+      confirmText: 'ลบโซน',
+      cancelText: 'ยกเลิก'
+    }
+  )
+  if (confirmed) {
     try {
       await del(`/zones/${z.id}`)
       await loadZones()
+      await showSuccess('ลบโซนเรียบร้อยแล้ว', 'สำเร็จ')
     } catch (err: any) {
-      alert(err?.data?.detail || 'ไม่สามารถลบโซนได้')
+      await showError(err?.data?.detail || 'ไม่สามารถลบโซนได้', 'ข้อผิดพลาด')
     }
   }
 }

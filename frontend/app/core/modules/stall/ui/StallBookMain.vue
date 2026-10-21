@@ -3,7 +3,7 @@
     <!-- Top Header -->
     <AppHeader />
 
-    <div class="content-body" style="max-width: 1200px; margin: 0 auto;">
+    <div class="content-body">
       <!-- Breadcrumb Navigation at top of section body -->
       <AppBreadcrumb
         :market="currentMarketName"
@@ -13,7 +13,7 @@
       />
 
       <!-- Market Info Header Banner -->
-      <div class="market-select-banner card glass-card" style="display: flex; justify-content: space-between; align-items: center; border-radius: 16px; padding: 14px 22px; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; border: 1px solid #bfdbfe; background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%); box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);">
+      <div class="market-select-banner card glass-card" style="display: flex; justify-content: space-between; align-items: center; border-radius: 16px; padding: 14px 22px; margin-bottom: 32px; flex-wrap: wrap; gap: 14px; border: 1px solid #bfdbfe; background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%); box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);">
         <div style="display: flex; align-items: center; gap: 14px;">
           <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -52,6 +52,17 @@
       <!-- STEP 1: เลือกแผงเช่าที่สนใจ (Projects Overview & Sub-Stalls)  -->
       <!-- ============================================================ -->
       <div v-if="currentStep === 1">
+        <!-- แจ้งเตือนเมื่อตลาดเต็ม (ใช้ข้อมูลจริง) -->
+        <div v-if="isMarketFull" class="market-full-banner">
+          <div class="market-full-banner-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <div class="market-full-banner-content">
+            <h3 class="market-full-title">ตลาดนี้มีผู้เช่าเต็มแล้ว (เปิดให้เข้าชมผังแผงเท่านั้น)</h3>
+            <p class="market-full-desc">ขณะนี้แผงค้าใน{{ currentMarketName }}มีผู้เช่าครบทุกแผงแล้ว จึงยังไม่สามารถเปิดรับการจองแผงได้ในขณะนี้ ท่านยังสามารถเข้าชมผังแผงและข้อมูลโซนได้ แต่แผงค้าจะไม่สามารถคลิกเลือกเพื่อทำการจองได้</p>
+          </div>
+        </div>
+
         <!-- Title & Filter Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
           <div>
@@ -66,58 +77,11 @@
 
           <!-- View Mode Tabs & Checkbox -->
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <!-- Segmented View Mode Toggle -->
-            <div class="view-mode-tabs-container">
-              <button
-                type="button"
-                class="view-mode-tab-btn"
-                :class="{ active: mapViewMode === 'projects' }"
-                @click="mapViewMode = 'projects'"
-                style="display: inline-flex; align-items: center; gap: 6px;"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                  <line x1="8" y1="2" x2="8" y2="18"></line>
-                  <line x1="16" y1="6" x2="16" y2="22"></line>
-                </svg>
-                <span>ผังรวม 29 โครงการ</span>
-              </button>
-              <button
-                type="button"
-                class="view-mode-tab-btn"
-                :class="{ active: mapViewMode === 'stalls' }"
-                @click="mapViewMode = 'stalls'"
-                style="display: inline-flex; align-items: center; gap: 6px;"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="7" height="7"></rect>
-                  <rect x="14" y="3" width="7" height="7"></rect>
-                  <rect x="14" y="14" width="7" height="7"></rect>
-                  <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                <span>ผังล็อคย่อย ({{ selectedProject?.name || 'โครงการที่ 23' }})</span>
-              </button>
-            </div>
 
-            <!-- Heatmap Toggle (UX/UI & BA WOW ELEMENT) -->
-            <button
-              v-if="mapViewMode === 'stalls'"
-              type="button"
-              class="btn btn-sm"
-              :class="showTrafficHeatmap ? 'btn-primary' : 'btn-outline'"
-              style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"
-              @click="showTrafficHeatmap = !showTrafficHeatmap"
-              title="เปิด/ปิด การแสดงผลความหนาแน่นของผู้คนเดินผ่าน (Traffic Heatmap)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 20V10"></path>
-                <path d="M12 20V4"></path>
-                <path d="M6 20v-6"></path>
-              </svg>
-              <span>{{ showTrafficHeatmap ? 'ปิดฮีตแมป' : 'แสดงทราฟฟิกคนเดิน' }}</span>
-            </button>
 
-            <!-- Checkbox: แผงเช่าที่ว่าง -->
+
+
+            <!-- Checkbox: เฉพาะแผงว่าง -->
             <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #334155; cursor: pointer; background: #ffffff; padding: 6px 14px; border-radius: 20px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
               <input type="checkbox" v-model="onlyAvailable" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
               <span>แผงเช่าที่ว่าง</span>
@@ -130,28 +94,11 @@
         <!-- ========================================================== -->
         <div v-if="mapViewMode === 'projects'" class="card" style="padding: 0; position: relative; overflow: hidden; background: #faf8f5; border: 1px solid #e2e8f0; margin-bottom: 24px;">
 
-          <!-- Bottom Left: Map Style Switcher (Thumbnails) -->
-          <div class="map-style-switcher">
-            <div class="style-thumb" :class="{ active: mapStyle === 'standard' }" @click="mapStyle = 'standard'">
-              <div class="thumb-preview standard"></div>
-              <span>Standard</span>
-            </div>
-            <div class="style-thumb" :class="{ active: mapStyle === 'dark' }" @click="mapStyle = 'dark'">
-              <div class="thumb-preview dark"></div>
-              <span>Dark</span>
-            </div>
-            <div class="style-thumb" :class="{ active: mapStyle === 'satellite' }" @click="mapStyle = 'satellite'">
-              <div class="thumb-preview satellite"></div>
-              <span>Satellite</span>
-            </div>
-          </div>
-
           <!-- The SVG Master Map of Projects Component -->
           <MarketProjectsOverviewMap
             :selectedProjectId="selectedProject?.id"
             :onlyAvailable="onlyAvailable"
             :categoryFilter="selectedCategoryFilter"
-            :mapStyle="mapStyle"
             @selectProject="handleSelectProject"
             @update:categoryFilter="val => selectedCategoryFilter = val"
           />
@@ -182,7 +129,9 @@
                   <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <strong style="color: #0f172a;">{{ selectedProject?.name || 'โครงการที่ 23' }}</strong>
-                <span class="badge badge-available" style="font-size: 0.72rem; padding: 2px 8px;">ว่าง {{ selectedProject?.stallsAvailable || 18 }}</span>
+                <span :class="isMarketFull || selectedProject?.stallsAvailable === 0 ? 'badge badge-reserved' : 'badge badge-available'" style="font-size: 0.72rem; padding: 2px 8px;">
+                  {{ isMarketFull ? 'เต็มทุกแผง' : `ว่าง ${selectedProject?.stallsAvailable || 18}` }}
+                </span>
               </div>
             </div>
 
@@ -279,7 +228,7 @@
                 <polyline points="10 17 15 12 10 7"></polyline>
                 <line x1="15" y1="12" x2="3" y2="12"></line>
               </svg>
-              <span>➔ ทางเข้า MRT ทางออก 2</span>
+              <span>ทางเข้า MRT ทางออก 2</span>
             </div>
 
             <div
@@ -300,9 +249,9 @@
                     :class="getStallClass(s)"
                     @click="selectStall(s)"
                     @mouseenter="s.status === 'reserved' && fetchWaitingQueueForStall(s.code)"
-                    :title="s.status === 'reserved' ? `แผง ${s.code} (ติดจอง)` : `แผง ${s.code} (${getStatusText(s.status)})`"
+                    :title="isMarketFull ? `แผง ${s.code} (ตลาดนี้เต็มแล้ว - มีผู้เช่าครบทุกแผง)` : (s.status === 'reserved' ? `แผง ${s.code} (ติดจอง)` : `แผง ${s.code} (${getStatusText(s.status)})`)"
                   >
-                    <span v-if="isStallSelected(s.code)" class="selected-check">✓</span>
+                    <svg v-if="isStallSelected(s.code)" class="selected-check" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     <span v-else-if="s.status === 'reserved'" class="stall-queue-pill">คิว 1</span>
                     <span class="stall-mini-code">{{ s.code }}</span>
                   </div>
@@ -323,9 +272,9 @@
                     :class="getStallClass(s)"
                     @click="selectStall(s)"
                     @mouseenter="s.status === 'reserved' && fetchWaitingQueueForStall(s.code)"
-                    :title="s.status === 'reserved' ? `แผง ${s.code} (ติดจอง)` : `แผง ${s.code} (${getStatusText(s.status)})`"
+                    :title="isMarketFull ? `แผง ${s.code} (ตลาดนี้เต็มแล้ว - มีผู้เช่าครบทุกแผง)` : (s.status === 'reserved' ? `แผง ${s.code} (ติดจอง)` : `แผง ${s.code} (${getStatusText(s.status)})`)"
                   >
-                    <span v-if="isStallSelected(s.code)" class="selected-check">✓</span>
+                    <svg v-if="isStallSelected(s.code)" class="selected-check" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     <span v-else-if="s.status === 'reserved'" class="stall-queue-pill">คิว 1</span>
                     <span class="stall-mini-code">{{ s.code }}</span>
                   </div>
@@ -350,7 +299,9 @@
               <!-- Drawer Header -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <strong style="font-size: 0.92rem; color: #0f172a;">แผงที่เลือก ({{ selectedStalls.length }})</strong>
-                <button class="btn-icon-square" style="width: 26px; height: 26px; font-size: 0.72rem;" @click="clearAllSelectedStalls" title="ล้างการเลือกทั้งหมด">✕</button>
+                <button class="btn-icon-square" style="width: 26px; height: 26px;" @click="clearAllSelectedStalls" title="ล้างการเลือกทั้งหมด" aria-label="ล้าง">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
               </div>
 
               <!-- Status Badge of Current Selection -->
@@ -370,7 +321,9 @@
                   :class="s.status === 'available' ? 'chip-available' : 'chip-reserved'"
                 >
                   <span>แผง {{ s.code }}</span>
-                  <button type="button" class="stall-chip-remove" @click.stop="removeStall(s.code)" title="นำแผงนี้ออก">✕</button>
+                  <button type="button" class="stall-chip-remove" @click.stop="removeStall(s.code)" title="นำแผงนี้ออก" aria-label="ลบ">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
                 </div>
               </div>
 
@@ -461,37 +414,63 @@
             </div>
 
             <!-- State 2: When no stall is selected yet (Clean & Concise) -->
-            <div v-else key="empty" class="selected-stall-drawer card empty-stall-guide" style="position: absolute; top: 16px; right: 16px; width: 330px; max-height: calc(100% - 32px); overflow-y: auto; overflow-x: hidden; z-index: 25; padding: 22px 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); background: rgba(255, 255, 255, 0.97); text-align: center; border: 1.5px dashed #bfdbfe; border-radius: 14px;">
-              <div style="margin: 0 auto 10px; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #eff6ff; color: #2563eb;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </div>
-              
-              <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
-                คลิกเลือกแผงบนผัง
-              </h4>
-              
-              <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 12px;">
-                คลิกแผงค้าเพื่อดูขนาด ราคา และภาพจำลอง 3D
-              </p>
+            <div v-else key="empty" class="selected-stall-drawer card empty-stall-guide" :class="{ 'is-full-guide': isMarketFull }" style="position: absolute; top: 16px; right: 16px; width: 330px; max-height: calc(100% - 32px); overflow-y: auto; overflow-x: hidden; z-index: 25; padding: 22px 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); background: rgba(255, 255, 255, 0.97); text-align: center; border: 1.5px dashed #bfdbfe; border-radius: 14px;">
+              <template v-if="isMarketFull">
+                <div style="margin: 0 auto 10px; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: #fee2e2; color: #dc2626;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                
+                <h4 style="font-size: 0.95rem; font-weight: 800; color: #991b1b; margin-bottom: 4px;">
+                  ตลาดนี้เต็มแล้ว
+                </h4>
+                
+                <p style="font-size: 0.78rem; color: #b91c1c; line-height: 1.5; margin-bottom: 14px;">
+                  ขณะนี้ไม่มีแผงว่างพร้อมให้จอง ทุกแผงในผังมีผู้เช่าแล้ว ไม่สามารถคลิกเลือกเพื่อจองได้
+                </p>
 
-              <!-- Color Status Legend Guide (Clean & Compact) -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.76rem; text-align: left; display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="width: 10px; height: 10px; border-radius: 3px; background: #34d399; display: inline-block;"></span>
-                  <span style="color: #065f46; font-weight: 700;">สีเขียว : แผงว่างพร้อมจอง</span>
+                <!-- Full Market Guide Legend -->
+                <div style="background: #ffffff; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; text-align: left; display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 3px; background: #cbd5e1; display: inline-block;"></span>
+                    <span style="color: #64748b; font-weight: 600;">สีเทา : มีผู้เช่าแล้ว (ทุกแผง)</span>
+                  </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="width: 10px; height: 10px; border-radius: 3px; background: #fbbf24; display: inline-block;"></span>
-                  <span style="color: #92400e;">สีเหลือง : ติดจอง (Waiting List)</span>
+              </template>
+              <template v-else>
+                <div style="margin: 0 auto 10px; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #eff6ff; color: #2563eb;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="width: 10px; height: 10px; border-radius: 3px; background: #cbd5e1; display: inline-block;"></span>
-                  <span style="color: #64748b;">สีเทา : ไม่ว่าง</span>
+                
+                <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+                  คลิกเลือกแผงบนผัง
+                </h4>
+                
+                <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 12px;">
+                  คลิกแผงค้าเพื่อดูขนาด ราคา และภาพจำลอง 3D
+                </p>
+
+                <!-- Color Status Legend Guide (Clean & Compact) -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.76rem; text-align: left; display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 3px; background: #34d399; display: inline-block;"></span>
+                    <span style="color: #065f46; font-weight: 700;">สีเขียว : แผงว่างพร้อมจอง</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 3px; background: #fbbf24; display: inline-block;"></span>
+                    <span style="color: #92400e;">สีเหลือง : ติดจอง (Waiting List)</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 3px; background: #cbd5e1; display: inline-block;"></span>
+                    <span style="color: #64748b;">สีเทา : ไม่ว่าง</span>
+                  </div>
                 </div>
-              </div>
+              </template>
             </div>
           </transition>
 
@@ -554,21 +533,7 @@
             </div>
           </transition>
 
-          <!-- Bottom Left: Map Style Switcher (Thumbnails) -->
-          <div class="map-style-switcher">
-            <div class="style-thumb" :class="{ active: mapStyle === 'standard' }" @click="mapStyle = 'standard'">
-              <div class="thumb-preview standard"></div>
-              <span>Standard</span>
-            </div>
-            <div class="style-thumb" :class="{ active: mapStyle === 'dark' }" @click="mapStyle = 'dark'">
-              <div class="thumb-preview dark"></div>
-              <span>Dark</span>
-            </div>
-            <div class="style-thumb" :class="{ active: mapStyle === 'satellite' }" @click="mapStyle = 'satellite'">
-              <div class="thumb-preview satellite"></div>
-              <span>Satellite</span>
-            </div>
-          </div>
+
 
           <!-- Bottom Center: Map Legend -->
           <div class="map-bottom-legend">
@@ -591,12 +556,14 @@
         <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 16px;">
           <button
             type="button"
-            class="btn btn-primary"
-            style="padding: 12px 32px; font-size: 1rem; font-weight: 700; border-radius: 10px; box-shadow: 0 4px 14px rgba(67, 97, 238, 0.35); display: inline-flex; align-items: center; gap: 8px;"
+            class="btn"
+            :class="isMarketFull ? 'btn-outline' : 'btn-primary'"
+            :disabled="isMarketFull"
+            :style="isMarketFull ? 'padding: 12px 28px; font-size: 0.92rem; font-weight: 600; border-radius: 10px; opacity: 0.65; cursor: not-allowed; border-color: #cbd5e1; background: #f1f5f9; color: #64748b;' : 'padding: 12px 32px; font-size: 1rem; font-weight: 700; border-radius: 10px; box-shadow: 0 4px 14px rgba(67, 97, 238, 0.35); display: inline-flex; align-items: center; gap: 8px;'"
             @click="handleNextFromStep1"
           >
-            <span>ถัดไป</span>
-            <span>&rarr;</span>
+            <span>{{ isMarketFull ? 'ตลาดเต็มแล้ว (ไม่สามารถจองได้)' : 'ถัดไป' }}</span>
+            <span v-if="!isMarketFull">&rarr;</span>
           </button>
         </div>
       </div>
@@ -663,7 +630,10 @@
               <div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <strong style="font-size: 0.95rem; color: #1e3a8a;">ระบบสแกนข้อมูลบัตรประชาชนอัตโนมัติ (AI Smart ID OCR)</strong>
-                  <span v-if="idVerified" class="badge badge-green" style="font-size: 0.72rem; padding: 2px 8px;">✓ ยืนยันตัวตนสำเร็จ</span>
+                  <span v-if="idVerified" class="badge badge-green" style="font-size: 0.72rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>ยืนยันตัวตนสำเร็จ</span>
+                  </span>
                 </div>
                 <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
                   {{ idVerified ? 'ดึงข้อมูลคุณสมชาย ใจดี และเลขบัตร ปชช. จากฐานข้อมูลทะเบียนราษฎร์เรียบร้อยแล้ว' : 'ไม่ต้องพิมพ์เอง! กดปุ่มเดียวเพื่อสแกนและกรอกข้อมูลจากบัตรประชาชนอัตโนมัติ' }}
@@ -938,7 +908,7 @@
                     class="stall-box-item"
                     :class="getStallClass(s)"
                   >
-                    <span v-if="isStallSelected(s.code)" class="selected-check">✓</span>
+                    <svg v-if="isStallSelected(s.code)" class="selected-check" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                 </div>
                 <div class="market-aisle-divider">
@@ -951,28 +921,14 @@
                     class="stall-box-item"
                     :class="getStallClass(s)"
                   >
-                    <span v-if="isStallSelected(s.code)" class="selected-check">✓</span>
+                    <svg v-if="isStallSelected(s.code)" class="selected-check" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Bottom Left: Styles -->
-          <div class="map-style-switcher" style="bottom: 10px; left: 10px;">
-            <div class="style-thumb active">
-              <div class="thumb-preview standard"></div>
-              <span>Standard</span>
-            </div>
-            <div class="style-thumb">
-              <div class="thumb-preview dark"></div>
-              <span>Dark</span>
-            </div>
-            <div class="style-thumb">
-              <div class="thumb-preview satellite"></div>
-              <span>Satellite</span>
-            </div>
-          </div>
+
 
           <!-- Bottom Center: Legend -->
           <div class="map-bottom-legend" style="bottom: 10px;">
@@ -1258,7 +1214,10 @@
               </div>
             </div>
           </div>
-          <span class="badge" style="background: #15803d; color: #ffffff; padding: 4px 10px; font-weight: 700;">✓ คุ้มครองตามกฎหมาย กทม.</span>
+          <span class="badge" style="background: #15803d; color: #ffffff; padding: 4px 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>คุ้มครองตามกฎหมาย กทม.</span>
+          </span>
         </div>
 
         <!-- BMA Municipal Regulations Accordion (BA) -->
@@ -1347,7 +1306,10 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #059669;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
               <span>ได้รับการคุ้มครองตาม พ.ร.บ. ว่าด้วยธุรกรรมทางอิเล็กทรอนิกส์</span>
             </span>
-            <span v-if="signatureDrawn" style="color: #059669; font-weight: 700;">✓ มีการลงลายมือชื่อแล้ว</span>
+            <span v-if="signatureDrawn" style="color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>มีการลงลายมือชื่อแล้ว</span>
+            </span>
           </div>
         </div>
 
@@ -1376,10 +1338,11 @@
           <div class="vip-pass-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%); color: #ffffff; padding: 24px 28px; position: relative; text-align: left;">
             <button
               class="btn-icon-square"
-              style="position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border: none; font-size: 1.1rem; color: #ffffff; backdrop-filter: blur(4px);"
+              style="position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border: none; color: #ffffff; backdrop-filter: blur(4px);"
               @click="showSuccessModal = false"
+              aria-label="ปิด"
             >
-              ✕
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -1416,14 +1379,14 @@
           <!-- Body Content -->
           <div style="padding: 24px 28px; background: #ffffff;">
             <!-- Countdown Banner -->
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 0.85rem; color: #166534; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #15803d;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>ส่งคำขอนัดหมายสำเร็จ เจ้าหน้าที่พร้อมต้อนรับ</span>
+            <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 10px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.85rem; color: #854d0e; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ca8a04;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>ยื่นคำขอนัดดูแผงสำเร็จ (รอเจ้าหน้าที่อนุมัติ)</span>
               </span>
-              <span class="badge" style="background: #15803d; color: #ffffff; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">
+              <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <span>อีก 24 ชั่วโมง</span>
+                <span>รอเจ้าหน้าที่ตรวจสอบ</span>
               </span>
             </div>
 
@@ -1431,6 +1394,12 @@
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px; text-align: left; margin-bottom: 20px;">
               <!-- Left: Specs -->
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #fffbeb; padding: 6px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
+                  <span style="color: #92400e; font-weight: 600;">สถานะคำขอ:</span>
+                  <span class="badge" style="background: #fef3c7; color: #d97706; font-size: 0.82rem; font-weight: 700; border-radius: 6px; padding: 3px 10px; border: 1px solid #fde68a;">
+                    รอเจ้าหน้าที่อนุมัติ
+                  </span>
+                </div>
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: #64748b;">ตลาด:</span>
                   <strong style="color: #0f172a;">{{ currentMarketName }}</strong>
@@ -1519,8 +1488,8 @@
                 </div>
               </div>
             </div>
-            <button class="btn-icon-square" style="width: 32px; height: 32px; background: rgba(255,255,255,0.15); border: none; color: #fff;" @click="showVirtualModal = false">
-              ✕
+            <button class="btn-icon-square" style="width: 32px; height: 32px; background: rgba(255,255,255,0.15); border: none; color: #fff;" @click="showVirtualModal = false" aria-label="ปิด">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
 
@@ -1593,7 +1562,9 @@
               </svg>
               <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0;">เปรียบเทียบแผงค้า (Stall Comparison)</h3>
             </div>
-            <button class="btn-icon-square" style="width: 32px; height: 32px;" @click="showCompareModal = false">✕</button>
+            <button class="btn-icon-square" style="width: 32px; height: 32px;" @click="showCompareModal = false" aria-label="ปิด">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
           </div>
 
           <!-- Comparison Table -->
@@ -1653,6 +1624,8 @@ const { showAlert, showWarning, showError, showSuccess } = useAppAlert()
 
 const currentMarketName = ref('ตลาดนัดจตุจักร')
 const currentMarketDistrict = ref('เขตจตุจักร')
+const isMarketFull = ref(false)
+const currentMarket = ref<any>(null)
 
 const currentStep = ref<number>(1)
 const mapViewMode = ref<'projects' | 'stalls'>('projects')
@@ -1673,6 +1646,7 @@ const selectedProject = ref<{
   totalStalls: 96
 })
 
+const bookingMode = ref<'available' | 'queue'>('available')
 const onlyAvailable = ref(false)
 const showTrafficHeatmap = ref(false)
 const zoneFilter = ref<'all' | 'hotspot' | 'stage'>('all')
@@ -1921,7 +1895,7 @@ const contractTotal = computed(() => {
 const currentBreadcrumbText = computed(() => {
   if (currentStep.value === 1) {
     return mapViewMode.value === 'projects'
-      ? 'จองแผงเช่า (ผังโครงการรวม)'
+      ? 'จองแผงเช่า'
       : `จองแผงเช่า (${selectedProject.value?.name || 'โครงการที่ 23'})`
   }
   if (currentStep.value === 2) return 'กรอกข้อมูลเพื่อเยี่ยมชมแผง'
@@ -1991,12 +1965,14 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
       }
 
       let status: 'available' | 'reserved' | 'occupied' = 'occupied'
-      if (specialStalls[code]) {
-        status = specialStalls[code]
-      } else if ((r === 1 && c === 4) || (r === 2 && c === 6) || (r === 3 && c === 11) || (r === 4 && c === 2)) {
-        status = 'available'
-      } else if ((r === 2 && c === 10) || (r === 4 && c === 5)) {
-        status = 'reserved'
+      if (!isMarketFull.value && Number(project.stallsAvailable ?? 1) > 0) {
+        if (specialStalls[code]) {
+          status = specialStalls[code]
+        } else if ((r === 1 && c === 4) || (r === 2 && c === 6) || (r === 3 && c === 11) || (r === 4 && c === 2)) {
+          status = 'available'
+        } else if ((r === 2 && c === 10) || (r === 4 && c === 5)) {
+          status = 'reserved'
+        }
       }
 
       upper.push({
@@ -2025,10 +2001,12 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
       }
 
       let status: 'available' | 'reserved' | 'occupied' = 'occupied'
-      if ((r === 1 && c === 1) || (r === 2 && c === 5) || (r === 3 && c === 8) || (r === 4 && c === 13)) {
-        status = 'available'
-      } else if (r === 2 && c === 11) {
-        status = 'reserved'
+      if (!isMarketFull.value && Number(project.stallsAvailable ?? 1) > 0) {
+        if ((r === 1 && c === 1) || (r === 2 && c === 5) || (r === 3 && c === 8) || (r === 4 && c === 13)) {
+          status = 'available'
+        } else if (r === 2 && c === 11) {
+          status = 'reserved'
+        }
       }
 
       lower.push({
@@ -2061,16 +2039,19 @@ const handleSelectProject = (project: any) => {
 }
 
 const handleNextFromStep1 = () => {
-  if (mapViewMode.value === 'projects') {
-    mapViewMode.value = 'stalls'
-    window.scrollTo({ top: 120, behavior: 'smooth' })
-  } else {
-    if (selectedStalls.value.length === 0) {
-      showWarning('กรุณาคลิกเลือกแผงเช่าที่ต้องการอย่างน้อย 1 แผงก่อนดำเนินการต่อ', 'แจ้งเตือนการเลือกแผง')
-      return
-    }
-    goToStep(2)
+  if (isMarketFull.value) {
+    showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มแล้ว ขณะนี้ยังไม่สามารถทำรายการจองได้`, 'ตลาดเต็มแล้ว')
+    return
   }
+  if (selectedStalls.value.length === 0) {
+    showWarning('กรุณาเลือกแผงก่อนถึงจะไปขั้นตอนถัดไปได้', 'แจ้งเตือนการเลือกแผง')
+    if (mapViewMode.value === 'projects') {
+      mapViewMode.value = 'stalls'
+      window.scrollTo({ top: 120, behavior: 'smooth' })
+    }
+    return
+  }
+  goToStep(2)
 }
 
 // Drawing logic
@@ -2282,6 +2263,10 @@ const addToCalendar = () => {
 }
 
 const selectStall = (s: StallModel) => {
+  if (isMarketFull.value) {
+    showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มแล้ว ขณะนี้ยังไม่สามารถเลือกหรือจองแผงได้`, 'ตลาดนี้เต็มแล้ว')
+    return
+  }
   if (s.status === 'occupied') {
     return
   }
@@ -2360,9 +2345,10 @@ const getStallClass = (s: StallModel) => {
     if (!isStage) isDimmed = true
   }
   return {
-    'is-available': s.status === 'available',
-    'is-reserved': s.status === 'reserved',
-    'is-occupied': s.status === 'occupied',
+    'is-available': !isMarketFull.value && s.status === 'available',
+    'is-reserved': !isMarketFull.value && s.status === 'reserved',
+    'is-occupied': isMarketFull.value || s.status === 'occupied',
+    'is-market-full': isMarketFull.value,
     'is-selected': isSelected,
     'is-dimmed': isDimmed,
     'is-conflict-mode': isConflict,
@@ -2431,8 +2417,17 @@ const onStallsMouseUp = () => {
 }
 
 const goToStep = (step: number) => {
-  if (step === 2 && selectedStalls.value.length === 0) {
-    showWarning('กรุณาคลิกเลือกแผงเช่าที่ต้องการก่อนดำเนินการต่อ', 'แจ้งเตือนการเลือกแผง')
+  if (step === currentStep.value) return
+  if (step > 1 && isMarketFull.value) {
+    showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มแล้ว ขณะนี้ยังไม่สามารถทำรายการจองได้`, 'ตลาดเต็มแล้ว')
+    return
+  }
+  if (step > 1 && selectedStalls.value.length === 0) {
+    showWarning('กรุณาเลือกแผงก่อนถึงจะไปขั้นตอนถัดไปได้', 'แจ้งเตือนการเลือกแผง')
+    if (mapViewMode.value === 'projects') {
+      mapViewMode.value = 'stalls'
+      window.scrollTo({ top: 120, behavior: 'smooth' })
+    }
     return
   }
   currentStep.value = step
@@ -2467,14 +2462,18 @@ const submitBooking = async () => {
         stallId = target.id
       }
 
+      const isQueue = stallItem.status === 'reserved' || bookingMode.value === 'queue'
       const res = await post('/bookings', {
         stall_id: stallId,
+        stall_number: stallItem.code,
+        market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
         tenant_name: `${bookingForm.value.firstName} ${bookingForm.value.lastName}`.trim(),
         tenant_phone: bookingForm.value.phone.trim(),
         tenant_email: bookingForm.value.email?.trim() || null,
         intended_business: bookingForm.value.business,
-        visit_date: bookingForm.value.visitDate,
-        visit_time_slot: bookingForm.value.visitSlot
+        visit_date: isQueue ? undefined : bookingForm.value.visitDate,
+        visit_time_slot: isQueue ? undefined : bookingForm.value.visitSlot,
+        is_queue: isQueue
       })
 
       if (res?.booking_number) {
@@ -2513,8 +2512,14 @@ onMounted(async () => {
       const markets = await get('/markets')
       const found = markets.find((m: any) => String(m.id) === String(marketQuery) || m.slug === marketQuery)
       if (found) {
+        currentMarket.value = found
         currentMarketName.value = found.name
         currentMarketDistrict.value = found.district
+        // ตรวจสอบว่าตลาดนี้เต็มหรือไม่ (status === 'full' หรือ available_stalls === 0)
+        if (found.status === 'full' || Number(found.available_stalls) === 0) {
+          isMarketFull.value = true
+          selectedProject.value.stallsAvailable = 0
+        }
       }
     } catch (e) {
       console.warn('Could not fetch market:', e)
@@ -2531,8 +2536,13 @@ onMounted(async () => {
   generateStallsForProject(selectedProject.value, realStall20a)
   selectedStall.value = null
 
-  // If a specific stall was requested via URL query (?stall=20A), select it
-  if (route.query.stall) {
+  // If market is full, alert user gently on entry
+  if (isMarketFull.value) {
+    showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มทุกแผงแล้ว ขณะนี้ยังไม่สามารถทำรายการจองได้ (เข้าชมผังแผงได้เท่านั้น)`, 'ตลาดนี้เต็มแล้ว')
+  }
+
+  // If a specific stall was requested via URL query (?stall=20A), select it (only if market not full)
+  if (route.query.stall && !isMarketFull.value) {
     const targetCode = String(route.query.stall).trim()
     const found = upperHallStalls.value.find(s => s.code === targetCode) || lowerHallStalls.value.find(s => s.code === targetCode)
     if (found && found.status === 'available') {
@@ -3400,5 +3410,130 @@ onUnmounted(() => {
 
 .selected-stall-drawer::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
+}
+
+/* Responsive adjustments for Booking Canvas & Drawers */
+@media (max-width: 992px) {
+  .stall-view-top-bar {
+    position: static !important;
+    right: auto !important;
+    left: auto !important;
+    padding: 12px 14px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .zone-filter-bar {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .selected-stall-drawer {
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-height: 80vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    z-index: 99 !important;
+    box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.25) !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  .map-style-switcher {
+    bottom: 10px !important;
+    left: 10px !important;
+    padding: 4px 6px !important;
+  }
+
+  .style-thumb {
+    padding: 2px 6px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .thumb-preview {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .view-mode-tabs-container {
+    width: 100%;
+    display: flex;
+  }
+
+  .view-mode-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 8px !important;
+    font-size: 0.76rem !important;
+  }
+}
+
+/* แจ้งเตือนตลาดเต็ม */
+.market-full-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.05);
+}
+
+.market-full-banner-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.market-full-banner-content {
+  flex: 1;
+}
+
+.market-full-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #991b1b;
+  margin-bottom: 4px;
+}
+
+.market-full-desc {
+  font-size: 0.84rem;
+  color: #b91c1c;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.stall-box-item.is-market-full {
+  cursor: not-allowed !important;
+  opacity: 0.75;
+}
+
+.stall-box-item.is-market-full:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.is-full-guide {
+  border-color: #fca5a5 !important;
+  background: rgba(254, 242, 242, 0.95) !important;
 }
 </style>

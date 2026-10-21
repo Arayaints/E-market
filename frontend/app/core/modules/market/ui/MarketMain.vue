@@ -1,9 +1,9 @@
 <template>
   <div class="homepage-container">
     <!-- Top Header Navigation Bar (Clean & Streamlined) -->
-    <AppHeader subtitle="ระบบบริการจองแผงเช่า 12 ตลาด สำนักงานตลาดกรุงเทพมหานคร" />
+    <AppHeader />
 
-    <div class="content-body" style="max-width: 1260px; margin: 0 auto; padding: 28px 24px 80px;">
+    <div class="content-body">
       <!-- ============================================================== -->
       <!-- 1. TOP HERO PROMOTIONAL BANNER (Modern High-Impact Banner)     -->
       <!-- ============================================================== -->
@@ -219,7 +219,7 @@
             <span>สำนักงานตลาดกรุงเทพมหานคร</span>
           </div>
           <h2 class="directory-big-heading">
-            12 <span class="heading-underline">ตลาดในสังกัด กทม.</span>
+            <span class="heading-underline">12 ตลาดในสังกัด กทม.</span>
           </h2>
           <p class="directory-sub-caption">
             ค้นหาข้อมูล ทำเล และยื่นขอจองแผงค้าออนไลน์ได้ทันที พร้อมระบบผังแผงดิจิทัล 3 มิติ และสัญญามาตรฐาน
@@ -244,9 +244,9 @@
               type="button"
               class="search-clear-btn"
               @click="clearSearch"
-              title="ล้างคำค้นหา"
+              aria-label="ล้างคำค้นหา"
             >
-              ✕
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
         </div>
@@ -314,116 +314,158 @@
           </div>
         </div>
 
-        <!-- Interactive GIS Map Toggle Button -->
-        <div class="map-view-toggle-bar">
-          <button
-            class="btn btn-sm"
-            :class="showGisMap ? 'btn-primary' : 'btn-outline'"
-            @click="showGisMap = !showGisMap"
-          >
-            <span style="display: inline-flex; align-items: center; gap: 7px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-              <span>{{ showGisMap ? 'ซ่อนแผนที่ GIS กทม.' : 'เปิดดูแผนที่ GIS กทม. (ปักหมุดทั้ง 12 ตลาด)' }}</span>
-            </span>
-          </button>
+        <!-- Segmented View Mode Toggle: Grid Cards vs Interactive GIS Map -->
+        <div class="market-view-switcher-bar">
+          <div class="segmented-view-control">
+            <button
+              class="svc-tab-btn"
+              :class="{ active: viewMode === 'grid' }"
+              @click="viewMode = 'grid'"
+              title="ดูรายการตลาดทั้งหมด"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span>รายการตลาด</span>
+              <span class="svc-counter">{{ filteredMarkets.length }}</span>
+            </button>
+
+            <button
+              class="svc-tab-btn"
+              :class="{ active: viewMode === 'map' }"
+              @click="viewMode = 'map'"
+              title="ดูแผนที่ตำแหน่งตลาดทั้งหมด"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                <line x1="8" y1="2" x2="8" y2="18"></line>
+                <line x1="16" y1="6" x2="16" y2="22"></line>
+              </svg>
+              <span>แผนที่ตลาด</span>
+            </button>
+          </div>
         </div>
 
-        <!-- GIS Map Section (When Opened) -->
-        <div v-if="showGisMap" style="margin-bottom: 36px;">
+        <!-- VIEW MODE 1: Interactive GIS Map Section (When Map is Selected - No Cards Below) -->
+        <div v-if="viewMode === 'map'" class="market-gis-view-container" style="margin-bottom: 36px;">
           <BangkokMarketsGisMap
             :markets="filteredMarkets"
             @selectMarket="onSelectMarketOnMap"
           />
         </div>
 
-        <!-- ============================================================ -->
-        <!-- 12 MARKET CARDS GRID (3 Columns x 4 Rows)                    -->
-        <!-- ============================================================ -->
-        <div v-if="loadingMarkets" style="text-align: center; padding: 60px;">
-          <div style="font-size: 1rem; color: #64748b; display: inline-flex; align-items: center; gap: 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span>กำลังโหลดข้อมูลตลาด กทม. ...</span>
+        <!-- VIEW MODE 2: 12 MARKET CARDS GRID (When Grid is Selected) -->
+        <template v-else-if="viewMode === 'grid'">
+          <div v-if="loadingMarkets" style="text-align: center; padding: 60px;">
+            <div style="font-size: 1rem; color: #64748b; display: inline-flex; align-items: center; gap: 8px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>กำลังโหลดข้อมูลตลาด กทม. ...</span>
+            </div>
           </div>
-        </div>
 
-        <div v-else class="market-cards-3col-grid">
-          <div
-            v-for="m in filteredMarkets"
-            :key="m.id"
-            class="market-box-card card"
-          >
-            <!-- Card Top Image with Rounded Corners & Green "เปิดจอง" Badge -->
-            <NuxtLink :to="`/stalls?market=${m.id}`" class="market-img-container" title="คลิกเพื่อดูภาพแผนผังและข้อมูลตลาด">
-              <img :src="m.image_url" :alt="m.name" class="market-box-img" />
-              <div class="market-img-gradient"></div>
-              <!-- Status Badge (Top-Right Pill) -->
-              <div class="market-avail-badge" :class="m.status === 'open' && m.available_stalls > 0 ? 'badge-green' : 'badge-red'">
-                <span class="badge-dot-live"></span>
-                <span>{{ m.status === 'open' && m.available_stalls > 0 ? 'เปิดจอง' : 'เต็มแล้ว' }}</span>
-              </div>
-              <!-- Top Left Market Code Pill -->
-              <div class="market-code-pill">
-                <span>{{ m.slug ? m.slug.toUpperCase() : `MKT-${m.id}` }}</span>
-              </div>
-            </NuxtLink>
-
-            <!-- Card Body Content -->
-            <div class="market-box-body">
-              <!-- Name & Tag Pill -->
-              <div class="market-header-row">
-                <NuxtLink :to="`/stalls?market=${m.id}`" style="text-decoration: none;">
-                  <h3 class="market-card-name">{{ m.name }}</h3>
-                </NuxtLink>
-                <span class="market-tag-pill-blue">
-                  {{ m.tags?.[0] || 'ตลาดมาตรฐาน กทม.' }}
-                </span>
-              </div>
-
-              <!-- Address with Pin Icon -->
-              <div class="market-card-address">
-                <span class="pin-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                </span>
-                <span>{{ m.address }}</span>
-              </div>
-
-              <!-- Occupancy Rate Progress Bar -->
-              <div class="market-occupancy-row">
-                <div class="occupancy-info">
-                  <span class="occupancy-label">แผงว่างคงเหลือ:</span>
-                  <strong class="occupancy-val" :class="m.available_stalls > 0 ? 'text-emerald' : 'text-slate'">
-                    {{ m.available_stalls || 0 }} แผง
-                  </strong>
+          <div v-else class="market-cards-3col-grid">
+            <div
+              v-for="m in filteredMarkets"
+              :key="m.id"
+              class="market-box-card"
+            >
+              <!-- Card Top Image with Rounded Corners & Green "ว่าง" Badge -->
+              <NuxtLink :to="`/stalls?market=${m.id}`" class="market-img-container" title="คลิกเพื่อดูภาพแผนผังและข้อมูลตลาด">
+                <img :src="m.image_url" :alt="m.name" class="market-box-img" />
+                <div class="market-img-gradient"></div>
+                <!-- Status Badge (Top-Right Pill: "● ว่าง" or "● เต็ม") -->
+                <div class="market-avail-badge" :class="m.status === 'open' && m.available_stalls > 0 ? 'badge-green' : 'badge-red'">
+                  <span class="badge-dot-live"></span>
+                  <span>{{ m.status === 'open' && m.available_stalls > 0 ? 'ว่าง' : 'เต็ม' }}</span>
                 </div>
-                <div class="occupancy-progress-bar">
-                  <div
-                    class="occupancy-progress-fill"
-                    :style="{ width: `${Math.min(100, Math.round(((m.total_stalls - (m.available_stalls || 0)) / (m.total_stalls || 100)) * 100))}%` }"
-                  ></div>
+              </NuxtLink>
+
+              <!-- Card Body Content -->
+              <div class="market-box-body">
+                <!-- Market Title & Views Pill Row (No extra tag) -->
+                <div class="market-title-views-row">
+                  <div class="market-title-col">
+                    <NuxtLink :to="`/stalls?market=${m.id}`" class="market-title-link">
+                      <h3 class="market-card-name">{{ m.name }}</h3>
+                    </NuxtLink>
+                  </div>
+                  <!-- ซ่อนไว้ก่อน: จำนวนผู้เข้าชมตลาด (Views Pill)
+                  <div class="market-views-pill" title="จำนวนผู้เข้าชมตลาดนี้">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>{{ getMarketViews(m.id) }}</span>
+                  </div>
+                  -->
                 </div>
-              </div>
 
-              <!-- Starting Price -->
-              <div class="market-price-tag">
-                <span class="price-prefix">เริ่มต้น ฿</span>
-                <span class="price-number">{{ m.starting_price_daily || 500 }}</span>
-                <span class="price-suffix">/ วัน</span>
-              </div>
+                <!-- Address with Map Pin Icon -->
+                <div class="market-card-address" :title="m.address">
+                  <span class="pin-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                  </span>
+                  <span class="address-text">{{ m.address }}</span>
+                </div>
 
-              <!-- Action Button: Full-Width Primary "จองแผงเช่า" -->
-              <div class="market-card-actions">
-                <NuxtLink
-                  :to="m.slug === 'chatuchak' ? '/stalls/book?market=chatuchak' : `/stalls/book?market=${m.id}`"
-                  class="btn btn-primary btn-book-stall"
-                  title="เข้าสู่ขั้นตอนการจองแผงเช่าทันที"
-                >
-                  <span>จองแผงเช่า &amp; ดูผังแผงค้า</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </NuxtLink>
+                <!-- Stall Availability Box (มุมมองแผงว่าง) -->
+                <div class="market-occupancy-row">
+                  <div class="occupancy-info">
+                    <div class="occupancy-title-col">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                      <span class="occupancy-label">แผงว่างพร้อมให้เช่า</span>
+                    </div>
+                    <span class="occupancy-count">
+                      <template v-if="getAvailableCount(m) > 0">
+                        <strong :class="getAvailabilityTextClass(m)">{{ getAvailableCount(m).toLocaleString() }}</strong>
+                        <span class="occupancy-total">/ {{ (m.total_stalls || 0).toLocaleString() }} แผง</span>
+                      </template>
+                      <strong v-else class="avail-text-full">เต็ม</strong>
+                    </span>
+                  </div>
+
+                  <!-- Progress Bar showing availability -->
+                  <div class="occupancy-progress-bar" :title="`ว่าง ${getAvailabilityRate(m)}% จากทั้งหมด ${(m.total_stalls || 0).toLocaleString()} แผง`">
+                    <div
+                      class="occupancy-progress-fill"
+                      :class="getAvailabilityBarColor(m)"
+                      :style="{ width: `${getAvailabilityBarWidth(m)}%` }"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Starting Price -->
+                <div class="market-price-row">
+                  <span class="price-prefix-text">เริ่มต้น</span>
+                  <span class="price-currency">฿</span>
+                  <span class="price-big-number">{{ getStartingPrice(m) }}</span>
+                  <span class="price-suffix-text">/ {{ getPriceUnit(m) }}</span>
+                </div>
+
+                <!-- Action Button: Full-Width Primary "จองแผงเช่า →" -->
+                <div class="market-card-actions">
+                  <NuxtLink
+                    :to="m.slug === 'chatuchak' ? '/stalls/book?market=chatuchak' : `/stalls/book?market=${m.id}`"
+                    class="btn-book-action-bar"
+                    title="เข้าสู่ขั้นตอนการจองแผงเช่าทันที"
+                  >
+                    <span>จองแผงเช่า</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </NuxtLink>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
 
         <!-- Empty Results Message -->
         <div v-if="filteredMarkets.length === 0 && !loadingMarkets" class="card empty-search-card">
@@ -451,7 +493,8 @@ const { get } = useApi()
 // Search & Filter State
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
-const showGisMap = ref(false)
+const viewMode = ref<'grid' | 'map'>('grid')
+const showGisMap = computed(() => viewMode.value === 'map')
 const currentHeroSlide = ref(1)
 const currentEventsPage = ref(2)
 
@@ -529,6 +572,66 @@ const onSelectMarketOnMap = (market: any) => {
   // Option to focus market
 }
 
+const cleanTag = (tag?: string) => {
+  if (!tag) return ''
+  return tag.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
+}
+
+const getAvailableCount = (m: any) => {
+  const total = m.total_stalls || 0
+  return Math.max(0, Math.min(total, m.available_stalls ?? 0))
+}
+
+const getAvailabilityRate = (m: any) => {
+  const total = m.total_stalls || 0
+  if (!total) return 0
+  const rate = (getAvailableCount(m) / total) * 100
+  // ถ้ายังมีแผงว่างแต่ต่ำกว่า 1% ให้แสดงอย่างน้อย 1% เพื่อไม่ให้ดูเหมือนเต็ม
+  return getAvailableCount(m) > 0 ? Math.max(1, Math.round(rate)) : 0
+}
+
+// ความกว้างแถบ = สัดส่วนแผงว่างจริง (เช่น 8/180 ≈ 4.4%)
+// กรณีเต็ม ให้แถบเต็มสีแดงเพื่อสื่อสถานะ "เต็ม"
+const getAvailabilityBarWidth = (m: any) => {
+  const total = m.total_stalls || 0
+  const avail = getAvailableCount(m)
+  if (!total || avail === 0) return 100
+  return Math.max(2, (avail / total) * 100)
+}
+
+// ระดับความใกล้เต็ม: ว่าง >= 50% เขียว | 20-49% เหลือง | 1-19% ส้ม | 0 แดง
+const getAvailabilityLevel = (m: any) => {
+  const total = m.total_stalls || 0
+  const avail = getAvailableCount(m)
+  if (!total || avail === 0) return 'full'
+  const pct = (avail / total) * 100
+  if (pct >= 50) return 'ok'
+  if (pct >= 20) return 'mid'
+  return 'low'
+}
+
+const getAvailabilityBarColor = (m: any) => `bar-${getAvailabilityLevel(m)}`
+
+const getAvailabilityTextClass = (m: any) => `avail-text-${getAvailabilityLevel(m)}`
+
+const getMarketViews = (marketId: number | string) => {
+  const seed = typeof marketId === 'number' ? marketId : parseInt(String(marketId)) || 1
+  const views = [342, 480, 215, 620, 390, 540, 290, 430, 310, 670, 450, 380]
+  return views[(seed - 1) % views.length] || 342
+}
+
+const getStartingPrice = (m: any) => {
+  if (m.starting_price_monthly) {
+    return Number(m.starting_price_monthly).toLocaleString()
+  }
+  if (m.starting_price_daily) {
+    return Number(m.starting_price_daily).toLocaleString()
+  }
+  return '500'
+}
+
+const getPriceUnit = (m: any) => (m.starting_price_monthly || !m.starting_price_daily ? 'เดือน' : 'วัน')
+
 onMounted(() => {
   loadData()
 })
@@ -545,7 +648,7 @@ onMounted(() => {
 /* 1. HERO PROMOTIONAL BANNER                                     */
 /* ============================================================== */
 .hero-banner-wrapper {
-  margin-bottom: 38px;
+  margin-bottom: 64px;
 }
 
 .hero-banner-card {
@@ -759,7 +862,7 @@ onMounted(() => {
 /* 2. SECTION: อีเวนต์ตลาด                                        */
 /* ============================================================== */
 .events-card-wrapper {
-  margin-bottom: 46px;
+  margin-bottom: 80px;
   padding: 30px;
   background: #ffffff;
   border-radius: var(--radius-2xl);
@@ -998,6 +1101,17 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
+/* ระยะห่างระหว่าง 3 ส่วนหลัก (Banner / อีเวนต์ / ตลาด) บนจอเล็ก */
+@media (max-width: 768px) {
+  .hero-banner-wrapper {
+    margin-bottom: 40px;
+  }
+
+  .events-card-wrapper {
+    margin-bottom: 52px;
+  }
+}
+
 .directory-header-pill {
   display: inline-block;
   background: #eff6ff;
@@ -1022,12 +1136,14 @@ onMounted(() => {
   display: inline-block;
 }
 
+/* ให้เส้นใต้เหมือน .title-blue-bar ของหัวข้ออีเวนต์ (44x4px, ห่าง 6px) แต่จัดกึ่งกลาง */
 .heading-underline::after {
   content: '';
   position: absolute;
-  bottom: 2px;
-  left: 0;
-  right: 0;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
   height: 4px;
   background: var(--primary);
   border-radius: var(--radius-full);
@@ -1036,7 +1152,7 @@ onMounted(() => {
 .directory-sub-caption {
   font-size: 0.95rem;
   color: #64748b;
-  margin-top: 6px;
+  margin-top: 24px;
   max-width: 620px;
   margin-left: auto;
   margin-right: auto;
@@ -1192,10 +1308,74 @@ onMounted(() => {
   font-weight: 800;
 }
 
+.market-view-switcher-bar,
 .map-view-toggle-bar {
   display: flex;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+}
+
+.segmented-view-control {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  gap: 4px;
+}
+
+.svc-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.svc-tab-btn:hover:not(.active) {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.svc-tab-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.svc-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 12px;
+  background: #e2e8f0;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.svc-tab-btn.active .svc-counter {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.market-gis-view-container {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 /* ============================================================== */
@@ -1208,20 +1388,19 @@ onMounted(() => {
 }
 
 .market-box-card {
-  padding: 0;
-  overflow: hidden;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--border-card);
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid #eef2f6;
   background: #ffffff;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
 
 .market-box-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 32px -4px rgba(15, 23, 42, 0.1), 0 4px 12px rgba(15, 23, 42, 0.04);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
   border-color: #cbd5e1;
 }
 
@@ -1231,6 +1410,8 @@ onMounted(() => {
   aspect-ratio: 16 / 10;
   overflow: hidden;
   background: #f1f5f9;
+  border-radius: 14px;
+  display: block;
 }
 
 .market-box-img {
@@ -1242,208 +1423,296 @@ onMounted(() => {
 }
 
 .market-box-card:hover .market-box-img {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .market-img-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, transparent 35%, transparent 70%, rgba(0, 0, 0, 0.18) 100%);
 }
 
 .market-avail-badge {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 0.74rem;
-  font-weight: 800;
+  font-size: 0.85rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .badge-green {
-  background: rgba(16, 185, 129, 0.92);
+  background: #10b981;
   color: #ffffff;
 }
 
 .badge-red {
-  background: rgba(239, 68, 68, 0.92);
+  background: #ef4444;
   color: #ffffff;
 }
 
 .badge-dot-live {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ffffff;
-  animation: pulse-dot 1.8s infinite;
-}
-
-.market-code-pill {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #ffffff;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
-  letter-spacing: 0.05em;
 }
 
 .market-box-body {
-  padding: 20px 22px;
+  padding: 16px 4px 4px 4px;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
-.market-header-row {
+.market-title-views-row {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.market-title-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.market-title-link {
+  text-decoration: none;
 }
 
 .market-card-name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.01em;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
   line-height: 1.3;
   transition: color 0.15s ease;
 }
 
 .market-card-name:hover {
-  color: var(--primary);
+  color: #2563eb;
 }
 
-.market-tag-pill-blue {
+.market-views-pill {
   background: #eff6ff;
   color: #2563eb;
-  border: 1px solid #dbeafe;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 12px;
-  white-space: nowrap;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .market-card-address {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   color: #64748b;
+  line-height: 1.5;
   margin-bottom: 14px;
+  min-height: calc(0.84rem * 1.5 * 2);
+}
+
+.address-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .pin-icon {
   display: inline-flex;
   align-items: center;
+  color: #94a3b8;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .market-occupancy-row {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 14px;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
 }
 
 .occupancy-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.occupancy-label {
+.occupancy-title-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
   color: #64748b;
   font-weight: 600;
 }
 
-.occupancy-val {
-  font-weight: 800;
+.occupancy-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.78rem;
 }
 
-.text-emerald {
-  color: #059669;
+.occupancy-count strong {
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
-.text-slate {
+.occupancy-total {
   color: #94a3b8;
+  font-weight: 500;
+}
+
+.avail-text-ok {
+  color: #15803d;
+}
+
+.avail-text-mid {
+  color: #ca8a04;
+}
+
+.avail-text-low {
+  color: #ea580c;
+}
+
+.avail-text-full {
+  color: #dc2626;
 }
 
 .occupancy-progress-bar {
   width: 100%;
-  height: 5px;
+  height: 6px;
   background: #e2e8f0;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .occupancy-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   transition: width 0.4s ease;
 }
 
-.market-price-tag {
+.occupancy-progress-fill.bar-ok {
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+}
+
+.occupancy-progress-fill.bar-mid {
+  background: linear-gradient(90deg, #facc15 0%, #eab308 100%);
+}
+
+.occupancy-progress-fill.bar-low {
+  background: linear-gradient(90deg, #fb923c 0%, #ea580c 100%);
+}
+
+.occupancy-progress-fill.bar-full {
+  background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+}
+
+.occupancy-meta-row {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.price-prefix {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.price-number {
-  font-size: 1.55rem;
-  font-weight: 900;
-  color: #1e3a8a;
-  font-family: var(--font-display);
-}
-
-.price-suffix {
-  font-size: 0.82rem;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
   color: #94a3b8;
+  font-weight: 500;
+}
+
+.meta-occupied-text {
+  color: #64748b;
   font-weight: 600;
+}
+
+.meta-total-text {
+  color: #94a3b8;
+}
+
+.market-price-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 2px;
+  margin-bottom: 14px;
+  margin-top: auto;
+}
+
+.price-prefix-text {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.price-currency {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-right: 1px;
+}
+
+.price-big-number {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.price-suffix-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 4px;
 }
 
 .market-card-actions {
   margin-top: auto;
 }
 
-.btn-book-stall {
+.btn-book-action-bar {
   width: 100%;
-  padding: 11px 16px;
+  background: #2563eb;
+  color: #ffffff;
   border-radius: 12px;
-  font-weight: 700;
+  padding: 12px 18px;
+  font-weight: 600;
   font-size: 0.92rem;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+  transition: all 0.2s ease;
 }
 
-.btn-arrow-icon {
+.btn-book-action-bar:hover {
+  background: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-book-action-bar .btn-arrow-icon {
   transition: transform 0.2s ease;
+}
+
+.btn-book-action-bar:hover .btn-arrow-icon {
+  transform: translateX(4px);
 }
 
 .btn-book-stall:hover .btn-arrow-icon {
