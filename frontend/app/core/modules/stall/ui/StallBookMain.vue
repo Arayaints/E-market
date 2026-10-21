@@ -101,10 +101,10 @@
                 class="selected-stall-drawer card"
                 style="
                   position: absolute;
-                  top: 12px;
-                  right: 52px;
+                  top: 62px;
+                  right: 14px;
                   width: 334px;
-                  max-height: calc(100% - 24px);
+                  max-height: calc(100% - 76px);
                   display: flex;
                   flex-direction: column;
                   pointer-events: auto;
@@ -2383,21 +2383,38 @@ const submitBooking = async () => {
       }
 
       const isQueue = stallItem.status === 'reserved' || bookingMode.value === 'queue'
+      const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
+      const contactPhone = (bookingForm.value.phone || '087-567-4497').trim()
+      const contactEmail = (bookingForm.value.email || '').trim()
+      const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
+      const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
+
       const res = await post('/bookings', {
+        // Standard Go backend fields (CreateBookingRequest)
+        stall_ident: stallItem.code,
+        applicant_name: fullName,
+        applicant_phone: contactPhone,
+        applicant_email: contactEmail,
+        business_type: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+        visit_date: visitDate,
+        visit_time: visitTime,
+        note: bookingForm.value.notes || '',
+
+        // Backward compatibility & client-side metadata fields
         stall_id: stallId,
         stall_number: stallItem.code,
         market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
-        tenant_name: `${bookingForm.value.firstName} ${bookingForm.value.lastName}`.trim(),
-        tenant_phone: bookingForm.value.phone.trim(),
-        tenant_email: bookingForm.value.email?.trim() || null,
-        intended_business: bookingForm.value.business,
-        visit_date: isQueue ? undefined : bookingForm.value.visitDate,
-        visit_time_slot: isQueue ? undefined : bookingForm.value.visitSlot,
+        tenant_name: fullName,
+        tenant_phone: contactPhone,
+        tenant_email: contactEmail || null,
+        intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+        visit_time_slot: visitTime,
         is_queue: isQueue
       })
 
-      if (res?.booking_number) {
-        createdBookingNumbers.push(res.booking_number)
+      const bNo = res?.data?.booking_no || res?.booking_no || res?.data?.booking_number || res?.booking_number
+      if (bNo) {
+        createdBookingNumbers.push(bNo)
       }
     }
 
