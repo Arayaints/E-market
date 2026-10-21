@@ -86,6 +86,57 @@
                   <span class="kpi-unit-pill">รายการ</span>
                 </div>
               </div>
+
+              <!-- Info Tooltip Button (มุมบนขวาของการ์ด) -->
+              <div
+                class="kpi-info-wrapper"
+                @mouseenter="showTenantPendingTooltip = true"
+                @mouseleave="showTenantPendingTooltip = false"
+                @click.stop="toggleTenantPendingTooltip"
+              >
+                <button
+                  type="button"
+                  class="kpi-info-btn"
+                  aria-label="ดูรายละเอียดสถานะในกลุ่มรอดำเนินการ"
+                  title="ดูรายละเอียดสถานะย่อย"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+
+                <!-- Rich Tooltip Popover -->
+                <transition name="fade-slide">
+                  <div v-if="showTenantPendingTooltip" class="kpi-info-popover" @click.stop>
+                    <div class="kpi-popover-header">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                      <span>สถานะในกลุ่มรอดำเนินการ ({{ countPending }})</span>
+                    </div>
+                    <div class="kpi-popover-body">
+                      <div class="kpi-popover-item" :class="{ 'is-selected': tenantSubFilter === 'pending_approval' }" @click="setTenantSubFilter('pending_approval')">
+                        <span class="kpi-status-dot amber"></span>
+                        <span class="kpi-status-name">รอเจ้าหน้าที่อนุมัติ</span>
+                        <span class="kpi-status-val">{{ tenantCountPendingApproval }}</span>
+                      </div>
+                      <div class="kpi-popover-item" :class="{ 'is-selected': tenantSubFilter === 'approved' }" @click="setTenantSubFilter('approved')">
+                        <span class="kpi-status-dot green"></span>
+                        <span class="kpi-status-name">นัดหมายสำเร็จ</span>
+                        <span class="kpi-status-val">{{ tenantCountApproved }}</span>
+                      </div>
+                      <div class="kpi-popover-item" :class="{ 'is-selected': tenantSubFilter === 'interested' }" @click="setTenantSubFilter('interested')">
+                        <span class="kpi-status-dot blue"></span>
+                        <span class="kpi-status-name">รอผู้เช่ายื่นคำร้อง</span>
+                        <span class="kpi-status-val">{{ tenantCountInterested }}</span>
+                      </div>
+                    </div>
+                    <div v-if="tenantSubFilter !== 'all'" class="kpi-popover-reset" @click="setTenantSubFilter('all')">
+                      <span>แสดงทั้งหมดในรอดำเนินการ</span>
+                    </div>
+                  </div>
+                </transition>
+              </div>
             </div>
 
             <!-- 3. เสร็จสิ้น -->
@@ -129,6 +180,47 @@
             </div>
           </div>
 
+          <!-- Tenant Sub-filters when "รอดำเนินการ" is Active -->
+          <transition name="fade-slide">
+            <div v-if="tenantStatusTab === 'pending'" class="tenant-subfilter-bar">
+              <button
+                type="button"
+                class="subfilter-chip"
+                :class="{ active: tenantSubFilter === 'all' }"
+                @click="tenantSubFilter = 'all'"
+              >
+                ทั้งหมด ({{ countPending }})
+              </button>
+              <button
+                type="button"
+                class="subfilter-chip chip-amber"
+                :class="{ active: tenantSubFilter === 'pending_approval' }"
+                @click="tenantSubFilter = 'pending_approval'"
+              >
+                <span class="dot-amber"></span>
+                รอเจ้าหน้าที่อนุมัติ ({{ tenantCountPendingApproval }})
+              </button>
+              <button
+                type="button"
+                class="subfilter-chip chip-green"
+                :class="{ active: tenantSubFilter === 'approved' }"
+                @click="tenantSubFilter = 'approved'"
+              >
+                <span class="dot-green"></span>
+                นัดหมายสำเร็จ ({{ tenantCountApproved }})
+              </button>
+              <button
+                type="button"
+                class="subfilter-chip chip-blue"
+                :class="{ active: tenantSubFilter === 'interested' }"
+                @click="tenantSubFilter = 'interested'"
+              >
+                <span class="dot-blue"></span>
+                รอผู้เช่ายื่นคำร้อง ({{ tenantCountInterested }})
+              </button>
+            </div>
+          </transition>
+
           <!-- Loading State -->
           <div v-if="loading" class="loading-state-box">
             <svg class="spin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -140,12 +232,68 @@
             <div class="empty-icon">
               <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
-            <div class="empty-title">ไม่พบรายการจองตามเงื่อนไขที่ค้นหา</div>
-            <div class="empty-desc">ลองเปลี่ยนคำค้นหา หรือเลือกแท็บ "ทั้งหมด" เพื่อดูรายการที่มีอยู่</div>
-            <NuxtLink to="/" class="btn btn-primary btn-sm" style="margin-top: 14px; display: inline-flex; align-items: center; gap: 6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <span>ไปยังหน้าเลือกตลาดเพื่อจองแผง</span>
-            </NuxtLink>
+
+            <!-- Case A: Current tab has 0, but user has bookings in other tabs -->
+            <template v-if="countAll > 0 && tenantStatusTab !== 'all'">
+              <div class="empty-title">ไม่มีรายการในแท็บ "{{ getTenantTabName(tenantStatusTab) }}"</div>
+              <div class="empty-desc">
+                คุณไม่มีรายการในกลุ่มนี้ แต่มีรายการจองในแท็บอื่นทั้งหมด <strong>{{ countAll }}</strong> รายการ
+                <span v-if="countCompleted > 0"> (เสร็จสิ้น {{ countCompleted }} รายการ)</span>
+                <span v-if="countCancelled > 0"> (ยกเลิก {{ countCancelled }} รายการ)</span>
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  @click="tenantStatusTab = 'all'; tenantSubFilter = 'all'"
+                  style="display: inline-flex; align-items: center; gap: 6px;"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                  <span>ดูรายการทั้งหมด ({{ countAll }} รายการ)</span>
+                </button>
+                <NuxtLink to="/" class="btn btn-outline-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span>จองแผงเพิ่ม</span>
+                </NuxtLink>
+              </div>
+            </template>
+
+            <!-- Case B: Sub-filter in pending has 0 items -->
+            <template v-else-if="tenantStatusTab === 'pending' && tenantSubFilter !== 'all'">
+              <div class="empty-title">ไม่มีรายการในขั้นตอนนี้</div>
+              <div class="empty-desc">ในกลุ่มรอดำเนินการยังมีรายการในขั้นตอนอื่น {{ countPending }} รายการ</div>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                @click="tenantSubFilter = 'all'"
+                style="margin-top: 14px; display: inline-flex; align-items: center; gap: 6px;"
+              >
+                <span>แสดงทุกขั้นตอนในรอดำเนินการ ({{ countPending }} รายการ)</span>
+              </button>
+            </template>
+
+            <!-- Case C: Filtered by search query -->
+            <template v-else-if="tenantSearchQuery">
+              <div class="empty-title">ไม่พบรายการที่ตรงกับ "{{ tenantSearchQuery }}"</div>
+              <div class="empty-desc">ลองตรวจสอบคำค้นหา หรือล้างคำค้นหาเพื่อดูรายการทั้งหมด</div>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                @click="tenantSearchQuery = ''; currentPage = 1"
+                style="margin-top: 14px;"
+              >
+                ล้างคำค้นหา
+              </button>
+            </template>
+
+            <!-- Case D: Truly zero bookings in system -->
+            <template v-else>
+              <div class="empty-title">ยังไม่มีประวัติการจองแผงค้า</div>
+              <div class="empty-desc">คุณยังไม่มีรายการจองแผงค้าในระบบ สามารถเลือกตลาดและยื่นขอนัดดูแผงได้ทันที</div>
+              <NuxtLink to="/" class="btn btn-primary btn-sm" style="margin-top: 14px; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>ไปยังหน้าเลือกตลาดเพื่อจองแผง</span>
+              </NuxtLink>
+            </template>
           </div>
 
           <!-- Market Accordion Groups List (ผู้เช่าเห็นหลายตลาดตามจองจริง) -->
@@ -364,10 +512,10 @@
                       <div class="footer-right-actions">
                         <!-- ปุ่มยกเลิก / สละสิทธิ์ (Secondary Ghost Danger) -->
                         <button
-                          v-if="b.status === 'approved' || b.status === 'pending_approval' || b.status === 'pending'"
+                          v-if="['approved', 'pending_approval', 'pending', 'waiting_queue', 'pending_slot'].includes(b.status)"
                           class="btn-action-danger-ghost"
-                          @click="handleCancelBooking(b, 'ผู้เช่าขอยกเลิกการจอง')"
-                          title="ยกเลิกนัดหมายนี้"
+                          @click="handleCancelBooking(b, b.status === 'waiting_queue' ? 'ผู้เช่ายกเลิกการต่อคิว' : 'ผู้เช่าขอยกเลิกการจอง')"
+                          title="ยกเลิกรายการนี้"
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                           <span>ยกเลิก</span>
@@ -658,8 +806,40 @@
             <div class="empty-icon">
               <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
-            <div class="empty-title">ไม่พบรายการจองตามเงื่อนไขที่เลือก</div>
-            <div class="empty-desc">ลองเปลี่ยนคำค้นหา หรือเลือกแท็บ "รายการทั้งหมด" เพื่อดูรายการที่มีอยู่</div>
+
+            <template v-if="officerMarketBookings.length > 0 && officerActiveTab !== 'all'">
+              <div class="empty-title">ไม่มีรายการในแท็บ "{{ getOfficerTabName(officerActiveTab) }}"</div>
+              <div class="empty-desc">
+                ไม่มีรายการในสถานะนี้สำหรับตลาดที่เลือก แต่มีรายการในสถานะอื่นทั้งหมด <strong>{{ officerMarketBookings.length }}</strong> รายการ
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  @click="officerActiveTab = 'all'"
+                  style="display: inline-flex; align-items: center; gap: 6px;"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                  <span>ดูรายการทั้งหมดในตลาดนี้ ({{ officerMarketBookings.length }} รายการ)</span>
+                </button>
+              </div>
+            </template>
+            <template v-else-if="officerSearchQuery">
+              <div class="empty-title">ไม่พบรายการที่ตรงกับ "{{ officerSearchQuery }}"</div>
+              <div class="empty-desc">ลองตรวจสอบคำค้นหา หรือล้างคำค้นหาเพื่อดูรายการทั้งหมด</div>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                @click="officerSearchQuery = ''; officerCurrentPage = 1"
+                style="margin-top: 14px;"
+              >
+                ล้างคำค้นหา
+              </button>
+            </template>
+            <template v-else>
+              <div class="empty-title">ยังไม่มีรายการจองในตลาดนี้</div>
+              <div class="empty-desc">ยังไม่มีผู้เช่ายื่นขอนัดหมายหรือจองแผงค้าในตลาดนี้</div>
+            </template>
           </div>
 
           <!-- OFFICER VIEW MODE 1: CARDS VIEW (การ์ดแบบเดียวกับผู้เช่า เรียงลงมาโดยไม่แบ่ง Accordion) -->
@@ -885,15 +1065,15 @@
                       </button>
                     </template>
 
-                    <!-- Case 2: approved -> Mark Visited (success solid CTA), Cancel (danger outline), Details (neutral ghost) -->
+                    <!-- Case 2: approved -> Confirm Rental (success solid CTA), Cancel (danger outline), Details (neutral ghost) -->
                     <template v-else-if="b.status === 'approved'">
                       <button class="btn-success-prominent" @click="handleMarkVisited(b)">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>มาตามนัด</span>
+                        <span>ยืนยันการเช่า</span>
                       </button>
                       <button class="btn-action-danger-ghost" @click="handleOfficerCancel(b)">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        <span>ยกเลิกนัด</span>
+                        <span>ยกเลิก</span>
                       </button>
                       <button class="btn-action-ghost" @click="openBookingDetails(b)">
                         <span>ดูรายละเอียด</span>
@@ -988,11 +1168,11 @@
                         </button>
                       </template>
 
-                      <!-- Case 2: approved -> Mark Visited (success solid CTA), Cancel (danger outline), Details (neutral ghost) -->
+                      <!-- Case 2: approved -> Confirm Rental (success solid CTA), Cancel (danger outline), Details (neutral ghost) -->
                       <template v-else-if="b.status === 'approved'">
                         <button class="btn-success-prominent btn-table-act" @click="handleMarkVisited(b)">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          <span>มาตามนัด</span>
+                          <span>ยืนยันการเช่า</span>
                         </button>
                         <button class="btn-action-danger-ghost btn-table-act" @click="handleOfficerCancel(b)">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1210,7 +1390,25 @@ const officerSearchQuery = ref('')
 
 // Tenant Specific State
 const tenantStatusTab = ref<'all' | 'pending' | 'completed' | 'cancelled'>('all')
+const tenantSubFilter = ref<'all' | 'pending_approval' | 'approved' | 'interested'>('all')
+const showTenantPendingTooltip = ref(false)
 const tenantSearchQuery = ref('')
+
+const toggleTenantPendingTooltip = () => {
+  showTenantPendingTooltip.value = !showTenantPendingTooltip.value
+}
+
+const setTenantSubFilter = (val: 'all' | 'pending_approval' | 'approved' | 'interested') => {
+  tenantSubFilter.value = val
+  if (tenantStatusTab.value !== 'pending') {
+    tenantStatusTab.value = 'pending'
+  }
+}
+
+watch(tenantStatusTab, () => {
+  tenantSubFilter.value = 'all'
+  currentPage.value = 1
+})
 
 // Accordion open/collapse states for Tenant view
 const openMarkets = ref<Record<string, boolean>>({
@@ -1249,7 +1447,7 @@ const slotTime = ref('13:00 - 14:00')
 const loadBookings = async () => {
   loading.value = true
   try {
-    const res = await get('/bookings')
+    const res = await get('/bookings', { _t: Date.now() })
     bookings.value = Array.isArray(res) ? res : []
   } catch (err) {
     console.error('Failed to load bookings:', err)
@@ -1277,6 +1475,20 @@ const countPending = computed(() => {
   ).length
 })
 
+const tenantCountPendingApproval = computed(() => {
+  return bookings.value.filter(b =>
+    ['pending', 'pending_approval', 'waiting_queue', 'pending_slot'].includes(b.status)
+  ).length
+})
+
+const tenantCountApproved = computed(() => {
+  return bookings.value.filter(b => b.status === 'approved').length
+})
+
+const tenantCountInterested = computed(() => {
+  return bookings.value.filter(b => b.status === 'interested').length
+})
+
 const countCompleted = computed(() => {
   return bookings.value.filter(b =>
     ['completed', 'lease_applied'].includes(b.status)
@@ -1289,13 +1501,32 @@ const countCancelled = computed(() => {
   ).length
 })
 
+const getTenantTabName = (tab: string) => {
+  switch (tab) {
+    case 'pending': return 'รอดำเนินการ'
+    case 'completed': return 'เสร็จสิ้น'
+    case 'cancelled': return 'ยกเลิก'
+    default: return 'รายการทั้งหมด'
+  }
+}
+
 const filteredTenantBookings = computed(() => {
   let list = bookings.value
 
   if (tenantStatusTab.value === 'pending') {
-    list = list.filter(b =>
-      ['pending', 'pending_approval', 'approved', 'waiting_queue', 'pending_slot', 'interested'].includes(b.status)
-    )
+    if (tenantSubFilter.value === 'pending_approval') {
+      list = list.filter(b =>
+        ['pending', 'pending_approval', 'waiting_queue', 'pending_slot'].includes(b.status)
+      )
+    } else if (tenantSubFilter.value === 'approved') {
+      list = list.filter(b => b.status === 'approved')
+    } else if (tenantSubFilter.value === 'interested') {
+      list = list.filter(b => b.status === 'interested')
+    } else {
+      list = list.filter(b =>
+        ['pending', 'pending_approval', 'approved', 'waiting_queue', 'pending_slot', 'interested'].includes(b.status)
+      )
+    }
   } else if (tenantStatusTab.value === 'completed') {
     list = list.filter(b =>
       ['completed', 'lease_applied'].includes(b.status)
@@ -1720,24 +1951,24 @@ const confirmReject = async () => {
 
 const handleMarkVisited = async (b: any) => {
   const confirmed = await showConfirm(
-    `ยืนยันว่าคุณ ${b.tenant_name} "มาตามนัดหมาย" ดูแผง ${b.stall_number} เรียบร้อยแล้วใช่หรือไม่?\n(ระบบจะเปลี่ยนสถานะเป็น "รอผู้เช่ายื่นคำร้อง" เพื่อให้ผู้เช่ายื่นคำร้องขอเช่าได้ทันที)`,
+    `ยืนยันว่าคุณ ${b.tenant_name} ต้องการเช่าแผง ${b.stall_number} ใช่หรือไม่?\n(ระบบจะเปลี่ยนสถานะเป็น "รอผู้เช่ายื่นคำร้อง" เพื่อให้ผู้เช่ายื่นคำร้องขอเช่าได้ทันที)`,
     {
-      title: 'ยืนยันผลการเข้าชม',
+      title: 'ยืนยันการเช่า',
       type: 'info',
-      confirmText: 'ยืนยันมาตามนัด',
+      confirmText: 'ยืนยันการเช่า',
       cancelText: 'ยกเลิก'
     }
   )
   if (confirmed) {
     try {
       await post(`/bookings/${b.id}/mark-visited`, {
-        officer_notes: 'ผู้เช่ามาตามนัดหมาย เจ้าหน้าที่พาชมแผงหน้างานเรียบร้อย รอผู้เช่ายื่นคำร้อง'
+        officer_notes: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย รอผู้เช่ายื่นคำร้อง'
       })
       if (showDetailsModal.value) {
         showDetailsModal.value = false
       }
       await loadBookings()
-      await showSuccess('บันทึกผลการเข้าชมเรียบร้อยแล้ว สถานะเปลี่ยนเป็น "รอผู้เช่ายื่นคำร้อง"', 'สำเร็จ')
+      await showSuccess('ยืนยันการเช่าเรียบร้อยแล้ว สถานะเปลี่ยนเป็น "รอผู้เช่ายื่นคำร้อง"', 'สำเร็จ')
     } catch (err: any) {
       await showError(err?.data?.detail || 'เกิดข้อผิดพลาด', 'ข้อผิดพลาด')
     }
@@ -1772,8 +2003,11 @@ const handleOfficerCancel = async (b: any) => {
 }
 
 const handleCancelBooking = async (b: any, reason: string) => {
+  const isQueue = b.status === 'waiting_queue'
   const confirmed = await showConfirm(
-    `คุณต้องการยกเลิกรายการนี้หรือไม่? ${b.holding_stall ? '(หากยกเลิก แผงจะถูกส่งต่อให้คิวถัดไปทันที)' : ''}`,
+    isQueue
+      ? `คุณต้องการยกเลิกการต่อคิวแผง ${b.stall_number} (คิวที่ ${b.queue_position || 1}) หรือไม่?\n(หากยกเลิก คิวจะถูกปล่อยและไม่สามารถกู้คืนได้)`
+      : `คุณต้องการยกเลิกรายการนี้หรือไม่? ${b.holding_stall ? '(หากยกเลิก แผงจะถูกส่งต่อให้คิวถัดไปทันที)' : ''}`,
     {
       title: 'ยืนยันยกเลิกการจอง',
       type: 'warning',
@@ -1788,7 +2022,7 @@ const handleCancelBooking = async (b: any, reason: string) => {
         by_officer: currentRole.value === 'officer'
       })
       await loadBookings()
-      await showSuccess('ยกเลิกรายการจองเรียบร้อยแล้ว', 'สำเร็จ')
+      await showSuccess('ยกเลิกรายการเรียบร้อยแล้ว', 'สำเร็จ')
     } catch (err: any) {
       await showError(err?.data?.detail || 'เกิดข้อผิดพลาด', 'ข้อผิดพลาด')
     }
@@ -2134,7 +2368,7 @@ onMounted(async () => {
 }
 
 .market-accordion-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #eef2f6;
   border-radius: 12px;
   overflow: hidden;
   background: #ffffff;
@@ -2189,9 +2423,9 @@ onMounted(async () => {
 
 /* Accordion Body */
 .market-accordion-body {
-  padding: 12px 18px 18px 18px;
-  background: #fafafa;
-  border-top: 1px solid #f1f5f9;
+  padding: 14px 18px 18px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #eef2f6;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -3141,6 +3375,201 @@ onMounted(async () => {
   color: #ffffff;
   padding: 2px 7px;
   border-radius: 10px;
+}
+
+/* KPI Info Tooltip & Popover */
+.kpi-info-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.kpi-info-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.kpi-info-btn:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #2563eb;
+  transform: scale(1.08);
+}
+
+.kpi-info-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: -4px;
+  width: 250px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  padding: 12px;
+  z-index: 50;
+  cursor: default;
+  text-align: left;
+}
+
+.kpi-popover-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 8px;
+}
+
+.kpi-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kpi-popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.kpi-popover-item:hover {
+  background: #f8fafc;
+}
+
+.kpi-popover-item.is-selected {
+  background: #eff6ff;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.kpi-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.kpi-status-dot.amber { background: #f59e0b; }
+.kpi-status-dot.green { background: #10b981; }
+.kpi-status-dot.blue { background: #2563eb; }
+
+.kpi-status-name {
+  flex: 1;
+}
+
+.kpi-status-val {
+  font-weight: 700;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.kpi-popover-reset {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+  font-size: 0.74rem;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kpi-popover-reset:hover {
+  text-decoration: underline;
+}
+
+/* Sub-filter chips below ribbon */
+.tenant-subfilter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  margin-top: -12px;
+  margin-bottom: 22px;
+}
+
+.subfilter-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.subfilter-chip {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 11px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.subfilter-chip:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.subfilter-chip.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.subfilter-chip.active .dot-amber,
+.subfilter-chip.active .dot-green,
+.subfilter-chip.active .dot-blue {
+  background: #ffffff;
+}
+
+.dot-amber { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; display: inline-block; }
+.dot-green { width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block; }
+.dot-blue { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; display: inline-block; }
+
+/* Fade Slide Transition */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 /* Officer Toolbar */

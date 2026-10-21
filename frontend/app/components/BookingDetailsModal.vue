@@ -176,17 +176,17 @@
               </button>
               <button class="btn btn-success btn-sm" @click="$emit('markVisited', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>มาตามนัด</span>
+                <span>ยืนยันการเช่า</span>
               </button>
             </template>
           </template>
 
           <!-- TENANT ROLE ACTIONS -->
           <template v-else>
-            <template v-if="booking.status === 'approved' || booking.status === 'pending_approval' || booking.status === 'pending'">
+            <template v-if="['approved', 'pending_approval', 'pending', 'waiting_queue', 'pending_slot'].includes(booking.status)">
               <button class="btn btn-outline-danger btn-sm" @click="$emit('cancel', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                <span>ยกเลิกการจอง</span>
+                <span>ยกเลิก</span>
               </button>
             </template>
             <template v-else-if="booking.status === 'interested'">

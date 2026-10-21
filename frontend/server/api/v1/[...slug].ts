@@ -866,17 +866,17 @@ export default defineEventHandler(async (event) => {
       const booking = BOOKINGS_DATA.find(b => b.id === bId)
       if (booking) {
         booking.status = 'interested'
-        booking.officer_notes = body.officer_notes || 'ผู้เช่ามาตามนัดหมายดูแผงหน้างานเรียบร้อย เข้าสู่ขั้นตอนการยื่นคำร้อง'
+        booking.officer_notes = body.officer_notes || 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย เข้าสู่ขั้นตอนการยื่นคำร้อง'
         booking.timeline = booking.timeline || []
         booking.timeline.push({
-          action: 'มาตามนัดหมาย (พร้อมยื่นคำร้องขอเช่า)',
+          action: 'ยืนยันการเช่า (พร้อมยื่นคำร้องขอเช่า)',
           actor_role: 'officer',
-          actor_name: body.officer_name || 'จนท. นำชมแผง',
+          actor_name: body.officer_name || 'เจ้าหน้าที่ตลาด',
           timestamp: new Date().toISOString(),
-          note: 'เจ้าหน้าที่ยืนยันผู้เช่ามาตามนัดหมายดูแผงหน้างานเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที'
+          note: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที'
         })
       }
-      return { status: true, code: 200, message: 'บันทึกการมาตามนัดเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที', data: booking }
+      return { status: true, code: 200, message: 'ยืนยันการเช่าเรียบร้อย ผู้เช่าสามารถยื่นคำร้องขอเช่าได้ทันที', data: booking }
     }
 
     // 3.1 POST /bookings/:id/no-show (Officer records that tenant did not attend appointment)
@@ -1010,18 +1010,28 @@ export default defineEventHandler(async (event) => {
       const booking = BOOKINGS_DATA.find(b => b.id === bId)
       if (booking) {
         const wasHolding = booking.holding_stall
+        const wasQueue = booking.status === 'waiting_queue'
+        const stallNum = booking.stall_number
         booking.status = 'cancelled'
         booking.holding_stall = false
+        delete booking.queue_position
         booking.timeline = booking.timeline || []
         booking.timeline.push({
-          action: 'ยกเลิกการจอง',
+          action: wasQueue ? 'ยกเลิกการต่อคิว' : 'ยกเลิกการจอง',
           actor_role: body.by_officer ? 'officer' : 'tenant',
           actor_name: body.by_officer ? 'เจ้าหน้าที่ตลาด' : booking.tenant_name,
           timestamp: new Date().toISOString(),
-          note: body.reason || 'ยกเลิกคำขอจอง'
+          note: body.reason || (wasQueue ? 'ผู้เช่ายกเลิกการต่อคิว' : 'ยกเลิกคำขอจอง')
         })
         if (wasHolding) {
-          shiftQueueForStall(booking.stall_number)
+          shiftQueueForStall(stallNum)
+        } else if (wasQueue) {
+          // Re-index remaining queues behind this cancelled one
+          const remainingQueues = BOOKINGS_DATA.filter(b => b.stall_number === stallNum && b.status === 'waiting_queue')
+            .sort((a, b) => (a.queue_position || 99) - (b.queue_position || 99))
+          remainingQueues.forEach((q, idx) => {
+            q.queue_position = idx + 1
+          })
         }
       }
       return { status: true, code: 200, message: 'ยกเลิกรายการเรียบร้อย', data: booking }
@@ -1122,6 +1132,7 @@ export default defineEventHandler(async (event) => {
       }
 
       BOOKINGS_DATA.unshift(newBooking)
+      bookingsExplicitlyCleared = false
 
       return {
         status: true,
