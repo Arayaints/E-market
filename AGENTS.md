@@ -107,3 +107,26 @@
   - เมื่อมีส่วนใดในโปรเจกต์ที่ต้องใช้ Dropdown ให้เรียกใช้คอมโพเนนต์ `AppSelect` เสมอ
   - รองรับ `v-model`, อาร์เรย์ของ `{ value, label }`, มีสถานะโฟกัส/เปิด-ปิด นุ่มนวล, เมนูลอยสีขาวมน 12px, ไอคอน Chevron หมุนสลับ และไฮไลต์รายการที่เลือกด้วยสีฟ้าอ่อน (`#eff6ff`) พร้อมเครื่องหมายถูก (`✓`)
 
+## Map UI & Control Layout Standards (มาตรฐานการจัดวางปุ่มควบคุมบนแผนที่)
+
+ทุกคอมโพเนนต์แผนที่ในระบบ (เช่น `MarketProjectsOverviewMap`, `BangkokMarketsGisMap`, `MarketGisMap`) ต้องยึดมาตรฐานการวางตำแหน่งและสไตล์คอนโทรลเดียวกันอย่างเคร่งครัด:
+
+1. **คอนโทรลลอยมุมบนขวา (Top-Right Floating Controls)**:
+   - **ตำแหน่ง**: ตรึงลอยที่มุมบนขวาเสมอ (`position: absolute; top: 14px; right: 14px; z-index: 20; display: inline-flex; align-items: center; gap: 10px;`)
+   - **การจัดเรียง**: วางแถบสลับโหมดแผนที่ไว้ทางซ้าย และปุ่มปรับกึ่งกลางไว้ทางขวา
+     1. แถบสลับโหมด `[ แผนที่ | ดาวเทียม ]`:
+        - กล่องแคปซูลมนรี (`border-radius: 9999px`), กระจกฝ้าขาว (`background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);`)
+        - ปุ่มแท็บภายในมนรี (`border-radius: 9999px`), ตัวหนังสือคลีนตา **ไม่ใส่ไอคอนในปุ่ม**
+        - แท็บ Active: พื้นขาว Solid (`background: #ffffff; color: #2563eb; font-weight: 700; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);`)
+        - แท็บ Inactive: ตัวหนังสือสีเทา `#64748b`
+     2. ปุ่มปรับกึ่งกลาง `[ 🎯 ปรับกึ่งกลาง / ศูนย์กลาง กทม. ]`:
+        - ทรงแคปซูลมนรี (`border-radius: 9999px`) ดีไซน์เดียวกัน
+        - ไอคอน SVG เป้าเล็ง Crosshair สีน้ำเงินสด `#2563eb` เส้นคม 2.2px
+        - เอฟเฟกต์ Hover ยกตัวลอยเล็กน้อย (`transform: translateY(-1px);`)
+
+2. **คอนโทรลซูมมาตรฐานมุมขวาล่าง (Bottom-Right Navigation Controls)**:
+   - ปุ่มซูมเข้า/ออก (`+`, `-`) และเข็มทิศของ MapLibre ต้องกำหนดตำแหน่งให้อยู่ **มุมขวาล่าง (`'bottom-right'`)** เสมอ:
+     `map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')`
+   - ห้ามวางไว้ที่มุมบนขวา เพื่อป้องกันการบดบังหรือซ้อนทับกับชุดคอนโทรลหลัก
+
+
