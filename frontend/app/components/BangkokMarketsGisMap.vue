@@ -1,47 +1,43 @@
 <template>
   <div class="bma-gis-wrapper card" style="padding: 0; position: relative; overflow: hidden; border-radius: var(--radius-xl);">
-    <!-- Map Header Overlay Controls -->
-    <div class="bma-gis-overlay">
-      <div class="bma-gis-controls">
-        <button class="gis-ctrl-btn" @click="recenterMap" title="กลับสู่ศูนย์กลาง กทม." style="display: inline-flex; align-items: center; gap: 5px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>
-          </svg>
-          <span>ศูนย์กลาง กทม.</span>
+    <!-- Map Floating Top Controls (Top-Right): แผนที่ vs ดาวเทียม & ปุ่มศูนย์กลาง กทม. -->
+    <div class="map-floating-top-controls">
+      <div class="map-floating-style-switcher">
+        <button
+          type="button"
+          class="map-mode-tab"
+          :class="{ active: currentMode === 'street' }"
+          @click="setMapMode('street')"
+          title="มุมมองแผนที่ (Street Map)"
+        >
+          แผนที่
         </button>
-
-        <!-- Segmented 2-Mode Switcher: แผนที่ vs ดาวเทียม -->
-        <div class="gis-mode-segmented">
-          <button
-            type="button"
-            class="gis-mode-tab"
-            :class="{ active: currentMode === 'street' }"
-            @click="setMapMode('street')"
-            title="มุมมองแผนที่ถนน (Street Map)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-              <line x1="8" y1="2" x2="8" y2="18"></line>
-              <line x1="16" y1="6" x2="16" y2="22"></line>
-            </svg>
-            <span>แผนที่</span>
-          </button>
-          <button
-            type="button"
-            class="gis-mode-tab"
-            :class="{ active: currentMode === 'satellite' }"
-            @click="setMapMode('satellite')"
-            title="มุมมองภาพถ่ายดาวเทียม (Satellite Imagery)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            <span>ดาวเทียม</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          class="map-mode-tab"
+          :class="{ active: currentMode === 'satellite' }"
+          @click="setMapMode('satellite')"
+          title="มุมมองภาพถ่ายดาวเทียม (Satellite Imagery)"
+        >
+          ดาวเทียม
+        </button>
       </div>
+
+      <button
+        type="button"
+        class="map-floating-recenter-btn"
+        @click="recenterMap"
+        title="กลับสู่ศูนย์กลาง กทม."
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="22" y1="12" x2="18" y2="12"></line>
+          <line x1="6" y1="12" x2="2" y2="12"></line>
+          <line x1="12" y1="6" x2="12" y2="2"></line>
+          <line x1="12" y1="22" x2="12" y2="18"></line>
+        </svg>
+        <span>ศูนย์กลาง กทม.</span>
+      </button>
     </div>
 
     <!-- MapLibre Map Canvas Container -->
@@ -309,82 +305,91 @@ const renderMarkers = () => {
   border: 1px solid var(--border-card);
 }
 
-.bma-gis-overlay {
+/* Floating Map Style Switcher & Recenter Controls (inside map - Top Right) */
+.map-floating-top-controls {
   position: absolute;
   top: 14px;
-  left: 14px;
   right: 14px;
-  z-index: 10;
-  display: flex;
-  justify-content: flex-end;
+  z-index: 20;
+  display: inline-flex;
   align-items: center;
-  pointer-events: none;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
-.bma-gis-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.gis-ctrl-btn {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  color: #334155;
-  padding: 7px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-}
-
-.gis-ctrl-btn:hover {
-  background: #ffffff;
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
-/* 2-Mode Segmented Control */
-.gis-mode-segmented {
+.map-floating-style-switcher {
   display: inline-flex;
+  align-items: center;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
   padding: 3px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-md);
-  gap: 2px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
 }
 
-.gis-mode-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
+.map-floating-style-switcher .map-mode-tab {
+  padding: 6px 16px;
+  border-radius: 9999px;
   border: none;
   background: transparent;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
   color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+  line-height: 1.2;
 }
 
-.gis-mode-tab:hover {
-  color: #0f172a;
+.map-floating-style-switcher .map-mode-tab:hover {
+  color: #1e293b;
 }
 
-.gis-mode-tab.active {
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(67, 97, 238, 0.35);
+.map-floating-style-switcher .map-mode-tab.active {
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.map-floating-recenter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1.2;
+}
+
+.map-floating-recenter-btn svg {
+  color: #2563eb;
+}
+
+.map-floating-recenter-btn:hover {
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .map-floating-top-controls {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 .bma-gis-legend {

@@ -32,14 +32,9 @@
             class="gis-mode-tab"
             :class="{ active: currentMode === 'street' }"
             @click="setMapMode('street')"
-            title="มุมมองแผนที่ถนน (Street Map)"
+            title="มุมมองแผนที่ (Street Map)"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-              <line x1="8" y1="2" x2="8" y2="18"></line>
-              <line x1="16" y1="6" x2="16" y2="22"></line>
-            </svg>
-            <span>แผนที่</span>
+            แผนที่
           </button>
           <button
             type="button"
@@ -48,18 +43,17 @@
             @click="setMapMode('satellite')"
             title="มุมมองภาพถ่ายดาวเทียม (Satellite Imagery)"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            <span>ดาวเทียม</span>
+            ดาวเทียม
           </button>
         </div>
 
         <button class="gis-btn" @click="recenterMap" title="กลับสู่จุดศูนย์กลางตลาด" style="display: inline-flex; align-items: center; gap: 6px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
           </svg>
           <span>รีเซ็ตมุมมอง</span>
         </button>
@@ -576,100 +570,71 @@ defineExpose({
   box-shadow: var(--shadow-md);
 }
 
-.gis-engine-pill {
-  font-size: 0.68rem;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #059669;
-  font-weight: 700;
-  border: 1px solid #a7f3d0;
-}
-
-.gis-select {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  color: #0f172a;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-}
-
-.gis-checkbox-label {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  color: #0f172a;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-}
-
-/* 2-Mode Segmented Control */
+/* 2-Mode Segmented Control (Pill Style) */
 .gis-mode-segmented {
   display: inline-flex;
+  align-items: center;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
   padding: 3px;
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-md);
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
 }
 
 .gis-mode-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 9999px;
   border: none;
   background: transparent;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
   color: #64748b;
-  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+  line-height: 1.2;
 }
 
 .gis-mode-tab:hover {
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .gis-mode-tab.active {
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .gis-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  color: #334155;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  font-family: inherit;
+  font-size: 0.84rem;
   font-weight: 600;
+  color: #334155;
   cursor: pointer;
-  transition: var(--transition);
-  box-shadow: var(--shadow-md);
+  transition: all 0.18s ease;
+  line-height: 1.2;
+}
+
+.gis-btn svg {
+  color: #2563eb;
 }
 
 .gis-btn:hover {
   background: #ffffff;
-  border-color: var(--primary);
-  color: var(--primary);
+  color: #1e293b;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  transform: translateY(-1px);
 }
 
 /* Floating Stall Details Card */
