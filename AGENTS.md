@@ -106,6 +106,11 @@
 - **ให้ใช้ `AppSelect` (`frontend/app/components/AppSelect.vue`) เสมอ**:
   - เมื่อมีส่วนใดในโปรเจกต์ที่ต้องใช้ Dropdown ให้เรียกใช้คอมโพเนนต์ `AppSelect` เสมอ
   - รองรับ `v-model`, อาร์เรย์ของ `{ value, label }`, มีสถานะโฟกัส/เปิด-ปิด นุ่มนวล, เมนูลอยสีขาวมน 12px, ไอคอน Chevron หมุนสลับ และไฮไลต์รายการที่เลือกด้วยสีฟ้าอ่อน (`#eff6ff`) พร้อมเครื่องหมายถูก (`✓`)
+- **หลีกเลี่ยง Native HTML `<input type="checkbox">` และให้ใช้ `AppCheckbox` (`frontend/app/components/AppCheckbox.vue`)**:
+  - ใช้คอมโพเนนต์ `AppCheckbox` เพื่อให้รูปทรง Checkbox มีขอบมนสวยงาม (`border-radius: 6px`), เส้นขอบคมชัด, ไอคอนเช็คถูก SVG Stroke สอดคล้องกับมาตรฐาน Feather/Lucide, สถานะโฟกัส/Hover นุ่มนวล และรองรับ `v-model` (ทั้ง boolean และ array)
+- **หลีกเลี่ยงช่องกรอกเวลาแบบ Free-text หรือ Native Time Input และให้ใช้ `AppTimePicker` (`frontend/app/components/AppTimePicker.vue`)**:
+  - ใช้สำหรับเลือกเวลาหรือช่วงเวลา (Start & End Time) มีป๊อปอัปเลือกชั่วโมง/นาที, ชิปช็อตคัตด่วน (Quick Presets), ไอคอนนาฬิกา SVG เส้นคลีน และรองรับฟอร์แมต `HH:mm` สอดคล้องกับมาตรฐานระบบ
+
 
 ## Map UI & Control Layout Standards (มาตรฐานการจัดวางปุ่มควบคุมบนแผนที่)
 

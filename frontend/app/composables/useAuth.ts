@@ -5,7 +5,7 @@ export const useAuth = () => {
 	const authStore = useAuthStore()
 
 	const initAuth = () => {
-		// State initializes automatically in Pinia AuthStore
+		authStore.hydrate()
 	}
 
 	return {

@@ -1371,6 +1371,7 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
 const { get, post } = useApi()
 const { user, role: authRole, switchRole: authSwitchRole } = useAuth()
 const { showAlert, showConfirm, showSuccess, showError, showWarning } = useAppAlert()
@@ -1382,7 +1383,7 @@ const bookings = ref<any[]>([])
 const currentRole = ref<'tenant' | 'officer'>('officer')
 
 // Officer Specific State
-const officerSelectedMarket = ref('all')
+const officerSelectedMarket = ref(String(route.query.market || 'all'))
 const officerActiveTab = ref<'all' | 'pending' | 'approved' | 'interested' | 'applied' | 'cancelled'>('all')
 const officerOnlyToday = ref(false)
 const officerViewMode = ref<'card' | 'table'>('card')

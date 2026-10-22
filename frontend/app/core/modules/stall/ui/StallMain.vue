@@ -7,6 +7,20 @@
       <!-- Breadcrumb -->
       <div class="md-breadcrumb-row">
         <AppBreadcrumb :current="currentMarket.name" backTo="/" />
+        <nav v-if="isOfficer" class="md-market-actions" aria-label="เครื่องมือจัดการตลาด">
+          <NuxtLink :to="editMarketLink" class="md-edit-market-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            <span>แก้ไขข้อมูล</span>
+          </NuxtLink>
+          <NuxtLink :to="visitManagementLink" class="md-edit-market-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>จัดการรอบเข้าชม</span>
+          </NuxtLink>
+          <NuxtLink :to="stallManagementLink" class="md-edit-market-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"></path></svg>
+            <span>จัดการแผง</span>
+          </NuxtLink>
+        </nav>
       </div>
 
       <!-- 1. Header Card: ชื่อตลาด + ข้อมูลสำคัญ + แท็กหมวดหมู่ + Showcase กทม. -->
@@ -133,7 +147,7 @@
                 class="md-bqc-btn"
                 :class="availNow > 0 ? 'btn-book-active' : 'btn-book-full'"
               >
-                <span>{{ availNow > 0 ? 'จองแผงเช่า' : 'ดูผังแผง' }}</span>
+                <span>{{ isOfficer ? 'จัดการแผงเช่า' : (availNow > 0 ? 'จองแผงเช่า' : 'ดูผังแผง') }}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -168,7 +182,7 @@
           title="คลิกเพื่อดูรูปผังตลาดขนาดใหญ่"
           style="cursor: zoom-in;"
         >
-          <img src="/images/chatuchak_isometric_plan.jpg" :alt="`ภาพแผนผัง${currentMarket.name}`" class="md-floorplan-img" />
+          <img :src="currentMarket.floorplan_image_url || '/images/chatuchak_isometric_plan.jpg'" :alt="`ภาพแผนผัง${currentMarket.name}`" class="md-floorplan-img" />
           <span class="md-floorplan-hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
             <span>คลิกเพื่อดูรูปผังตลาดขนาดเต็ม</span>
@@ -176,7 +190,7 @@
         </div>
 
         <NuxtLink id="md-btn-enter-floorplan" :to="bookLink" class="md-btn-primary md-btn-lg" :class="{ 'md-btn-full': availNow <= 0 }">
-          <span>{{ availNow <= 0 ? 'เข้าชมผังแผงดิจิทัล (ตลาดเต็มแล้ว)' : 'เข้าสู่ผังแผงดิจิทัลเพื่อเลือกแผงค้า' }}</span>
+          <span>{{ isOfficer ? 'เข้าสู่การจัดการผังแผง GIS' : (availNow <= 0 ? 'เข้าชมผังแผงดิจิทัล (ตลาดเต็มแล้ว)' : 'เข้าสู่ผังแผงดิจิทัลเพื่อเลือกแผงค้า') }}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </NuxtLink>
       </section>
@@ -202,7 +216,7 @@
               </div>
               <div class="md-stat-body">
                 <div class="md-stat-label">ขนาดพื้นที่</div>
-                <div class="md-stat-value">4 - 25 <span class="md-stat-unit">ตร.ม.</span></div>
+                <div class="md-stat-value">{{ currentMarket.min_area_sqm || 4 }} - {{ currentMarket.max_area_sqm || 25 }} <span class="md-stat-unit">ตร.ม.</span></div>
               </div>
             </div>
 
@@ -271,21 +285,9 @@
                 <div class="md-detail-content">
                   <h4 class="md-sub-title">การเดินทาง</h4>
                   <div class="md-travel-list">
-                    <span class="md-travel-chip">
+                    <span v-for="item in travelOptions" :key="item" class="md-travel-chip">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="2"></rect><line x1="4" y1="10" x2="20" y2="10"></line><line x1="7" y1="21" x2="7" y2="18"></line><line x1="17" y1="21" x2="17" y2="18"></line></svg>
-                      รถโดยสารประจำทาง
-                    </span>
-                    <span class="md-travel-chip">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"></path><circle cx="7.5" cy="17" r="2"></circle><circle cx="16.5" cy="17" r="2"></circle><line x1="10" y1="4" x2="14" y2="4"></line></svg>
-                      รถรับจ้างสาธารณะ
-                    </span>
-                    <span class="md-travel-chip">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"></path><line x1="3" y1="12" x2="21" y2="12"></line><circle cx="7.5" cy="17" r="2"></circle><circle cx="16.5" cy="17" r="2"></circle></svg>
-                      รถยนต์ส่วนบุคคล
-                    </span>
-                    <span class="md-travel-chip">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"></rect><line x1="4" y1="11" x2="20" y2="11"></line><line x1="8" y1="21" x2="10" y2="17"></line><line x1="16" y1="21" x2="14" y2="17"></line></svg>
-                      รถไฟฟ้า BTS / MRT
+                      {{ item }}
                     </span>
                   </div>
                 </div>
@@ -309,7 +311,7 @@
             <a
               id="md-video-link"
               class="md-media-frame md-video-frame"
-              :href="`https://www.youtube.com/results?search_query=${encodeURIComponent(currentMarket.name)}`"
+              :href="currentMarket.video_url || `https://www.youtube.com/results?search_query=${encodeURIComponent(currentMarket.name)}`"
               target="_blank"
               rel="noopener"
               title="ดูวิดีโอแนะนำตลาดบน YouTube"
@@ -403,7 +405,7 @@
 
             <div class="md-lightbox-body">
               <img
-                src="/images/chatuchak_isometric_plan.jpg"
+                :src="currentMarket.floorplan_image_url || '/images/chatuchak_isometric_plan.jpg'"
                 :alt="`ภาพแผนผัง${currentMarket.name}`"
                 class="md-lightbox-img"
               />
@@ -431,7 +433,7 @@
                   class="btn btn-primary btn-sm"
                   style="display: inline-flex; align-items: center; gap: 6px;"
                 >
-                  <span>{{ availNow <= 0 ? 'เข้าชมผังแผงดิจิทัล' : 'เข้าสู่การจองแผง' }}</span>
+                  <span>{{ isOfficer ? 'จัดการผังแผง GIS' : (availNow <= 0 ? 'เข้าชมผังแผงดิจิทัล' : 'เข้าสู่การจองแผง') }}</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -449,6 +451,9 @@
 <script setup lang="ts">
 const route = useRoute()
 const { get } = useApi()
+const { role } = useAuth()
+const { applyMarketOverride } = useMarketOverrides()
+const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 
 const currentMarket = ref<any>({
   id: 1,
@@ -583,7 +588,12 @@ const initMap = () => {
 }
 
 // ---------- Display helpers (หน้ารายละเอียดตลาด) ----------
-const bookLink = computed(() => `/stalls/book?market=${currentMarket.value.id || 1}`)
+const bookLink = computed(() => isOfficer.value
+  ? `/stalls/manage?market=${currentMarket.value.id || 1}`
+  : `/stalls/book?market=${currentMarket.value.id || 1}`)
+const editMarketLink = computed(() => `/markets/${currentMarket.value.id || route.query.market || 1}/edit`)
+const visitManagementLink = computed(() => `/stalls/visit-schedule?market=${currentMarket.value.id || route.query.market || 1}`)
+const stallManagementLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}`)
 
 // แยก "เสาร์ - อาทิตย์ 09:00 - 18:00 น." เป็นวัน / เวลา
 const operatingDays = computed(() => {
@@ -606,10 +616,17 @@ const priceRange = computed(() => {
 
 // ดึงจำนวนที่จอดรถจาก tag เช่น "มีที่จอดรถ 800+ คัน"
 const parkingCount = computed(() => {
+  if (currentMarket.value.parking_spaces !== undefined && currentMarket.value.parking_spaces !== null) {
+    return Number(currentMarket.value.parking_spaces).toLocaleString()
+  }
   const tag = (currentMarket.value.tags || []).find((t: string) => t.includes('ที่จอดรถ'))
   const m = tag && tag.match(/([\d,]+\+?)/)
   return m ? m[1] : '120+'
 })
+
+const travelOptions = computed<string[]>(() => currentMarket.value.travel_options?.length
+  ? currentMarket.value.travel_options
+  : ['รถโดยสารประจำทาง', 'รถรับจ้างสาธารณะ', 'รถยนต์ส่วนบุคคล', 'รถไฟฟ้า BTS / MRT'])
 
 // แท็กจุดเด่นของตลาด: ตัด emoji และกรองแท็กสถานะ (เช่น "ติดจองเต็ม") ออก
 const getTagIcon = (label: string) => {
@@ -657,7 +674,7 @@ onMounted(async () => {
       const markets = await get('/markets')
       const found = markets.find((m: any) => String(m.id) === String(marketQuery) || m.slug === marketQuery)
       if (found) {
-        currentMarket.value = found
+        currentMarket.value = applyMarketOverride(found)
       }
     } catch (e) {
       console.warn('Could not fetch market details:', e)
@@ -709,10 +726,44 @@ onBeforeUnmount(() => {
 
 .md-breadcrumb-row {
   margin-bottom: -16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .md-breadcrumb-row :deep(.body-breadcrumb-wrapper) {
   margin-bottom: 0;
+}
+
+.md-edit-market-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #334155;
+  font-size: .84rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.md-market-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.md-edit-market-btn:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .md-card {

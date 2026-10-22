@@ -2,6 +2,8 @@ import { defineStore } from "pinia"
 import { AuthService } from "../infrastructure/AuthService"
 import type { IUser } from "../models/AuthModel"
 
+const normalizeRole = (role?: string | null) => role === "officer" ? "staff" : (role || "tenant")
+
 export interface IAuthState {
 	currentUser: IUser | null
 	accessToken: string | null
@@ -21,7 +23,7 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.getItem("token") ||
 				localStorage.getItem("access_token") ||
 				localStorage.getItem("emarket_jwt_token")
-			storedRole = localStorage.getItem("user_role") || "tenant"
+			storedRole = normalizeRole(localStorage.getItem("user_role"))
 			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
 			if (rawUser) {
 				try {
@@ -53,6 +55,32 @@ export const useAuthStore = defineStore("auth", {
 		isTenant: (state) => state.role === "tenant",
 	},
 	actions: {
+		hydrate() {
+			if (typeof window === "undefined") return
+
+			this.accessToken =
+				localStorage.getItem("token") ||
+				localStorage.getItem("access_token") ||
+				localStorage.getItem("emarket_jwt_token")
+			this.role = normalizeRole(localStorage.getItem("user_role"))
+
+			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
+			if (rawUser) {
+				try {
+					this.currentUser = JSON.parse(rawUser)
+				} catch {
+					this.currentUser = null
+				}
+			} else if (this.accessToken) {
+				this.currentUser = {
+					id: this.role === "tenant" ? 3 : 1,
+					username: this.role === "tenant" ? "tenant" : "admin",
+					full_name: this.role === "tenant" ? "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)" : "ผู้ดูแลระบบ (Admin)",
+					role: this.role,
+				}
+			}
+		},
+
 		setToken(accessToken: string, refreshToken?: string) {
 			this.accessToken = accessToken
 			if (refreshToken) {
@@ -70,7 +98,7 @@ export const useAuthStore = defineStore("auth", {
 
 		setUser(user: IUser) {
 			this.currentUser = user
-			this.role = user.role || this.role
+			this.role = normalizeRole(user.role || this.role)
 			if (typeof window !== "undefined") {
 				localStorage.setItem("user_info", JSON.stringify(user))
 				localStorage.setItem("emarket_user", JSON.stringify(user))
@@ -112,7 +140,7 @@ export const useAuthStore = defineStore("auth", {
 				if (res.status && res.data) {
 					const data = res.data
 					this.setToken(data.access_token, data.refresh_token)
-					const userRole = data.role || data.user?.role || (credentials.username === "tenant" ? "tenant" : "admin")
+					const userRole = normalizeRole(data.role || data.user?.role || (credentials.username === "tenant" ? "tenant" : "admin"))
 					this.role = userRole
 					this.setUser(data.user || {
 						id: credentials.username === "tenant" ? 3 : 1,

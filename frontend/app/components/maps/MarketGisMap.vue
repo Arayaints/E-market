@@ -18,10 +18,11 @@
         </select>
 
         <!-- Only Available Checkbox -->
-        <label class="gis-checkbox-label">
-          <input type="checkbox" v-model="onlyAvailable" @change="applyFilters" />
-          <span>เฉพาะแผงที่ว่างพร้อมจอง</span>
-        </label>
+        <AppCheckbox
+          v-model="onlyAvailable"
+          label="เฉพาะแผงที่ว่างพร้อมจอง"
+          @change="applyFilters"
+        />
       </div>
 
       <div class="gis-controls-right">

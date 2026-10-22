@@ -451,11 +451,11 @@
                 <!-- Action Button: Full-Width Primary "จองแผงเช่า →" -->
                 <div class="market-card-actions">
                   <NuxtLink
-                    :to="m.slug === 'chatuchak' ? '/stalls/book?market=chatuchak' : `/stalls/book?market=${m.id}`"
+                    :to="marketActionLink(m)"
                     class="btn-book-action-bar"
-                    title="เข้าสู่ขั้นตอนการจองแผงเช่าทันที"
+                    :title="isOfficer ? 'จัดการแผงเช่าและการนัดเข้าชม' : 'เข้าสู่ขั้นตอนการจองแผงเช่าทันที'"
                   >
-                    <span>จองแผงเช่า</span>
+                    <span>{{ isOfficer ? 'จัดการแผงเช่า' : 'จองแผงเช่า' }}</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                       <polyline points="12 5 19 12 12 19"></polyline>
@@ -494,6 +494,14 @@
 import AppFooter from '~/components/AppFooter.vue'
 
 const { get } = useApi()
+const { role } = useAuth()
+const { applyMarketOverride } = useMarketOverrides()
+const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
+
+const marketActionLink = (market: any) => {
+  const marketId = market.slug === 'chatuchak' ? 'chatuchak' : market.id
+  return isOfficer.value ? `/stalls/manage?market=${marketId}` : `/stalls/book?market=${marketId}`
+}
 
 // Search & Filter State
 const searchQuery = ref('')
@@ -512,7 +520,7 @@ const loadData = async () => {
   loadingMarkets.value = true
   try {
     const marketsRes = await get('/markets')
-    marketsList.value = marketsRes || []
+    marketsList.value = (marketsRes || []).map((market: any) => applyMarketOverride(market))
     filteredMarkets.value = marketsList.value
   } catch (err) {
     console.error('Failed to load markets:', err)

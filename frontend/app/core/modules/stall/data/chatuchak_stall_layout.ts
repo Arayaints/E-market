@@ -5,7 +5,7 @@
 // - เก็บเฉพาะแผงที่อยู่ภายในกรอบโครงการทั้งหมด (มีระยะร่นจากขอบ)
 // ================================================================
 
-import type { ProjectZone } from './chatuchak_real_polygons'
+import type { ProjectZone, ProjectFloor } from './chatuchak_real_polygons'
 
 export type StallStatus = 'available' | 'reserved' | 'occupied'
 
@@ -70,8 +70,11 @@ const rotate = ([x, y]: Pt, a: number): Pt => {
 const pointInPolygon = ([x, y]: Pt, poly: Pt[]): boolean => {
   let inside = false
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i]
-    const [xj, yj] = poly[j]
+    const pi = poly[i]
+    const pj = poly[j]
+    if (!pi || !pj) continue
+    const [xi, yi] = pi
+    const [xj, yj] = pj
     if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
   }
   return inside
@@ -89,7 +92,11 @@ const distToSegment = ([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt): number => {
 const distToBoundary = (p: Pt, poly: Pt[]): number => {
   let d = Infinity
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    d = Math.min(d, distToSegment(p, poly[j], poly[i]))
+    const pj = poly[j]
+    const pi = poly[i]
+    if (pj && pi) {
+      d = Math.min(d, distToSegment(p, pj, pi))
+    }
   }
   return d
 }
@@ -141,17 +148,17 @@ const findLabelPoint = (poly: Pt[]): Pt => {
 
 export const buildProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
   // Determine floor info
-  const floorList = project.floors && project.floors.length > 0
+  const floorList: ProjectFloor[] = project.floors && project.floors.length > 0
     ? project.floors
     : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
   
-  const currentFloor = floorList.find(f => f.id === floorId) || floorList[0]
+  const currentFloor: ProjectFloor = floorList.find(f => f.id === floorId) || floorList[0]!
   const effectiveFloorId = currentFloor.id
   const hasMultipleFloors = floorList.length > 1
 
   // Remove duplicated closing vertex
   const ring = project.coordinates.slice(0, -1) as Pt[]
-  const origin = ring[0]
+  const origin: Pt = ring[0] || [0, 0]
   const proj = makeProjector(origin)
   const local = ring.map(proj.toLocal)
 
@@ -161,6 +168,7 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
   for (let i = 0; i < local.length; i++) {
     const a = local[i]
     const b = local[(i + 1) % local.length]
+    if (!a || !b) continue
     const len = Math.hypot(b[0] - a[0], b[1] - a[1])
     if (len > longest) {
       longest = len
@@ -182,8 +190,13 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
   }
 
   const original = project.totalStalls > 0 ? project.stallsAvailable / project.totalStalls : 0
-  const availRatio = project.stallsAvailable === 0 ? 0 : Math.max(0.12, Math.min(0.45, original))
-  const reservedRatio = project.stallsAvailable === 0 ? 0 : 0.06
+  let availRatio = project.stallsAvailable === 0 ? 0 : Math.max(0.12, Math.min(0.45, original))
+  let reservedRatio = project.stallsAvailable === 0 ? 0 : 0.06
+
+  if (currentFloor.isFull) {
+    availRatio = 0
+    reservedRatio = 0
+  }
 
   const stalls: MapStall[] = []
   const bandH = STALL_D * 2 + AISLE
@@ -288,6 +301,25 @@ const layoutCache = new Map<string, ProjectStallLayout>()
 export const getProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
   const effectiveFloorId = floorId || project.floors?.[0]?.id || '1'
   const cacheKey = `${project.id}:${effectiveFloorId}`
+
+  // If the project carries its own pre-surveyed real stalls (e.g. from official GIS shapefile)
+  if (project.stalls && project.stalls.length > 0) {
+    const matchingStalls = (project.stalls as MapStall[]).filter(s => !s.floor || s.floor === effectiveFloorId)
+    const available = matchingStalls.filter(s => s.status === 'available').length
+    const reserved = matchingStalls.filter(s => s.status === 'reserved').length
+    const currentFloor = project.floors?.find(f => f.id === effectiveFloorId)
+    return {
+      stalls: matchingStalls,
+      labelPoint: project.centroid,
+      total: matchingStalls.length,
+      available,
+      reserved,
+      occupied: matchingStalls.length - available - reserved,
+      floorId: effectiveFloorId,
+      floorName: currentFloor?.name || 'ชั้น 1'
+    }
+  }
+
   let layout = layoutCache.get(cacheKey)
   if (!layout) {
     layout = buildProjectStallLayout(project, effectiveFloorId)

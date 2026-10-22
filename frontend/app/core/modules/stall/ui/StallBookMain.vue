@@ -12,9 +12,9 @@
         :backTo="`/stalls?market=${route.query.market || '1'}`"
       />
 
-      <!-- Market Info Header Banner -->
+      <!-- Market Info Header Banner with Quick Market Switcher -->
       <div class="market-select-banner card glass-card" style="display: flex; justify-content: space-between; align-items: center; border-radius: 16px; padding: 14px 22px; margin-bottom: 32px; flex-wrap: wrap; gap: 14px; border: 1px solid #bfdbfe; background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%); box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);">
-        <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
           <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -35,14 +35,25 @@
             </div>
           </div>
         </div>
-        <NuxtLink to="/" class="btn btn-sm btn-outline" style="border-color: #cbd5e1; color: #1e40af; background: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>
-          <span>เปลี่ยนตลาด (12 ตลาด กทม.)</span>
-        </NuxtLink>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div style="min-width: 250px;">
+            <AppSelect
+              :modelValue="currentMarketId"
+              :options="allMarketOptions"
+              placeholder="สลับเลือกตลาด กทม."
+              @update:modelValue="handleMarketSelect"
+            />
+          </div>
+          <NuxtLink to="/" class="btn btn-sm btn-outline" style="border-color: #cbd5e1; color: #1e40af; background: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>ดูแผนที่รวม กทม.</span>
+          </NuxtLink>
+        </div>
       </div>
 
       <!-- Stepper Component (3 Steps) -->
@@ -87,6 +98,7 @@
           <!-- The SVG Master Map of Projects Component -->
           <MarketProjectsOverviewMap
             ref="overviewMapRef"
+            :marketId="currentMarketId"
             :selectedProjectId="selectedProject?.id"
             :selectedStallCodes="selectedStalls.map(s => s.code)"
             v-model:onlyAvailable="onlyAvailable"
@@ -271,6 +283,21 @@
                 </div>
               </div>
               </transition>
+
+              <!-- Mobile Stall Hint Pill (Only on mobile/tablet when inside project and no stalls chosen yet) -->
+              <div v-if="selectedProject && selectedStalls.length === 0 && !isSelectedProjectFull" class="mobile-stall-hint-pill">
+                <span class="mshp-dot"></span>
+                <span>แตะแผงสีเขียวบนผังเพื่อเลือกจอง</span>
+              </div>
+
+              <!-- Mobile Project Full Banner (Only on mobile/tablet if project has 0 available) -->
+              <div v-if="selectedProject && isSelectedProjectFull" class="mobile-project-full-banner">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="m8.5 8.5 7 7m0-7-7 7"></path>
+                </svg>
+                <span>โครงการนี้มีผู้เช่าครบทุกแผงแล้ว</span>
+              </div>
 
               <!-- Empty state occupies the same right-side drawer until a stall is chosen. -->
               <transition name="slide-fade">
@@ -581,13 +608,18 @@
                   <span style="background: #2563eb; color: #ffffff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">1</span>
                   <span style="font-size: 0.95rem;">เลือกวันที่เปิดให้เข้าชมแผง <span style="color: #ef4444; font-weight: 700;">*</span></span>
                 </label>
-                <span style="font-size: 0.76rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px;">
+                <NuxtLink
+                  :to="`/stalls/visit-schedule?market=${route.query.market || '1'}`"
+                  target="_blank"
+                  style="font-size: 0.76rem; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-weight: 600;"
+                  title="เปิดหน้าจัดการรอบเข้าชมแผงสำหรับเจ้าหน้าที่"
+                >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                   </svg>
-                  <span>รอบพาเดินชมตามตารางสำนักงานตลาด</span>
-                </span>
+                  <span>จัดการรอบเวลา (เจ้าหน้าที่)</span>
+                </NuxtLink>
               </div>
 
               <!-- Strip of Date Cards -->
@@ -598,7 +630,8 @@
                   class="date-card"
                   :class="{
                     selected: bookingForm.visitDate === d.date,
-                    'is-full-date': d.isAllFull
+                    'is-full-date': d.isAllFull,
+                    'is-closed-date': d.isClosed
                   }"
                   @click="selectVisitDate(d)"
                 >
@@ -639,14 +672,14 @@
                 <span>{{ formErrors.visitDate }}</span>
               </div>
 
-              <!-- Market Advice banner under date cards -->
+              <!-- Market Advice banner under date cards (Dynamic from active date description or market default) -->
               <div style="font-size: 0.76rem; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 12px; margin-top: 10px; display: flex; align-items: center; gap: 8px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: #2563eb;">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="16" x2="12" y2="12"></line>
                   <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-                <span>คำแนะนำ: ตลาดนัดจตุจักรเปิดบริการเต็มรูปแบบในวันเสาร์และอาทิตย์ (09:00 - 18:00 น.) ชมบรรยากาศและทราฟฟิกลูกค้าจริงได้ดีที่สุด</span>
+                <span>{{ currentSelectedDateAdvice || 'คำแนะนำ: ตลาดเปิดบริการเต็มรูปแบบในวันเสาร์และอาทิตย์ (09:00 - 18:00 น.) ชมบรรยากาศและทราฟฟิกลูกค้าจริงได้ดีที่สุด' }}</span>
               </div>
             </div>
 
@@ -761,6 +794,7 @@
         <div class="card" style="padding: 0; position: relative; overflow: hidden; background: #ffffff; border: 1px solid #e2e8f0; margin-bottom: 24px; border-radius: 16px;">
           <MarketProjectsOverviewMap
             containerId="step3-confirmation-maplibre"
+            :marketId="currentMarketId"
             :selectedProjectId="selectedProject?.id"
             :selectedStallCodes="selectedStalls.map(s => s.code)"
             v-model:mapStyle="mapStyle"
@@ -1297,9 +1331,12 @@
 </template>
 
 <script setup lang="ts">
-import AppSelect from '~/components/AppSelect.vue'
+import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
+import { getBookingVisitDates, type AvailableDateSlot as ScheduleAvailableDateSlot } from '../composables/useMarketVisitSchedule'
+import { BMA_MARKETS_MASTER, getMarketGisConfig } from '../data/markets_registry'
 
 const route = useRoute()
+const router = useRouter()
 const { get, post } = useApi()
 const { user } = useAuth()
 const { showAlert, showWarning, showError, showSuccess, showConfirm } = useAppAlert()
@@ -1319,6 +1356,25 @@ const currentMarketName = ref('ตลาดนัดจตุจักร')
 const currentMarketDistrict = ref('เขตจตุจักร')
 const isMarketFull = ref(false)
 const currentMarket = ref<any>(null)
+
+const allMarketOptions = computed<SelectOption[]>(() => {
+  return Object.values(BMA_MARKETS_MASTER).map(m => ({
+    value: String(m.id),
+    label: `${m.name} (${m.district})`
+  }))
+})
+
+const handleMarketSelect = (val: string | number) => {
+  if (!val) return
+  router.push({
+    query: {
+      ...route.query,
+      market: String(val)
+    }
+  })
+  selectedProject.value = null
+  selectedStalls.value = []
+}
 
 const currentStep = ref<number>(1)
 const selectedCategoryFilter = ref<string | null>(null)
@@ -1415,122 +1471,42 @@ interface AvailableDateSlot {
   isPopular?: boolean
   description?: string
   isAllFull?: boolean
+  isClosed?: boolean
   slots: TimeSlotItem[]
 }
 
-const generateAvailableDates = (): AvailableDateSlot[] => {
-  const dates: AvailableDateSlot[] = []
-  const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
-  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
-  
-  const now = new Date()
-  for (let i = 1; i <= 21; i++) {
-    const d = new Date(now)
-    d.setDate(now.getDate() + i)
-    const dayOfWeek = d.getDay()
-    
-    // Officer schedule: Friday (5), Saturday (6), Sunday (0), Wednesday (3)
-    if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0 || dayOfWeek === 3) {
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      const dateStr = `${year}-${month}-${day}`
-      
-      const isSaturday = dayOfWeek === 6
-      const isSunday = dayOfWeek === 0
-      const isFriday = dayOfWeek === 5
-      const isWednesday = dayOfWeek === 3
+const currentMarketId = computed(() => String(route.query.market || '1'))
 
-      let badge = ''
-      let badgeType = 'badge-neutral'
-      let slotsText = 'ว่าง 4 รอบ'
-      let statusClass = 'status-open'
-      let description = ''
-      let isAllFull = false
-      let slots: TimeSlotItem[] = []
-
-      if (isSaturday) {
-        // วันเสาร์: เปิดเต็มรูปแบบ ทุกรอบว่าง
-        badge = 'แนะนำ'
-        badgeType = 'badge-primary'
-        slotsText = 'ว่าง 4 รอบ'
-        statusClass = 'status-open'
-        description = 'เปิดเต็มวัน คนเดินหนาแน่น'
-        slots = [
-          { time: '09.30 - 10.30 น.', capacityText: 'ว่าง 3 คิว', capacityClass: 'cap-high', note: 'ช่วงเช้า อากาศสบาย เหมาะดูโครงสร้าง', isFull: false, remainingQueues: 3 },
-          { time: '11.00 - 12.00 น.', capacityText: 'ว่าง 5 คิว', capacityClass: 'cap-high', note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', isFull: false, remainingQueues: 5 },
-          { time: '13.00 - 14.00 น.', capacityText: 'รอบยอดนิยม (เหลือ 1 คิว)', capacityClass: 'cap-med', note: 'ช่วงบ่าย มีเจ้าหน้าที่เทคนิคพาชม', isFull: false, remainingQueues: 1 },
-          { time: '15.30 - 16.30 น.', capacityText: 'ว่าง 4 คิว', capacityClass: 'cap-high', note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', isFull: false, remainingQueues: 4 }
-        ]
-      } else if (isSunday) {
-        // วันอาทิตย์: มี 2 รอบเต็มแล้ว เหลือ 2 รอบ (ตรงตาม badge 'เหลือ 2 รอบ')
-        badge = 'เปิดเต็มวัน'
-        badgeType = 'badge-success'
-        slotsText = 'เหลือ 2 รอบ'
-        statusClass = 'status-limited'
-        description = 'เปิดเต็มวัน เหมาะดูทำเล'
-        slots = [
-          { time: '09.30 - 10.30 น.', capacityText: 'เต็มแล้ว', capacityClass: 'cap-full', note: 'มีผู้ลงทะเบียนเต็มโควตาแล้ว', isFull: true, remainingQueues: 0 },
-          { time: '11.00 - 12.00 น.', capacityText: 'ว่าง 3 คิว', capacityClass: 'cap-high', note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', isFull: false, remainingQueues: 3 },
-          { time: '13.00 - 14.00 น.', capacityText: 'เต็มแล้ว (รอบยอดนิยม)', capacityClass: 'cap-full', note: 'มีผู้ลงทะเบียนเต็มโควตาแล้ว', isFull: true, remainingQueues: 0 },
-          { time: '15.30 - 16.30 น.', capacityText: 'เหลือ 1 คิวสุดท้าย', capacityClass: 'cap-low', note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', isFull: false, remainingQueues: 1 }
-        ]
-      } else if (isFriday) {
-        // วันศุกร์: รอบเช้าปิดเพราะเป็นตลาดกลางคืน เหลือ 3 รอบ
-        badge = 'ตลาดกลางคืน'
-        badgeType = 'badge-purple'
-        slotsText = 'ว่าง 3 รอบ'
-        statusClass = 'status-open'
-        description = 'รอบบ่าย-ค่ำ'
-        slots = [
-          { time: '09.30 - 10.30 น.', capacityText: 'เต็มแล้ว (งดรอบเช้า)', capacityClass: 'cap-full', note: 'เตรียมพื้นที่ตลาดกลางคืน', isFull: true, remainingQueues: 0 },
-          { time: '11.00 - 12.00 น.', capacityText: 'ว่าง 2 คิว', capacityClass: 'cap-med', note: 'ช่วงสาย เริ่มเตรียมพื้นที่', isFull: false, remainingQueues: 2 },
-          { time: '13.00 - 14.00 น.', capacityText: 'ว่าง 4 คิว', capacityClass: 'cap-high', note: 'ช่วงบ่าย มีเจ้าหน้าที่พาชม', isFull: false, remainingQueues: 4 },
-          { time: '15.30 - 16.30 น.', capacityText: 'ว่าง 5 คิว', capacityClass: 'cap-high', note: 'ช่วงเย็น ชมทราฟฟิกตลาดกลางคืน', isFull: false, remainingQueues: 5 }
-        ]
-      } else {
-        // วันพุธ: ว่าง 2 รอบ
-        badge = 'ดูโครงสร้าง'
-        badgeType = 'badge-neutral'
-        slotsText = 'ว่าง 2 รอบ'
-        statusClass = 'status-open'
-        description = 'วันทำการราชการ'
-        slots = [
-          { time: '09.30 - 10.30 น.', capacityText: 'ว่าง 2 คิว', capacityClass: 'cap-med', note: 'ช่วงเช้า เจ้าหน้าที่ฝ่ายอาคารพาชม', isFull: false, remainingQueues: 2 },
-          { time: '11.00 - 12.00 น.', capacityText: 'เต็มแล้ว', capacityClass: 'cap-full', note: 'ติดตรวจพื้นที่ประจำสัปดาห์', isFull: true, remainingQueues: 0 },
-          { time: '13.00 - 14.00 น.', capacityText: 'ว่าง 3 คิว', capacityClass: 'cap-high', note: 'ช่วงบ่าย ตรวจระบบไฟฟ้า-ประปา', isFull: false, remainingQueues: 3 },
-          { time: '15.30 - 16.30 น.', capacityText: 'เต็มแล้ว', capacityClass: 'cap-full', note: 'ไม่มีรอบเจ้าหน้าที่ช่วงเย็น', isFull: true, remainingQueues: 0 }
-        ]
-      }
-
-      dates.push({
-        date: dateStr,
-        dayName: `วัน${thaiDays[dayOfWeek]}`,
-        dayNum: String(d.getDate()),
-        monthShort: `${thaiMonths[d.getMonth()]} ${String(year + 543).slice(-2)}`,
-        badge,
-        badgeType,
-        slotsText,
-        statusClass,
-        isPopular: isSaturday,
-        description,
-        isAllFull,
-        slots
-      })
-      if (dates.length >= 6) break
-    }
-  }
-  return dates
+const loadAvailableDatesFromSchedule = (): AvailableDateSlot[] => {
+  return getBookingVisitDates(currentMarketId.value, 14)
 }
 
-const availableDates = ref<AvailableDateSlot[]>(generateAvailableDates())
+const availableDates = ref<AvailableDateSlot[]>(loadAvailableDatesFromSchedule())
+
+// Auto-sync whenever marketId changes
+watch(currentMarketId, () => {
+  availableDates.value = loadAvailableDatesFromSchedule()
+  if (bookingForm.value.visitDate) {
+    const cur = availableDates.value.find(d => d.date === bookingForm.value.visitDate)
+    if (!cur || cur.isClosed) {
+      const firstOpen = availableDates.value.find(d => !d.isClosed && !d.isAllFull)
+      bookingForm.value.visitDate = firstOpen?.date || ''
+    }
+  }
+})
+
+const currentSelectedDateAdvice = computed(() => {
+  const d = availableDates.value.find(item => item.date === bookingForm.value.visitDate)
+  return d?.description || ''
+})
+
 const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-const defaultVisitDate = (availableDates.value.find(d => d.isPopular) || availableDates.value[0])?.date || minDate
+const defaultVisitDate = (availableDates.value.find(d => d.isPopular && !d.isClosed) || availableDates.value.find(d => !d.isClosed) || availableDates.value[0])?.date || minDate
 
 // Dynamic Time Slots computed from selected date (Relational Link)
 const currentTimeSlots = computed<TimeSlotItem[]>(() => {
   const selectedDateObj = availableDates.value.find(d => d.date === bookingForm.value.visitDate)
-  if (selectedDateObj && selectedDateObj.slots) {
+  if (selectedDateObj && selectedDateObj.slots && selectedDateObj.slots.length > 0) {
     return selectedDateObj.slots
   }
   return [
@@ -1548,6 +1524,10 @@ const isCurrentDateAllFull = computed(() => {
 })
 
 const selectVisitDate = (d: AvailableDateSlot) => {
+  if (d.isClosed) {
+    formErrors.value.visitDate = `วันที่ ${d.dayName} ที่ ${d.dayNum} ${d.monthShort} ปิดรับนัดหมายเข้าชม กรุณาเลือกวันอื่นที่เปิดให้บริการ`
+    return
+  }
   bookingForm.value.visitDate = d.date
   formErrors.value.visitDate = ''
 }
@@ -2497,11 +2477,29 @@ const handleKeyDown = (e: KeyboardEvent) => {
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown)
 
-  const marketQuery = route.query.market
-  if (marketQuery) {
+  // Listen for schedule updates from VisitScheduleMain in same window or across tabs
+  const handleScheduleSync = () => {
+    availableDates.value = loadAvailableDatesFromSchedule()
+  }
+  window.addEventListener('market-visit-schedule-updated', handleScheduleSync)
+  const handleStorageSync = (e: StorageEvent) => {
+    if (e.key?.startsWith('visit-schedule:')) {
+      handleScheduleSync()
+    }
+  }
+  window.addEventListener('storage', handleStorageSync)
+
+  const syncMarketData = async (marketQuery: string | number) => {
+    const queryStr = String(marketQuery || '1')
+    const localMaster = getMarketGisConfig(queryStr)
+    if (localMaster) {
+      currentMarketName.value = localMaster.name
+      currentMarketDistrict.value = localMaster.district
+    }
+
     try {
       const markets = await get('/markets')
-      const found = markets.find((m: any) => String(m.id) === String(marketQuery) || m.slug === marketQuery)
+      const found = markets.find((m: any) => String(m.id) === queryStr || m.slug === queryStr)
       if (found) {
         currentMarket.value = found
         currentMarketName.value = found.name
@@ -2510,12 +2508,19 @@ onMounted(async () => {
         if (found.status === 'full' || Number(found.available_stalls) === 0) {
           isMarketFull.value = true
           if (selectedProject.value) selectedProject.value.stallsAvailable = 0
+        } else {
+          isMarketFull.value = false
         }
       }
     } catch (e) {
       console.warn('Could not fetch market:', e)
     }
   }
+
+  await syncMarketData(route.query.market || '1')
+  watch(currentMarketId, (newId) => {
+    syncMarketData(newId)
+  })
 
   let realStall20a: any = null
   try {
@@ -2528,11 +2533,6 @@ onMounted(async () => {
     generateStallsForProject(selectedProject.value, realStall20a)
   }
   selectedStall.value = null
-
-  // If market is full, alert user gently on entry
-  if (isMarketFull.value) {
-    showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มทุกแผงแล้ว ขณะนี้ยังไม่สามารถทำรายการจองได้ (เข้าชมผังแผงได้เท่านั้น)`, 'ตลาดนี้เต็มแล้ว')
-  }
 
   // If a specific stall was requested via URL query (?stall=20A), select it (only if market not full)
   if (route.query.stall && !isMarketFull.value) {
@@ -3215,6 +3215,26 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.date-status.status-closed {
+  color: #94a3b8;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.date-card.is-closed-date {
+  opacity: 0.6;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.date-card.is-closed-date:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #cbd5e1;
+}
+
 /* Interactive Time Slot Cards */
 .time-slot-cards-grid {
   display: grid;
@@ -3837,7 +3857,66 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+.mobile-stall-hint-pill {
+  display: none;
+}
+
+.mobile-project-full-banner {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .map-selection-empty-drawer {
+    display: none !important;
+  }
+
+  .mobile-stall-hint-pill {
+    position: absolute;
+    top: 60px;
+    left: 12px;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(15, 23, 42, 0.84);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    border-radius: 9999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    pointer-events: none;
+  }
+
+  .mobile-stall-hint-pill .mshp-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+  }
+
+  .mobile-project-full-banner {
+    position: absolute;
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    background: rgba(254, 242, 242, 0.98);
+    backdrop-filter: blur(8px);
+    border: 1px solid #fca5a5;
+    border-radius: 12px;
+    color: #b91c1c;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+  }
+
   .selected-stall-drawer {
     position: fixed !important;
     bottom: 0 !important;
@@ -3853,7 +3932,9 @@ onUnmounted(() => {
     border-left: none !important;
     border-right: none !important;
   }
+}
 
+@media (max-width: 768px) {
   .map-style-switcher {
     bottom: 10px !important;
     left: 10px !important;

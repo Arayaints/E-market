@@ -7,6 +7,7 @@ export interface ProjectFloor {
   shortLabel: string
   level: number
   description?: string
+  isFull?: boolean
 }
 
 export interface ProjectZone {
@@ -21,6 +22,7 @@ export interface ProjectZone {
   centroid: [number, number]
   coordinates: [number, number][]
   floors?: ProjectFloor[]
+  stalls?: any[]
 }
 
 export const CHATUCHAK_PROJECTS: ProjectZone[] = [
@@ -35,7 +37,7 @@ export const CHATUCHAK_PROJECTS: ProjectZone[] = [
     "realAreaSqm": 2583,
     "floors": [
       { "id": "1", "name": "ชั้น 1 (ของสะสม / เครื่องดนตรีไทย)", "shortLabel": "1F", "level": 1 },
-      { "id": "2", "name": "ชั้น 2 (หนังสือเก่า / แกลเลอรีภาพถ่าย)", "shortLabel": "2F", "level": 2 }
+      { "id": "2", "name": "ชั้น 2 (หนังสือเก่า / แกลเลอรีภาพถ่าย)", "shortLabel": "2F", "level": 2, "isFull": true }
     ],
     "centroid": [
       100.548742,

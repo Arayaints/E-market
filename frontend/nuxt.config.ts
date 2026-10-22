@@ -15,7 +15,9 @@ export default defineNuxtConfig({
     { path: '~/components/buttons', pathPrefix: false },
     { path: '~/components/layouts', pathPrefix: false },
     { path: '~/components/modals', pathPrefix: false },
+    { path: '~/components/maps', pathPrefix: false },
     { path: '~/components/extras', pathPrefix: false },
+    { path: '~/core/modules/stall/ui/components', pathPrefix: false },
   ],
   css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/css/main.css'],
   app: {

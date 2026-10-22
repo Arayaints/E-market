@@ -1,0 +1,4462 @@
+{
+  "id": 4,
+  "slug": "singhanat",
+  "name": "ตลาดสิงหนาท",
+  "district": "เขตคลองเตย",
+  "center": [
+    100.5967214,
+    13.7113411
+  ],
+  "overviewZoom": 18.8,
+  "bearing": 10,
+  "pitch": 35,
+  "description": "ตลาดชุมชนใจกลางสุขุมวิท 22 รองรับกลุ่มคนทำงานออฟฟิศ นักท่องเที่ยว และผู้อยู่อาศัยในพื้นที่",
+  "projects": [
+    {
+      "id": "sin-01",
+      "name": "โครงการ 01 (โซนแผงค้าตลาดสิงหนาท)",
+      "sectionNumber": "01",
+      "category": "สินค้าทั่วไป อาหาร และบริการ",
+      "color": "#2563eb",
+      "stallsAvailable": 19,
+      "totalStalls": 91,
+      "realAreaSqm": 753,
+      "centroid": [
+        100.5967131,
+        13.7113668
+      ],
+      "coordinates": [
+        [
+          100.596373,
+          13.7114606
+        ],
+        [
+          100.5968791,
+          13.7110937
+        ],
+        [
+          100.596909,
+          13.7110724
+        ],
+        [
+          100.5969937,
+          13.7111218
+        ],
+        [
+          100.5970254,
+          13.7111644
+        ],
+        [
+          100.5970698,
+          13.7112241
+        ],
+        [
+          100.5970548,
+          13.7112348
+        ],
+        [
+          100.5970226,
+          13.711256
+        ],
+        [
+          100.5965174,
+          13.711588
+        ],
+        [
+          100.596484,
+          13.7116099
+        ],
+        [
+          100.5964632,
+          13.711582
+        ],
+        [
+          100.596411,
+          13.7115118
+        ],
+        [
+          100.5963908,
+          13.7114846
+        ],
+        [
+          100.596373,
+          13.7114606
+        ]
+      ],
+      "floors": [
+        {
+          "id": "1",
+          "name": "ชั้น 1",
+          "shortLabel": "1F",
+          "level": 1
+        }
+      ],
+      "stalls": [
+        {
+          "code": "SIN-01-073",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969937,
+              13.7111218
+            ],
+            [
+              100.5969787,
+              13.7111324
+            ],
+            [
+              100.5970005,
+              13.7111616
+            ],
+            [
+              100.5970154,
+              13.711151
+            ],
+            [
+              100.5969937,
+              13.7111218
+            ]
+          ],
+          "center": [
+            100.596965,
+            13.7110722
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-090",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969308,
+              13.7111017
+            ],
+            [
+              100.5969158,
+              13.7111123
+            ],
+            [
+              100.5969348,
+              13.7111379
+            ],
+            [
+              100.5969498,
+              13.7111273
+            ],
+            [
+              100.5969308,
+              13.7111017
+            ]
+          ],
+          "center": [
+            100.5969328,
+            13.7111198
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-091",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969158,
+              13.7111123
+            ],
+            [
+              100.5969308,
+              13.7111017
+            ],
+            [
+              100.596909,
+              13.7110724
+            ],
+            [
+              100.5968941,
+              13.7110831
+            ],
+            [
+              100.5969158,
+              13.7111123
+            ]
+          ],
+          "center": [
+            100.5969124,
+            13.7110924
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-088",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969199,
+              13.7111485
+            ],
+            [
+              100.5969348,
+              13.7111379
+            ],
+            [
+              100.5969158,
+              13.7111123
+            ],
+            [
+              100.5969008,
+              13.7111229
+            ],
+            [
+              100.5969199,
+              13.7111485
+            ]
+          ],
+          "center": [
+            100.5969178,
+            13.7111304
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-089",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969158,
+              13.7111123
+            ],
+            [
+              100.5968941,
+              13.7110831
+            ],
+            [
+              100.5968791,
+              13.7110937
+            ],
+            [
+              100.5969008,
+              13.7111229
+            ],
+            [
+              100.5969158,
+              13.7111123
+            ]
+          ],
+          "center": [
+            100.5968814,
+            13.7110682
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-026",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "reserved",
+          "areaType": "ร้านค้า/อาคารพาณิชย์",
+          "size": 14.79,
+          "widthM": 2.0,
+          "depthM": 7.4,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964632,
+              13.711582
+            ],
+            [
+              100.596484,
+              13.7116099
+            ],
+            [
+              100.5964974,
+              13.7116011
+            ],
+            [
+              100.5964763,
+              13.7115727
+            ],
+            [
+              100.5964513,
+              13.711539
+            ],
+            [
+              100.5964382,
+              13.7115483
+            ],
+            [
+              100.5964632,
+              13.711582
+            ]
+          ],
+          "center": [
+            100.5964635,
+            13.7115654
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-050",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.75,
+          "widthM": 2.0,
+          "depthM": 4.4,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596411,
+              13.7115118
+            ],
+            [
+              100.5964382,
+              13.7115483
+            ],
+            [
+              100.5964513,
+              13.711539
+            ],
+            [
+              100.5964241,
+              13.7115025
+            ],
+            [
+              100.596411,
+              13.7115118
+            ]
+          ],
+          "center": [
+            100.5964165,
+            13.7114936
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-079",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.9,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596373,
+              13.7114606
+            ],
+            [
+              100.5963908,
+              13.7114846
+            ],
+            [
+              100.5964065,
+              13.7114735
+            ],
+            [
+              100.5963887,
+              13.7114494
+            ],
+            [
+              100.596373,
+              13.7114606
+            ]
+          ],
+          "center": [
+            100.5964091,
+            13.7115089
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-023",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.82,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5970072,
+              13.711266
+            ],
+            [
+              100.5970226,
+              13.711256
+            ],
+            [
+              100.5969957,
+              13.7112198
+            ],
+            [
+              100.5969807,
+              13.7112304
+            ],
+            [
+              100.5970072,
+              13.711266
+            ]
+          ],
+          "center": [
+            100.5969998,
+            13.7112393
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-024",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.97,
+          "widthM": 2.0,
+          "depthM": 5.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5970226,
+              13.711256
+            ],
+            [
+              100.5970379,
+              13.7112459
+            ],
+            [
+              100.5970107,
+              13.7112092
+            ],
+            [
+              100.5969957,
+              13.7112198
+            ],
+            [
+              100.5970226,
+              13.711256
+            ]
+          ],
+          "center": [
+            100.5970226,
+            13.7112454
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-021",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.36,
+          "widthM": 2.0,
+          "depthM": 4.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969596,
+              13.7112973
+            ],
+            [
+              100.596975,
+              13.7112872
+            ],
+            [
+              100.5969493,
+              13.7112527
+            ],
+            [
+              100.5969344,
+              13.7112634
+            ],
+            [
+              100.5969596,
+              13.7112973
+            ]
+          ],
+          "center": [
+            100.5969496,
+            13.7112644
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-022",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.51,
+          "widthM": 2.0,
+          "depthM": 4.8,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596975,
+              13.7112872
+            ],
+            [
+              100.5969903,
+              13.7112771
+            ],
+            [
+              100.5969643,
+              13.7112421
+            ],
+            [
+              100.5969493,
+              13.7112527
+            ],
+            [
+              100.596975,
+              13.7112872
+            ]
+          ],
+          "center": [
+            100.5969593,
+            13.7112422
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-019",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.91,
+          "widthM": 2.0,
+          "depthM": 4.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596912,
+              13.7113286
+            ],
+            [
+              100.5969274,
+              13.7113185
+            ],
+            [
+              100.596903,
+              13.7112857
+            ],
+            [
+              100.596888,
+              13.7112963
+            ],
+            [
+              100.596912,
+              13.7113286
+            ]
+          ],
+          "center": [
+            100.5969135,
+            13.7113201
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-020",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.06,
+          "widthM": 2.0,
+          "depthM": 4.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969274,
+              13.7113185
+            ],
+            [
+              100.5969427,
+              13.7113084
+            ],
+            [
+              100.5969179,
+              13.7112751
+            ],
+            [
+              100.596903,
+              13.7112857
+            ],
+            [
+              100.5969274,
+              13.7113185
+            ]
+          ],
+          "center": [
+            100.596937,
+            13.7113276
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-017",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.45,
+          "widthM": 2.0,
+          "depthM": 4.2,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968644,
+              13.7113599
+            ],
+            [
+              100.5968798,
+              13.7113498
+            ],
+            [
+              100.5968566,
+              13.7113186
+            ],
+            [
+              100.5968416,
+              13.7113293
+            ],
+            [
+              100.5968644,
+              13.7113599
+            ]
+          ],
+          "center": [
+            100.5968786,
+            13.7113783
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-018",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.6,
+          "widthM": 2.0,
+          "depthM": 4.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968798,
+              13.7113498
+            ],
+            [
+              100.5968951,
+              13.7113397
+            ],
+            [
+              100.5968716,
+              13.711308
+            ],
+            [
+              100.5968566,
+              13.7113186
+            ],
+            [
+              100.5968798,
+              13.7113498
+            ]
+          ],
+          "center": [
+            100.5968724,
+            13.7113217
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-015",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.93,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968166,
+              13.7113909
+            ],
+            [
+              100.596832,
+              13.7113809
+            ],
+            [
+              100.5968102,
+              13.7113516
+            ],
+            [
+              100.5967953,
+              13.7113622
+            ],
+            [
+              100.5968166,
+              13.7113909
+            ]
+          ],
+          "center": [
+            100.5968153,
+            13.7113752
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-016",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.12,
+          "widthM": 2.0,
+          "depthM": 4.1,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596832,
+              13.7113809
+            ],
+            [
+              100.5968475,
+              13.711371
+            ],
+            [
+              100.5968252,
+              13.7113409
+            ],
+            [
+              100.5968102,
+              13.7113516
+            ],
+            [
+              100.596832,
+              13.7113809
+            ]
+          ],
+          "center": [
+            100.5968224,
+            13.7113473
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-013",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.34,
+          "widthM": 2.0,
+          "depthM": 4.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967692,
+              13.7114225
+            ],
+            [
+              100.5967846,
+              13.7114124
+            ],
+            [
+              100.596759,
+              13.7113779
+            ],
+            [
+              100.596744,
+              13.7113886
+            ],
+            [
+              100.5967692,
+              13.7114225
+            ]
+          ],
+          "center": [
+            100.5967632,
+            13.7113981
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-014",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.49,
+          "widthM": 2.0,
+          "depthM": 4.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967846,
+              13.7114124
+            ],
+            [
+              100.5967999,
+              13.7114023
+            ],
+            [
+              100.5967739,
+              13.7113673
+            ],
+            [
+              100.596759,
+              13.7113779
+            ],
+            [
+              100.5967846,
+              13.7114124
+            ]
+          ],
+          "center": [
+            100.5967728,
+            13.7113758
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-011",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.11,
+          "widthM": 2.0,
+          "depthM": 4.6,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966924,
+              13.7114729
+            ],
+            [
+              100.5967072,
+              13.7114632
+            ],
+            [
+              100.5967078,
+              13.7114628
+            ],
+            [
+              100.5966831,
+              13.7114296
+            ],
+            [
+              100.5966828,
+              13.7114292
+            ],
+            [
+              100.5966679,
+              13.7114399
+            ],
+            [
+              100.5966681,
+              13.7114402
+            ],
+            [
+              100.5966924,
+              13.7114729
+            ]
+          ],
+          "center": [
+            100.596676,
+            13.7114258
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-009",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.74,
+          "widthM": 2.0,
+          "depthM": 4.4,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596654,
+              13.7114981
+            ],
+            [
+              100.5966694,
+              13.7114881
+            ],
+            [
+              100.5966457,
+              13.7114562
+            ],
+            [
+              100.5966454,
+              13.7114558
+            ],
+            [
+              100.5966305,
+              13.7114664
+            ],
+            [
+              100.5966307,
+              13.7114668
+            ],
+            [
+              100.596654,
+              13.7114981
+            ]
+          ],
+          "center": [
+            100.5966425,
+            13.7114613
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-010",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.89,
+          "widthM": 2.0,
+          "depthM": 4.4,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966694,
+              13.7114881
+            ],
+            [
+              100.5966847,
+              13.711478
+            ],
+            [
+              100.5966604,
+              13.7114452
+            ],
+            [
+              100.5966454,
+              13.7114558
+            ],
+            [
+              100.5966457,
+              13.7114562
+            ],
+            [
+              100.5966694,
+              13.7114881
+            ]
+          ],
+          "center": [
+            100.5966663,
+            13.7114696
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-007",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.38,
+          "widthM": 2.0,
+          "depthM": 4.2,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966156,
+              13.7115234
+            ],
+            [
+              100.596631,
+              13.7115133
+            ],
+            [
+              100.5966083,
+              13.7114828
+            ],
+            [
+              100.596608,
+              13.7114824
+            ],
+            [
+              100.5965931,
+              13.711493
+            ],
+            [
+              100.5965933,
+              13.7114934
+            ],
+            [
+              100.5966156,
+              13.7115234
+            ]
+          ],
+          "center": [
+            100.5965971,
+            13.7114708
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-008",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.52,
+          "widthM": 2.0,
+          "depthM": 4.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596631,
+              13.7115133
+            ],
+            [
+              100.5966463,
+              13.7115032
+            ],
+            [
+              100.596623,
+              13.7114718
+            ],
+            [
+              100.596608,
+              13.7114824
+            ],
+            [
+              100.5966083,
+              13.7114828
+            ],
+            [
+              100.596631,
+              13.7115133
+            ]
+          ],
+          "center": [
+            100.5966364,
+            13.7115128
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-005",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.01,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965772,
+              13.7115486
+            ],
+            [
+              100.5965926,
+              13.7115385
+            ],
+            [
+              100.5965709,
+              13.7115093
+            ],
+            [
+              100.5965706,
+              13.711509
+            ],
+            [
+              100.5965557,
+              13.7115196
+            ],
+            [
+              100.5965559,
+              13.71152
+            ],
+            [
+              100.5965772,
+              13.7115486
+            ]
+          ],
+          "center": [
+            100.596583,
+            13.7115481
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-006",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.16,
+          "widthM": 2.0,
+          "depthM": 4.1,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965926,
+              13.7115385
+            ],
+            [
+              100.596608,
+              13.7115284
+            ],
+            [
+              100.5965856,
+              13.7114983
+            ],
+            [
+              100.5965706,
+              13.711509
+            ],
+            [
+              100.5965709,
+              13.7115093
+            ],
+            [
+              100.5965926,
+              13.7115385
+            ]
+          ],
+          "center": [
+            100.5965757,
+            13.7114894
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-003",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.64,
+          "widthM": 2.0,
+          "depthM": 3.8,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965389,
+              13.7115738
+            ],
+            [
+              100.5965542,
+              13.7115637
+            ],
+            [
+              100.5965332,
+              13.7115355
+            ],
+            [
+              100.5965183,
+              13.7115462
+            ],
+            [
+              100.5965389,
+              13.7115738
+            ]
+          ],
+          "center": [
+            100.5965207,
+            13.7115213
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-004",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.79,
+          "widthM": 2.0,
+          "depthM": 3.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965542,
+              13.7115637
+            ],
+            [
+              100.5965696,
+              13.7115536
+            ],
+            [
+              100.5965482,
+              13.7115249
+            ],
+            [
+              100.5965332,
+              13.7115355
+            ],
+            [
+              100.5965542,
+              13.7115637
+            ]
+          ],
+          "center": [
+            100.5965624,
+            13.7115683
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-002",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.07,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965174,
+              13.711588
+            ],
+            [
+              100.5965296,
+              13.7115799
+            ],
+            [
+              100.5965055,
+              13.7115474
+            ],
+            [
+              100.5964935,
+              13.7115559
+            ],
+            [
+              100.5965174,
+              13.711588
+            ]
+          ],
+          "center": [
+            100.5965148,
+            13.711575
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-001",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.26,
+          "widthM": 2.0,
+          "depthM": 3.1,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964974,
+              13.7116011
+            ],
+            [
+              100.5965097,
+              13.711593
+            ],
+            [
+              100.5964882,
+              13.7115642
+            ],
+            [
+              100.5964763,
+              13.7115727
+            ],
+            [
+              100.5964974,
+              13.7116011
+            ]
+          ],
+          "center": [
+            100.5964827,
+            13.7115607
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-051",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965002,
+              13.7114911
+            ],
+            [
+              100.5964956,
+              13.7114849
+            ],
+            [
+              100.5964925,
+              13.7114807
+            ],
+            [
+              100.5964775,
+              13.7114913
+            ],
+            [
+              100.5964993,
+              13.7115206
+            ],
+            [
+              100.5965142,
+              13.7115099
+            ],
+            [
+              100.5965002,
+              13.7114911
+            ]
+          ],
+          "center": [
+            100.596528,
+            13.7115701
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-052",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964956,
+              13.7114849
+            ],
+            [
+              100.5965002,
+              13.7114911
+            ],
+            [
+              100.5965142,
+              13.7115099
+            ],
+            [
+              100.5965292,
+              13.7114993
+            ],
+            [
+              100.5965074,
+              13.7114701
+            ],
+            [
+              100.5964925,
+              13.7114807
+            ],
+            [
+              100.5964956,
+              13.7114849
+            ]
+          ],
+          "center": [
+            100.5964999,
+            13.7114664
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-027",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965274,
+              13.7115277
+            ],
+            [
+              100.5965228,
+              13.7115215
+            ],
+            [
+              100.5965142,
+              13.7115099
+            ],
+            [
+              100.5964993,
+              13.7115206
+            ],
+            [
+              100.5965183,
+              13.7115462
+            ],
+            [
+              100.5965332,
+              13.7115355
+            ],
+            [
+              100.5965274,
+              13.7115277
+            ]
+          ],
+          "center": [
+            100.5964979,
+            13.7114883
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-028",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965228,
+              13.7115215
+            ],
+            [
+              100.5965274,
+              13.7115277
+            ],
+            [
+              100.5965332,
+              13.7115355
+            ],
+            [
+              100.5965482,
+              13.7115249
+            ],
+            [
+              100.5965292,
+              13.7114993
+            ],
+            [
+              100.5965142,
+              13.7115099
+            ],
+            [
+              100.5965228,
+              13.7115215
+            ]
+          ],
+          "center": [
+            100.5965312,
+            13.7115174
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-074",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.65,
+          "widthM": 2.0,
+          "depthM": 4.8,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964697,
+              13.71147
+            ],
+            [
+              100.5964892,
+              13.7114562
+            ],
+            [
+              100.596469,
+              13.7114291
+            ],
+            [
+              100.5964495,
+              13.7114429
+            ],
+            [
+              100.5964697,
+              13.71147
+            ]
+          ],
+          "center": [
+            100.5964502,
+            13.7114081
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-083",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.58,
+          "widthM": 2.0,
+          "depthM": 3.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964511,
+              13.711405
+            ],
+            [
+              100.596469,
+              13.7114291
+            ],
+            [
+              100.5964839,
+              13.7114185
+            ],
+            [
+              100.5964661,
+              13.7113944
+            ],
+            [
+              100.5964511,
+              13.711405
+            ]
+          ],
+          "center": [
+            100.5964636,
+            13.7114033
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-082",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.55,
+          "widthM": 2.0,
+          "depthM": 4.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596469,
+              13.7114291
+            ],
+            [
+              100.5964511,
+              13.711405
+            ],
+            [
+              100.5964317,
+              13.7114189
+            ],
+            [
+              100.5964495,
+              13.7114429
+            ],
+            [
+              100.596469,
+              13.7114291
+            ]
+          ],
+          "center": [
+            100.5964389,
+            13.7113993
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-075",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.42,
+          "widthM": 2.0,
+          "depthM": 3.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596469,
+              13.7114291
+            ],
+            [
+              100.5964892,
+              13.7114562
+            ],
+            [
+              100.5965041,
+              13.7114456
+            ],
+            [
+              100.5964839,
+              13.7114185
+            ],
+            [
+              100.596469,
+              13.7114291
+            ]
+          ],
+          "center": [
+            100.59649,
+            13.7114448
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-055",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596575,
+              13.711438
+            ],
+            [
+              100.5965704,
+              13.7114318
+            ],
+            [
+              100.5965673,
+              13.7114275
+            ],
+            [
+              100.5965523,
+              13.7114382
+            ],
+            [
+              100.596574,
+              13.7114674
+            ],
+            [
+              100.596589,
+              13.7114568
+            ],
+            [
+              100.596575,
+              13.711438
+            ]
+          ],
+          "center": [
+            100.5965867,
+            13.7114822
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-056",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965704,
+              13.7114318
+            ],
+            [
+              100.596575,
+              13.711438
+            ],
+            [
+              100.596589,
+              13.7114568
+            ],
+            [
+              100.596604,
+              13.7114462
+            ],
+            [
+              100.5965822,
+              13.7114169
+            ],
+            [
+              100.5965673,
+              13.7114275
+            ],
+            [
+              100.5965704,
+              13.7114318
+            ]
+          ],
+          "center": [
+            100.5965856,
+            13.7114369
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-031",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966022,
+              13.7114745
+            ],
+            [
+              100.5965976,
+              13.7114683
+            ],
+            [
+              100.596589,
+              13.7114568
+            ],
+            [
+              100.596574,
+              13.7114674
+            ],
+            [
+              100.5965931,
+              13.711493
+            ],
+            [
+              100.596608,
+              13.7114824
+            ],
+            [
+              100.5966022,
+              13.7114745
+            ]
+          ],
+          "center": [
+            100.5966094,
+            13.7115146
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-032",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965976,
+              13.7114683
+            ],
+            [
+              100.5966022,
+              13.7114745
+            ],
+            [
+              100.596608,
+              13.7114824
+            ],
+            [
+              100.596623,
+              13.7114718
+            ],
+            [
+              100.596604,
+              13.7114462
+            ],
+            [
+              100.596589,
+              13.7114568
+            ],
+            [
+              100.5965976,
+              13.7114683
+            ]
+          ],
+          "center": [
+            100.5965877,
+            13.7114246
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-085",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.57,
+          "widthM": 2.0,
+          "depthM": 3.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965259,
+              13.7113519
+            ],
+            [
+              100.5965438,
+              13.7113759
+            ],
+            [
+              100.5965587,
+              13.7113653
+            ],
+            [
+              100.5965409,
+              13.7113413
+            ],
+            [
+              100.5965259,
+              13.7113519
+            ]
+          ],
+          "center": [
+            100.5965579,
+            13.7113924
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-077",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.43,
+          "widthM": 2.0,
+          "depthM": 3.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965438,
+              13.7113759
+            ],
+            [
+              100.5965639,
+              13.7114031
+            ],
+            [
+              100.5965789,
+              13.7113925
+            ],
+            [
+              100.5965587,
+              13.7113653
+            ],
+            [
+              100.5965438,
+              13.7113759
+            ]
+          ],
+          "center": [
+            100.5965475,
+            13.7113542
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-076",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.43,
+          "widthM": 2.0,
+          "depthM": 3.7,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965445,
+              13.7114169
+            ],
+            [
+              100.5965243,
+              13.7113898
+            ],
+            [
+              100.5965094,
+              13.7114004
+            ],
+            [
+              100.5965295,
+              13.7114275
+            ],
+            [
+              100.5965445,
+              13.7114169
+            ]
+          ],
+          "center": [
+            100.5965131,
+            13.7113787
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-084",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.58,
+          "widthM": 2.0,
+          "depthM": 3.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965243,
+              13.7113898
+            ],
+            [
+              100.5965065,
+              13.7113657
+            ],
+            [
+              100.5964915,
+              13.7113764
+            ],
+            [
+              100.5965094,
+              13.7114004
+            ],
+            [
+              100.5965243,
+              13.7113898
+            ]
+          ],
+          "center": [
+            100.596504,
+            13.7113746
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-059",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966498,
+              13.7113848
+            ],
+            [
+              100.5966452,
+              13.7113786
+            ],
+            [
+              100.5966421,
+              13.7113744
+            ],
+            [
+              100.5966271,
+              13.711385
+            ],
+            [
+              100.5966488,
+              13.7114143
+            ],
+            [
+              100.5966638,
+              13.7114037
+            ],
+            [
+              100.5966498,
+              13.7113848
+            ]
+          ],
+          "center": [
+            100.5966454,
+            13.7113943
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-060",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966452,
+              13.7113786
+            ],
+            [
+              100.5966498,
+              13.7113848
+            ],
+            [
+              100.5966638,
+              13.7114037
+            ],
+            [
+              100.5966788,
+              13.711393
+            ],
+            [
+              100.596657,
+              13.7113638
+            ],
+            [
+              100.5966421,
+              13.7113744
+            ],
+            [
+              100.5966452,
+              13.7113786
+            ]
+          ],
+          "center": [
+            100.5966765,
+            13.7114185
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-035",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.596677,
+              13.7114214
+            ],
+            [
+              100.5966724,
+              13.7114152
+            ],
+            [
+              100.5966638,
+              13.7114037
+            ],
+            [
+              100.5966488,
+              13.7114143
+            ],
+            [
+              100.5966679,
+              13.7114399
+            ],
+            [
+              100.5966828,
+              13.7114292
+            ],
+            [
+              100.596677,
+              13.7114214
+            ]
+          ],
+          "center": [
+            100.5966658,
+            13.7114218
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-036",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966724,
+              13.7114152
+            ],
+            [
+              100.596677,
+              13.7114214
+            ],
+            [
+              100.5966828,
+              13.7114292
+            ],
+            [
+              100.5966978,
+              13.7114186
+            ],
+            [
+              100.5966788,
+              13.711393
+            ],
+            [
+              100.5966638,
+              13.7114037
+            ],
+            [
+              100.5966724,
+              13.7114152
+            ]
+          ],
+          "center": [
+            100.5966808,
+            13.7114111
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-078",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966193,
+              13.7113638
+            ],
+            [
+              100.5966003,
+              13.7113382
+            ],
+            [
+              100.5965853,
+              13.7113488
+            ],
+            [
+              100.5966043,
+              13.7113744
+            ],
+            [
+              100.5966193,
+              13.7113638
+            ]
+          ],
+          "center": [
+            100.5966023,
+            13.7113563
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-086",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "reserved",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966003,
+              13.7113382
+            ],
+            [
+              100.5965812,
+              13.7113126
+            ],
+            [
+              100.5965663,
+              13.7113232
+            ],
+            [
+              100.5965853,
+              13.7113488
+            ],
+            [
+              100.5966003,
+              13.7113382
+            ]
+          ],
+          "center": [
+            100.5965649,
+            13.711291
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-061",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.5,
+          "widthM": 2.0,
+          "depthM": 4.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967246,
+              13.7113317
+            ],
+            [
+              100.59672,
+              13.7113255
+            ],
+            [
+              100.5967186,
+              13.7113236
+            ],
+            [
+              100.5967141,
+              13.7113176
+            ],
+            [
+              100.5966992,
+              13.7113282
+            ],
+            [
+              100.5967199,
+              13.7113562
+            ],
+            [
+              100.5967223,
+              13.7113593
+            ],
+            [
+              100.5967372,
+              13.7113487
+            ],
+            [
+              100.5967349,
+              13.7113455
+            ],
+            [
+              100.5967246,
+              13.7113317
+            ]
+          ],
+          "center": [
+            100.5966729,
+            13.7112403
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-062",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.5,
+          "widthM": 2.0,
+          "depthM": 4.2,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.59672,
+              13.7113255
+            ],
+            [
+              100.5967246,
+              13.7113317
+            ],
+            [
+              100.5967349,
+              13.7113455
+            ],
+            [
+              100.5967372,
+              13.7113487
+            ],
+            [
+              100.5967522,
+              13.7113381
+            ],
+            [
+              100.5967291,
+              13.711307
+            ],
+            [
+              100.5967141,
+              13.7113176
+            ],
+            [
+              100.5967186,
+              13.7113236
+            ],
+            [
+              100.59672,
+              13.7113255
+            ]
+          ],
+          "center": [
+            100.5967634,
+            13.7113933
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-037",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "reserved",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967518,
+              13.7113683
+            ],
+            [
+              100.5967471,
+              13.711362
+            ],
+            [
+              100.5967458,
+              13.7113602
+            ],
+            [
+              100.5967372,
+              13.7113487
+            ],
+            [
+              100.5967223,
+              13.7113593
+            ],
+            [
+              100.5967417,
+              13.7113854
+            ],
+            [
+              100.596744,
+              13.7113886
+            ],
+            [
+              100.596759,
+              13.7113779
+            ],
+            [
+              100.5967518,
+              13.7113683
+            ]
+          ],
+          "center": [
+            100.5967246,
+            13.7113339
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-038",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967471,
+              13.711362
+            ],
+            [
+              100.5967518,
+              13.7113683
+            ],
+            [
+              100.596759,
+              13.7113779
+            ],
+            [
+              100.5967739,
+              13.7113673
+            ],
+            [
+              100.5967522,
+              13.7113381
+            ],
+            [
+              100.5967372,
+              13.7113487
+            ],
+            [
+              100.5967458,
+              13.7113602
+            ],
+            [
+              100.5967471,
+              13.711362
+            ]
+          ],
+          "center": [
+            100.5967716,
+            13.7113928
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-087",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.78,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967048,
+              13.7112851
+            ],
+            [
+              100.5966844,
+              13.7112576
+            ],
+            [
+              100.596665,
+              13.7112715
+            ],
+            [
+              100.5966854,
+              13.711299
+            ],
+            [
+              100.5967048,
+              13.7112851
+            ]
+          ],
+          "center": [
+            100.5966859,
+            13.7112805
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-065",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968173,
+              13.7112658
+            ],
+            [
+              100.5968127,
+              13.7112596
+            ],
+            [
+              100.5968113,
+              13.7112577
+            ],
+            [
+              100.5968082,
+              13.7112536
+            ],
+            [
+              100.5967933,
+              13.7112642
+            ],
+            [
+              100.596815,
+              13.7112934
+            ],
+            [
+              100.59683,
+              13.7112828
+            ],
+            [
+              100.5968173,
+              13.7112658
+            ]
+          ],
+          "center": [
+            100.5968116,
+            13.7112735
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-066",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968127,
+              13.7112596
+            ],
+            [
+              100.5968173,
+              13.7112658
+            ],
+            [
+              100.59683,
+              13.7112828
+            ],
+            [
+              100.5968449,
+              13.7112722
+            ],
+            [
+              100.5968232,
+              13.7112429
+            ],
+            [
+              100.5968082,
+              13.7112536
+            ],
+            [
+              100.5968113,
+              13.7112577
+            ],
+            [
+              100.5968127,
+              13.7112596
+            ]
+          ],
+          "center": [
+            100.5968266,
+            13.7112629
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-041",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968445,
+              13.7113024
+            ],
+            [
+              100.5968399,
+              13.7112961
+            ],
+            [
+              100.5968385,
+              13.7112943
+            ],
+            [
+              100.59683,
+              13.7112828
+            ],
+            [
+              100.596815,
+              13.7112934
+            ],
+            [
+              100.5968416,
+              13.7113293
+            ],
+            [
+              100.5968566,
+              13.7113186
+            ],
+            [
+              100.5968445,
+              13.7113024
+            ]
+          ],
+          "center": [
+            100.5968253,
+            13.7112833
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-042",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968399,
+              13.7112961
+            ],
+            [
+              100.5968445,
+              13.7113024
+            ],
+            [
+              100.5968566,
+              13.7113186
+            ],
+            [
+              100.5968716,
+              13.711308
+            ],
+            [
+              100.5968449,
+              13.7112722
+            ],
+            [
+              100.59683,
+              13.7112828
+            ],
+            [
+              100.5968385,
+              13.7112943
+            ],
+            [
+              100.5968399,
+              13.7112961
+            ]
+          ],
+          "center": [
+            100.5968403,
+            13.7112727
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-069",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969101,
+              13.7111999
+            ],
+            [
+              100.5969054,
+              13.7111937
+            ],
+            [
+              100.5969041,
+              13.7111918
+            ],
+            [
+              100.596901,
+              13.7111877
+            ],
+            [
+              100.596886,
+              13.7111983
+            ],
+            [
+              100.5969077,
+              13.7112275
+            ],
+            [
+              100.5969227,
+              13.7112169
+            ],
+            [
+              100.5969101,
+              13.7111999
+            ]
+          ],
+          "center": [
+            100.5969044,
+            13.7112076
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-070",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969054,
+              13.7111937
+            ],
+            [
+              100.5969101,
+              13.7111999
+            ],
+            [
+              100.5969227,
+              13.7112169
+            ],
+            [
+              100.5969377,
+              13.7112063
+            ],
+            [
+              100.5969159,
+              13.711177
+            ],
+            [
+              100.596901,
+              13.7111877
+            ],
+            [
+              100.5969041,
+              13.7111918
+            ],
+            [
+              100.5969054,
+              13.7111937
+            ]
+          ],
+          "center": [
+            100.5969193,
+            13.711197
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-045",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969372,
+              13.7112365
+            ],
+            [
+              100.5969326,
+              13.7112303
+            ],
+            [
+              100.5969312,
+              13.7112284
+            ],
+            [
+              100.5969227,
+              13.7112169
+            ],
+            [
+              100.5969077,
+              13.7112275
+            ],
+            [
+              100.5969344,
+              13.7112634
+            ],
+            [
+              100.5969493,
+              13.7112527
+            ],
+            [
+              100.5969372,
+              13.7112365
+            ]
+          ],
+          "center": [
+            100.5969312,
+            13.7112458
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-046",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969326,
+              13.7112303
+            ],
+            [
+              100.5969372,
+              13.7112365
+            ],
+            [
+              100.5969493,
+              13.7112527
+            ],
+            [
+              100.5969643,
+              13.7112421
+            ],
+            [
+              100.5969377,
+              13.7112063
+            ],
+            [
+              100.5969227,
+              13.7112169
+            ],
+            [
+              100.5969312,
+              13.7112284
+            ],
+            [
+              100.5969326,
+              13.7112303
+            ]
+          ],
+          "center": [
+            100.5969592,
+            13.7112636
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-049",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 10.0,
+          "widthM": 2.0,
+          "depthM": 5.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.59703,
+              13.7111706
+            ],
+            [
+              100.5970254,
+              13.7111644
+            ],
+            [
+              100.5970154,
+              13.711151
+            ],
+            [
+              100.5970005,
+              13.7111616
+            ],
+            [
+              100.5970277,
+              13.7111982
+            ],
+            [
+              100.5970426,
+              13.7111876
+            ],
+            [
+              100.59703,
+              13.7111706
+            ]
+          ],
+          "center": [
+            100.5970344,
+            13.7112024
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-063",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967619,
+              13.7112865
+            ],
+            [
+              100.5967469,
+              13.7112971
+            ],
+            [
+              100.5967686,
+              13.7113264
+            ],
+            [
+              100.5967836,
+              13.7113157
+            ],
+            [
+              100.5967619,
+              13.7112865
+            ]
+          ],
+          "center": [
+            100.5967492,
+            13.7112717
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-064",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967768,
+              13.7112759
+            ],
+            [
+              100.5967619,
+              13.7112865
+            ],
+            [
+              100.5967836,
+              13.7113157
+            ],
+            [
+              100.5967986,
+              13.7113051
+            ],
+            [
+              100.5967768,
+              13.7112759
+            ]
+          ],
+          "center": [
+            100.5967802,
+            13.7112958
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-047",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "reserved",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969807,
+              13.7112304
+            ],
+            [
+              100.5969957,
+              13.7112198
+            ],
+            [
+              100.5969691,
+              13.711184
+            ],
+            [
+              100.5969541,
+              13.7111946
+            ],
+            [
+              100.5969807,
+              13.7112304
+            ]
+          ],
+          "center": [
+            100.5969644,
+            13.7111845
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-048",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969957,
+              13.7112198
+            ],
+            [
+              100.5970107,
+              13.7112092
+            ],
+            [
+              100.596984,
+              13.7111733
+            ],
+            [
+              100.5969691,
+              13.711184
+            ],
+            [
+              100.5969957,
+              13.7112198
+            ]
+          ],
+          "center": [
+            100.5969925,
+            13.7112022
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-040",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967986,
+              13.7113051
+            ],
+            [
+              100.5967836,
+              13.7113157
+            ],
+            [
+              100.5968102,
+              13.7113516
+            ],
+            [
+              100.5968252,
+              13.7113409
+            ],
+            [
+              100.5967986,
+              13.7113051
+            ]
+          ],
+          "center": [
+            100.596807,
+            13.711334
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-039",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967836,
+              13.7113157
+            ],
+            [
+              100.5967686,
+              13.7113264
+            ],
+            [
+              100.5967953,
+              13.7113622
+            ],
+            [
+              100.5968102,
+              13.7113516
+            ],
+            [
+              100.5967836,
+              13.7113157
+            ]
+          ],
+          "center": [
+            100.5967921,
+            13.7113446
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-068",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968546,
+              13.7112206
+            ],
+            [
+              100.5968763,
+              13.7112499
+            ],
+            [
+              100.5968913,
+              13.7112392
+            ],
+            [
+              100.5968696,
+              13.71121
+            ],
+            [
+              100.5968679,
+              13.7112112
+            ],
+            [
+              100.5968546,
+              13.7112206
+            ]
+          ],
+          "center": [
+            100.5968729,
+            13.7112299
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-067",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968763,
+              13.7112499
+            ],
+            [
+              100.5968546,
+              13.7112206
+            ],
+            [
+              100.5968529,
+              13.7112218
+            ],
+            [
+              100.5968396,
+              13.7112312
+            ],
+            [
+              100.5968614,
+              13.7112605
+            ],
+            [
+              100.5968763,
+              13.7112499
+            ]
+          ],
+          "center": [
+            100.596874,
+            13.7112753
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-044",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968913,
+              13.7112392
+            ],
+            [
+              100.5968763,
+              13.7112499
+            ],
+            [
+              100.596903,
+              13.7112857
+            ],
+            [
+              100.5969179,
+              13.7112751
+            ],
+            [
+              100.5968913,
+              13.7112392
+            ]
+          ],
+          "center": [
+            100.5968866,
+            13.7112398
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-043",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "reserved",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.8,
+          "widthM": 2.0,
+          "depthM": 4.9,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5968763,
+              13.7112499
+            ],
+            [
+              100.5968614,
+              13.7112605
+            ],
+            [
+              100.596888,
+              13.7112963
+            ],
+            [
+              100.596903,
+              13.7112857
+            ],
+            [
+              100.5968763,
+              13.7112499
+            ]
+          ],
+          "center": [
+            100.5968979,
+            13.7113071
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-072",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969623,
+              13.7111441
+            ],
+            [
+              100.5969473,
+              13.7111547
+            ],
+            [
+              100.5969691,
+              13.711184
+            ],
+            [
+              100.596984,
+              13.7111733
+            ],
+            [
+              100.5969623,
+              13.7111441
+            ]
+          ],
+          "center": [
+            100.5969978,
+            13.7112335
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-071",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5969691,
+              13.711184
+            ],
+            [
+              100.5969473,
+              13.7111547
+            ],
+            [
+              100.5969324,
+              13.7111653
+            ],
+            [
+              100.5969541,
+              13.7111946
+            ],
+            [
+              100.5969691,
+              13.711184
+            ]
+          ],
+          "center": [
+            100.5969507,
+            13.7111747
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-025",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 10.0,
+          "widthM": 2.0,
+          "depthM": 5.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5970698,
+              13.7112241
+            ],
+            [
+              100.5970426,
+              13.7111876
+            ],
+            [
+              100.5970277,
+              13.7111982
+            ],
+            [
+              100.5970548,
+              13.7112348
+            ],
+            [
+              100.5970698,
+              13.7112241
+            ]
+          ],
+          "center": [
+            100.5970487,
+            13.7112112
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-034",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966264,
+              13.7114302
+            ],
+            [
+              100.5966396,
+              13.711448
+            ],
+            [
+              100.5966454,
+              13.7114558
+            ],
+            [
+              100.5966604,
+              13.7114452
+            ],
+            [
+              100.5966414,
+              13.7114196
+            ],
+            [
+              100.5966264,
+              13.7114302
+            ]
+          ],
+          "center": [
+            100.5966434,
+            13.7114377
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-033",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966396,
+              13.711448
+            ],
+            [
+              100.5966264,
+              13.7114302
+            ],
+            [
+              100.5966114,
+              13.7114409
+            ],
+            [
+              100.5966305,
+              13.7114664
+            ],
+            [
+              100.5966454,
+              13.7114558
+            ],
+            [
+              100.5966396,
+              13.711448
+            ]
+          ],
+          "center": [
+            100.5966468,
+            13.7114881
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-058",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966264,
+              13.7114302
+            ],
+            [
+              100.5966414,
+              13.7114196
+            ],
+            [
+              100.5966196,
+              13.7113904
+            ],
+            [
+              100.5966047,
+              13.711401
+            ],
+            [
+              100.5966264,
+              13.7114302
+            ]
+          ],
+          "center": [
+            100.596623,
+            13.7114103
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-057",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5966264,
+              13.7114302
+            ],
+            [
+              100.5966047,
+              13.711401
+            ],
+            [
+              100.5965897,
+              13.7114116
+            ],
+            [
+              100.5966114,
+              13.7114409
+            ],
+            [
+              100.5966264,
+              13.7114302
+            ]
+          ],
+          "center": [
+            100.596592,
+            13.7113862
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-030",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965516,
+              13.7114834
+            ],
+            [
+              100.5965648,
+              13.7115011
+            ],
+            [
+              100.5965687,
+              13.7115064
+            ],
+            [
+              100.5965706,
+              13.711509
+            ],
+            [
+              100.5965856,
+              13.7114983
+            ],
+            [
+              100.5965666,
+              13.7114727
+            ],
+            [
+              100.5965516,
+              13.7114834
+            ]
+          ],
+          "center": [
+            100.5965686,
+            13.7114908
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-029",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 7.0,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965648,
+              13.7115011
+            ],
+            [
+              100.5965516,
+              13.7114834
+            ],
+            [
+              100.5965367,
+              13.711494
+            ],
+            [
+              100.5965557,
+              13.7115196
+            ],
+            [
+              100.5965706,
+              13.711509
+            ],
+            [
+              100.5965648,
+              13.7115011
+            ]
+          ],
+          "center": [
+            100.5965536,
+            13.7115015
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-054",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965516,
+              13.7114834
+            ],
+            [
+              100.5965666,
+              13.7114727
+            ],
+            [
+              100.5965448,
+              13.7114435
+            ],
+            [
+              100.5965299,
+              13.7114541
+            ],
+            [
+              100.5965516,
+              13.7114834
+            ]
+          ],
+          "center": [
+            100.5965643,
+            13.7114982
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-053",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "available",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 8.0,
+          "widthM": 2.0,
+          "depthM": 4.0,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5965516,
+              13.7114834
+            ],
+            [
+              100.5965299,
+              13.7114541
+            ],
+            [
+              100.5965149,
+              13.7114647
+            ],
+            [
+              100.5965367,
+              13.711494
+            ],
+            [
+              100.5965516,
+              13.7114834
+            ]
+          ],
+          "center": [
+            100.5965172,
+            13.7114393
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-080",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.58,
+          "widthM": 2.0,
+          "depthM": 3.3,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964065,
+              13.7114735
+            ],
+            [
+              100.5964215,
+              13.7114628
+            ],
+            [
+              100.5964036,
+              13.7114388
+            ],
+            [
+              100.5963887,
+              13.7114494
+            ],
+            [
+              100.5964065,
+              13.7114735
+            ]
+          ],
+          "center": [
+            100.5963816,
+            13.7114054
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-081",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 6.9,
+          "widthM": 2.0,
+          "depthM": 3.5,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5964215,
+              13.7114628
+            ],
+            [
+              100.5964372,
+              13.7114517
+            ],
+            [
+              100.5964193,
+              13.7114276
+            ],
+            [
+              100.5964036,
+              13.7114388
+            ],
+            [
+              100.5964215,
+              13.7114628
+            ]
+          ],
+          "center": [
+            100.5964397,
+            13.7114871
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        },
+        {
+          "code": "SIN-01-012",
+          "projectId": "sin-01",
+          "zone": "โซนแผงค้าตลาดสิงหนาท (ชั้น 1)",
+          "status": "occupied",
+          "areaType": "แผงค้ามาตรฐาน",
+          "size": 9.25,
+          "widthM": 2.0,
+          "depthM": 4.6,
+          "entryFee": 27000,
+          "monthlyRent": 1800,
+          "commonFee": 400,
+          "depositFee": 1800,
+          "photo": "/images/stall_3d_perspective.jpg",
+          "coordinates": [
+            [
+              100.5967078,
+              13.7114628
+            ],
+            [
+              100.5967226,
+              13.7114531
+            ],
+            [
+              100.5967231,
+              13.7114527
+            ],
+            [
+              100.5966984,
+              13.7114195
+            ],
+            [
+              100.5966978,
+              13.7114186
+            ],
+            [
+              100.5966828,
+              13.7114292
+            ],
+            [
+              100.5966835,
+              13.7114301
+            ],
+            [
+              100.5967078,
+              13.7114628
+            ]
+          ],
+          "center": [
+            100.5966982,
+            13.7114306
+          ],
+          "floor": "1",
+          "floorName": "ชั้น 1",
+          "floorLevel": 1
+        }
+      ]
+    }
+  ]
+}

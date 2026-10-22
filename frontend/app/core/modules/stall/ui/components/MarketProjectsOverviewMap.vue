@@ -76,8 +76,38 @@
             </div>
 
             <div class="map-filter-panel-footer">
-              <span>พบ <strong>{{ filteredProjectCount }}</strong> โครงการ · <strong>{{ filteredStallCount }}</strong> แผง</span>
-              <button v-if="hasActiveFilters" type="button" @click="clearAllFilters">ล้าง</button>
+              <div class="mfp-result-summary">
+                <span class="mfp-result-label">ผลลัพธ์:</span>
+                <span class="mfp-result-val"><strong>{{ filteredProjectCount }}</strong> โครงการ</span>
+                <span class="mfp-result-dot">·</span>
+                <span class="mfp-result-stalls"><strong>{{ filteredStallCount.toLocaleString() }}</strong> แผง</span>
+              </div>
+              <div class="mfp-action-grid">
+                <button
+                  type="button"
+                  class="btn-filter-reset"
+                  @click="clearAllFilters"
+                  title="รีเซ็ตตัวกรองทั้งหมด"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                  <span>ล้างค่า</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-filter-apply"
+                  @click="applyFilters"
+                  title="ดูโครงการที่ตรงตามเงื่อนไข"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <span>ค้นหา ({{ filteredProjectCount }})</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -86,8 +116,31 @@
     </Teleport>
 
     <!-- Preview Mode Top Bar (สำหรับขั้นตอนตรวจสอบยืนยันข้อมูล) -->
-    <div v-if="previewMode" class="master-map-top-bar preview-top-bar">
-      <div class="master-map-tools-left" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <div v-if="previewMode" class="preview-top-bar">
+      <!-- ด้านซ้าย: หัวข้อแผนที่ + ไอคอน + รายละเอียดโครงการที่จอง -->
+      <div class="preview-head-left">
+        <div class="preview-head-icon-box">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+        </div>
+        <div class="preview-head-text-col">
+          <div class="preview-head-title-row">
+            <strong class="preview-head-title">ตำแหน่งแผงค้าบนแผนที่จริง</strong>
+            <span v-if="bookedProject" class="preview-head-cat-badge">
+              {{ bookedProject.name }}
+            </span>
+          </div>
+          <div class="preview-head-subtitle">
+            {{ bookedProject?.category || 'ตรวจสอบตำแหน่งแผงค้าที่คุณเลือกจองในผังตลาด' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ด้านขวา: ปุ่มโฟกัสแผงที่จอง + แถบอธิบายสีแผง (Legend) -->
+      <div class="preview-head-right">
         <!-- Clickable Booked Stalls Button / Pill -->
         <button
           type="button"
@@ -97,9 +150,8 @@
           title="คลิกเพื่อซูมกลับไปยังแผงที่คุณเลือกจองทันที"
         >
           <span class="preview-info-dot" :style="{ backgroundColor: bookedProject?.color || '#2563eb' }"></span>
-          <strong style="color: #0f172a; font-size: 0.88rem;">{{ bookedProject?.name || 'โครงการที่เลือก' }}</strong>
           <span class="preview-badge-stalls">
-            ล็อคที่คุณเลือกจอง {{ selectedStallCodes.length }} แผง ({{ selectedStallCodes.join(', ') }})
+            แผงที่คุณเลือก {{ selectedStallCodes.length }} แผง ({{ selectedStallCodes.join(', ') }})
           </span>
           <span v-if="isNotViewingBookedProject" class="return-hint-tag">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px;">
@@ -114,17 +166,17 @@
           <span>กำลังดู:</span>
           <strong style="color: #0f172a;">{{ activeProject?.name }}</strong>
         </span>
-      </div>
 
-      <div class="preview-legend-row">
-        <div class="preview-leg-item"><span class="leg-dot is-selected"></span><span>แผงที่คุณเลือก ({{ selectedStallCodes.length }})</span></div>
-        <div class="preview-leg-item"><span class="leg-dot is-available"></span><span>แผงว่าง</span></div>
-        <div class="preview-leg-item"><span class="leg-dot is-reserved"></span><span>ติดจอง</span></div>
+        <div class="preview-legend-row">
+          <div class="preview-leg-item"><span class="leg-dot is-selected"></span><span>แผงที่คุณเลือก ({{ selectedStallCodes.length }})</span></div>
+          <div class="preview-leg-item"><span class="leg-dot is-available"></span><span>แผงว่าง</span></div>
+          <div class="preview-leg-item"><span class="leg-dot is-reserved"></span><span>ติดจอง</span></div>
+        </div>
       </div>
     </div>
 
     <!-- MapLibre GL JS Interactive Map Container -->
-    <div class="maplibre-overview-wrapper" :style="previewMode ? { height: '390px' } : {}">
+    <div class="maplibre-overview-wrapper">
       <div :id="containerId" class="maplibre-overview-canvas"></div>
 
       <!-- Floating Map Top Controls: แผนที่ vs ดาวเทียม & ปุ่มปรับกึ่งกลาง (มุมซ้ายบน) -->
@@ -238,42 +290,51 @@
               </button>
             </div>
 
-            <div class="fsc-guidance-card">
-              <span class="fsc-guidance-icon-box">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"></path><path d="M5 20V4h14v16"></path><path d="M9 8h2M9 12h2M13 8h2M13 12h2"></path></svg>
-              </span>
-              <span class="fsc-guidance-content">
-                <span class="fsc-step-label">ขั้นตอนที่ 1: เลือกชั้น</span>
-                <span class="fsc-step-hint">เลือกชั้นเพื่อดูผังแผงและเลือกแผงว่าง</span>
-              </span>
-            </div>
-
             <div class="fsc-floors-stack" aria-label="รายการชั้น">
               <button
                 v-for="floor in floorSelectorProject.floors"
                 :key="floor.id"
                 type="button"
                 class="fsc-floor-item"
+                :class="{
+                  'is-floor-full': getFloorLayout(floorSelectorProject, floor.id).available === 0 && getFloorLayout(floorSelectorProject, floor.id).reserved === 0,
+                  'is-floor-queue': getFloorLayout(floorSelectorProject, floor.id).available === 0 && getFloorLayout(floorSelectorProject, floor.id).reserved > 0
+                }"
                 @click="selectFloorFromDialog(floor.id)"
               >
-                <span class="fsc-pillar">
+                <span class="fsc-pillar" :class="{ 'is-full': getFloorLayout(floorSelectorProject, floor.id).available === 0 && getFloorLayout(floorSelectorProject, floor.id).reserved === 0 }">
                   <span class="fsc-pillar-level">{{ floor.shortLabel }}</span>
                   <span class="fsc-pillar-badge">ชั้น {{ floor.level }}</span>
                 </span>
                 <span class="fsc-floor-details">
                   <span class="fsc-floor-headline">
                     <span class="fsc-floor-title-text">{{ floor.name }}</span>
-                    <span class="fsc-avail-chip" :class="{ 'is-none': getFloorLayout(floorSelectorProject, floor.id).available === 0 }">
+                    <span v-if="getFloorLayout(floorSelectorProject, floor.id).available > 0" class="fsc-avail-chip">
                       <i class="fsc-chip-dot"></i>ว่าง {{ getFloorLayout(floorSelectorProject, floor.id).available }}
+                    </span>
+                    <span v-else-if="getFloorLayout(floorSelectorProject, floor.id).reserved > 0" class="fsc-avail-chip is-queue">
+                      <i class="fsc-chip-dot"></i>คิวสำรอง {{ getFloorLayout(floorSelectorProject, floor.id).reserved }}
+                    </span>
+                    <span v-else class="fsc-avail-chip is-full">
+                      <i class="fsc-chip-dot"></i>เต็มแล้ว
                     </span>
                   </span>
                   <span class="fsc-floor-meta-row">
                     <span class="fsc-meta-pill">ทั้งหมด {{ getFloorLayout(floorSelectorProject, floor.id).total }} แผง</span>
-                    <span class="fsc-meta-pill">ติดจอง {{ getFloorLayout(floorSelectorProject, floor.id).reserved }} แผง</span>
+                    <span v-if="getFloorLayout(floorSelectorProject, floor.id).reserved > 0" class="fsc-meta-pill">ติดจอง (ยังไม่ทำสัญญา) {{ getFloorLayout(floorSelectorProject, floor.id).reserved }} แผง</span>
+                    <span v-if="getFloorLayout(floorSelectorProject, floor.id).available === 0 && getFloorLayout(floorSelectorProject, floor.id).reserved === 0" class="fsc-meta-pill is-full-tag">มีผู้เช่าครบ 100%</span>
                   </span>
                 </span>
                 <span class="fsc-action-col">
-                  <span class="fsc-select-action-btn">ดูผัง <span>→</span></span>
+                  <span v-if="getFloorLayout(floorSelectorProject, floor.id).available > 0" class="fsc-select-action-btn">
+                    ดูผังแผง <span>→</span>
+                  </span>
+                  <span v-else-if="getFloorLayout(floorSelectorProject, floor.id).reserved > 0" class="fsc-select-action-btn is-queue-action">
+                    จองคิวสำรอง <span>→</span>
+                  </span>
+                  <span v-else class="fsc-select-action-btn is-full-action">
+                    ดูผัง (เต็ม) <span>→</span>
+                  </span>
                 </span>
               </button>
             </div>
@@ -322,16 +383,65 @@
                 :key="fl.id"
                 type="button"
                 class="smp-floor-segmented-btn"
-                :class="{ active: currentFloorId === fl.id }"
+                :class="{
+                  active: currentFloorId === fl.id,
+                  'is-floor-full': getFloorAvailCount(fl.id) === 0 && getFloorReservedCount(fl.id) === 0,
+                  'is-floor-queue': getFloorAvailCount(fl.id) === 0 && getFloorReservedCount(fl.id) > 0
+                }"
                 @click="switchFloor(fl.id)"
               >
                 <span class="smp-seg-badge">{{ fl.shortLabel }}</span>
                 <div class="smp-seg-info">
                   <span class="smp-seg-name">{{ fl.shortLabel === '1F' ? 'ชั้น 1' : fl.shortLabel === '2F' ? 'ชั้น 2' : fl.shortLabel === '3F' ? 'ชั้น 3' : fl.name }}</span>
-                  <span class="smp-seg-avail">ว่าง {{ getFloorAvailCount(fl.id) }}</span>
+                  <span v-if="getFloorAvailCount(fl.id) > 0" class="smp-seg-avail">ว่าง {{ getFloorAvailCount(fl.id) }}</span>
+                  <span v-else-if="getFloorReservedCount(fl.id) > 0" class="smp-seg-avail is-queue">คิวสำรอง {{ getFloorReservedCount(fl.id) }}</span>
+                  <span v-else class="smp-seg-avail is-full">เต็ม</span>
                 </div>
               </button>
             </div>
+          </div>
+
+          <!-- Full Floor Alert Banner with Quick Switch to Available Floor -->
+          <div v-if="activeProjectFloors.length > 1 && activeLayout?.available === 0 && activeLayout?.reserved === 0" class="smp-floor-full-banner">
+            <div class="sffb-head">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>{{ currentFloorObject?.name || 'ชั้นนี้' }} มีผู้เช่าครบแล้ว</span>
+            </div>
+            <p class="sffb-desc">ชั้นนี้มีผู้เช่าทำสัญญาครบทุกแผงแล้ว ท่านสามารถดูผังหรือกดสลับไปชั้นที่มีแผงว่างได้ทันที</p>
+            <button
+              v-if="suggestedAvailableFloor"
+              type="button"
+              class="sffb-switch-btn"
+              @click="switchFloor(suggestedAvailableFloor.id)"
+            >
+              <span>สลับไป {{ suggestedAvailableFloor.shortLabel }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+
+          <!-- Queue / Reserved Floor Banner (เมื่อไม่มีแผงว่างพร้อมทำสัญญา แต่มีแผงติดจองที่ยังไม่ทำสัญญา เปิดรับคิวสำรอง) -->
+          <div v-else-if="activeProjectFloors.length > 1 && activeLayout?.available === 0 && (activeLayout?.reserved || 0) > 0" class="smp-floor-queue-banner">
+            <div class="sfqb-head">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+              <span>{{ currentFloorObject?.name || 'ชั้นนี้' }} ติดจอง (เปิดรับคิวสำรอง)</span>
+            </div>
+            <p class="sfqb-desc">มีแผงติดจองที่ยังไม่ทำสัญญาจำนวน {{ activeLayout?.reserved }} แผง ท่านสามารถคลิกเลือกแผงสีส้มเพื่อลงทะเบียนคิวสำรอง (Waiting List) ได้ทันที</p>
+            <button
+              v-if="suggestedAvailableFloor"
+              type="button"
+              class="sfqb-switch-btn"
+              @click="switchFloor(suggestedAvailableFloor.id)"
+            >
+              <span>หรือเลือกดูแผงว่างที่ {{ suggestedAvailableFloor.shortLabel }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
           </div>
 
           <div class="smp-area-box">
@@ -363,7 +473,7 @@
 
           <div class="smp-legend">
             <div><span class="smp-sw sw-available"></span>ว่าง</div>
-            <div><span class="smp-sw sw-reserved"></span>ติดจอง (Waiting List)</div>
+            <div><span class="smp-sw sw-reserved"></span>ติดจอง (ยังไม่ทำสัญญา / คิวสำรอง)</div>
             <div><span class="smp-sw sw-occupied"></span>มีผู้เช่าแล้ว</div>
             <div><span class="smp-sw sw-selected"></span>แผงที่คุณเลือก</div>
           </div>
@@ -388,42 +498,83 @@
           <svg class="map-project-guidance-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
         </div>
       </transition>
-    </div>
 
-    <!-- Color Legend (read-only): สีไหนคือโครงการอะไร -->
-    <section class="color-legend-panel" aria-label="คำอธิบายสีโครงการ">
-      <div class="color-legend-header">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="13.5" cy="6.5" r="1.5"></circle><circle cx="17.5" cy="10.5" r="1.5"></circle><circle cx="8.5" cy="7.5" r="1.5"></circle><circle cx="6.5" cy="12.5" r="1.5"></circle>
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.75 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z"></path>
-        </svg>
-        <span class="color-legend-title">คำอธิบายสีโครงการ</span>
-        <span class="color-legend-sub">ทั้งหมด {{ projects.length }} โครงการ</span>
+      <!-- Floating Layer Legend Control inside map (มุมซ้ายล่าง - สีโดดเด่นสะดุดตา) -->
+      <div v-if="!previewMode && !activeProject" class="map-floating-legend-container">
+        <!-- Floating Capsule Button -->
+        <button
+          type="button"
+          class="map-floating-legend-btn"
+          :class="{ active: showColorLegend }"
+          @click="showColorLegend = !showColorLegend"
+          title="คำอธิบายสีโครงการ (Layer Legend)"
+        >
+          <span class="legend-btn-icon-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </span>
+          <span class="legend-btn-label">คำอธิบายสีโครงการ</span>
+          <svg class="legend-chevron" :class="{ 'is-open': showColorLegend }" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </button>
+
+        <!-- Floating Popover Card -->
+        <transition name="legend-popover-fade">
+          <div v-if="showColorLegend" class="map-floating-legend-card">
+            <div class="mflc-header">
+              <div class="mflc-title-group">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <strong>คำอธิบายสีโครงการ</strong>
+                <span class="mflc-sub">ทั้งหมด {{ projects.length }} โครงการ</span>
+              </div>
+              <button type="button" class="mflc-close-btn" @click="showColorLegend = false" title="ปิดหน้าต่าง">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div class="mflc-body">
+              <ul class="mflc-grid">
+                <li v-for="cat in categoryStats" :key="cat.name" class="mflc-item">
+                  <span class="mflc-swatch" :style="{ backgroundColor: cat.color, borderColor: cat.color }"></span>
+                  <div class="mflc-text">
+                    <span class="mflc-name">{{ cat.name }}</span>
+                    <span class="mflc-projects">โครงการ {{ cat.projectNumbers.join(', ') }}</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </transition>
       </div>
 
-      <ul class="color-legend-grid">
-        <li v-for="cat in categoryStats" :key="cat.name" class="color-legend-item">
-          <span class="color-legend-swatch" :style="{ backgroundColor: cat.color, borderColor: cat.color }"></span>
-          <div class="color-legend-text">
-            <span class="color-legend-name">{{ cat.name }}</span>
-            <span class="color-legend-projects">โครงการ {{ cat.projectNumbers.join(', ') }}</span>
-          </div>
-        </li>
-      </ul>
-    </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import AppSelect, { type SelectOption } from './AppSelect.vue'
-import { CHATUCHAK_PROJECTS, type ProjectZone, type ProjectFloor } from './chatuchak_real_polygons'
-import { getProjectStallLayout, getAllFloorLayoutsForProject, type MapStall } from './chatuchak_stall_layout'
+import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
+import { CHATUCHAK_PROJECTS, type ProjectZone, type ProjectFloor } from '../../data/chatuchak_real_polygons'
+import { getProjectStallLayout, getAllFloorLayoutsForProject, type MapStall } from '../../data/chatuchak_stall_layout'
+import { getMarketGisConfig, type MarketGisConfig } from '../../data/markets_registry'
+import { loadMarketGisJson } from '../../data/market_loader'
 
 export type { ProjectZone, ProjectFloor }
 
 const props = withDefaults(defineProps<{
   containerId?: string
+  marketId?: string | number
   selectedProjectId?: string
   selectedStallCodes?: string[]
   onlyAvailable?: boolean
@@ -432,6 +583,7 @@ const props = withDefaults(defineProps<{
   previewMode?: boolean
 }>(), {
   containerId: 'step1-projects-maplibre',
+  marketId: '1',
   selectedProjectId: undefined,
   selectedStallCodes: () => [],
   onlyAvailable: false,
@@ -466,31 +618,83 @@ const setMapStyle = (mode: 'standard' | 'satellite') => {
   })
 }
 
-// Live search state
 const searchQuery = ref('')
 const rentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
 const availabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
 const showAdvancedFilters = ref(false)
+const showColorLegend = ref(false)
 
-// 9 Categories matching official layout
-const categories = [
-  { name: 'ของเก่าของสะสม เครื่องประดับ เครื่องดนตรีไทย หนังสือ', color: '#e06456' },
-  { name: 'งานศิลปะและภาพวาด', color: '#f48fb1' },
-  { name: 'โปสการ์ด ของชำร่วย อุปกรณ์สำหรับสัตว์', color: '#e87a4d' },
-  { name: 'เสื้อผ้าแฟชั่นและเครื่องประดับวัยรุ่น', color: '#4eb5b7' },
-  { name: 'เครื่องประดับและของแต่งบ้านโบราณ ผ้าไหม กรอบรูป', color: '#7e8ee8' },
-  { name: 'เสื้อผ้า อุปกรณ์เดินป่า เครื่องหนัง', color: '#ab77c8' },
-  { name: 'อุปกรณ์โต๊ะอาหาร เซรามิก เบญจรงค์ เครื่องเงิน ของตกแต่งบ้าน', color: '#52b788' },
-  { name: 'เซรามิก ผ้าไหม', color: '#b5a839' },
-  { name: 'งานแกะสลักไม้ สปา เครื่องหอม', color: '#f2c94c' }
-]
+const currentMarket = ref<MarketGisConfig>(getMarketGisConfig(props.marketId))
+const currentMarketCenter = computed<[number, number]>(() => currentMarket.value.center)
+const currentMarketZoom = computed<number>(() => currentMarket.value.overviewZoom)
+const currentMarketBearing = computed<number>(() => currentMarket.value.bearing ?? DEFAULT_BEARING)
+const currentMarketPitch = computed<number>(() => currentMarket.value.pitch ?? DEFAULT_PITCH)
 
-// 30 Projects: real GIS polygon + sub-stall layout generated INSIDE each polygon.
-// Stall counts (ทั้งหมด/ว่าง) derive from the generated layout so every number on screen is consistent.
-const layouts = new Map(CHATUCHAK_PROJECTS.map(p => [p.id, getProjectStallLayout(p)]))
-const projects: ProjectZone[] = CHATUCHAK_PROJECTS.map(p => {
-  const l = layouts.get(p.id)!
-  return { ...p, totalStalls: l.total, stallsAvailable: l.available }
+type LngLat = [number, number]
+
+// A few imported surveys also contain a coarse boundary around several real
+// projects. Keep it in the data, but do not expose it as a selectable project.
+const pointInProject = ([lng, lat]: LngLat, project: ProjectZone): boolean => {
+  const ring = project.coordinates
+  let inside = false
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]!
+    const [xj, yj] = ring[j]!
+    if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
+  }
+  return inside
+}
+
+// This is used only to compare polygons from the same market, so a local
+// planar area is both sufficient and more robust than their survey metadata.
+const projectFootprintArea = (project: ProjectZone): number => {
+  const ring = project.coordinates
+  let twiceArea = 0
+  for (let i = 0; i < ring.length - 1; i++) {
+    const [x1, y1] = ring[i]!
+    const [x2, y2] = ring[i + 1]!
+    twiceArea += x1 * y2 - x2 * y1
+  }
+  return Math.abs(twiceArea) / 2
+}
+
+const isOverviewBoundary = (candidate: ProjectZone, source: ProjectZone[]): boolean => {
+  const candidateArea = projectFootprintArea(candidate)
+  const containedProjects = source.filter(project => (
+    project.id !== candidate.id &&
+    candidateArea > projectFootprintArea(project) * 3 &&
+    pointInProject(project.centroid, candidate)
+  ))
+  return containedProjects.length >= 2
+}
+
+const syncMarketJson = async (idOrSlug?: string | number) => {
+  const data = await loadMarketGisJson(idOrSlug)
+  if (data) currentMarket.value = data
+}
+
+// Extract categories dynamically from the current market's projects
+const categories = computed(() => {
+  const uniqueCats = new Map<string, string>()
+  currentMarket.value.projects.forEach(p => {
+    if (p.category && !uniqueCats.has(p.category)) {
+      uniqueCats.set(p.category, p.color)
+    }
+  })
+  return Array.from(uniqueCats.entries()).map(([name, color]) => ({ name, color }))
+})
+
+// Sub-stall layouts generated for each project/zone in the active market
+const layouts = computed(() => {
+  return new Map(currentMarket.value.projects.map(p => [p.id, getProjectStallLayout(p)]))
+})
+
+const projects = computed<ProjectZone[]>(() => {
+  const sourceProjects = currentMarket.value.projects
+  return sourceProjects.filter(p => !isOverviewBoundary(p, sourceProjects)).map(p => {
+    const l = layouts.value.get(p.id)
+    return { ...p, totalStalls: l ? l.total : p.totalStalls, stallsAvailable: l ? l.available : p.stallsAvailable }
+  })
 })
 
 const matchesStallFilters = (stall: MapStall) => {
@@ -511,8 +715,8 @@ const projectMatchesAllFilters = (project: ProjectZone) => {
   return matchesCategory && matchesSearch(project) && projectHasMatchingStall(project)
 }
 
-const filteredProjectCount = computed(() => projects.filter(projectMatchesAllFilters).length)
-const filteredStallCount = computed(() => projects.reduce((count, project) => {
+const filteredProjectCount = computed(() => projects.value.filter(projectMatchesAllFilters).length)
+const filteredStallCount = computed(() => projects.value.reduce((count, project) => {
   if (!(!props.categoryFilter || project.category === props.categoryFilter) || !matchesSearch(project)) return count
   return count + Array.from(getAllFloorLayoutsForProject(project).values())
     .reduce((floorCount, layout) => floorCount + layout.stalls.filter(matchesStallFilters).length, 0)
@@ -526,9 +730,9 @@ const hasAdvancedFilters = computed(() => advancedFilterCount.value > 0)
 
 // Category legend (read-only): สี → หมวดหมู่ → เลขโครงการ
 const categoryStats = computed(() => {
-  return categories
+  return categories.value
     .map(cat => {
-      const projs = projects.filter(p => p.category === cat.name)
+      const projs = projects.value.filter(p => p.category === cat.name)
       return {
         ...cat,
         projectCount: projs.length,
@@ -539,7 +743,7 @@ const categoryStats = computed(() => {
 })
 
 const categoryOptions = computed<SelectOption[]>(() => [
-  { value: '', label: `ทุกหมวดหมู่ (${projects.length} โครงการ)` },
+  { value: '', label: `ทุกหมวดหมู่ (${projects.value.length} โครงการ)` },
   ...categoryStats.value.map(cat => ({
     value: cat.name,
     label: `${cat.name} (${cat.projectCount})`
@@ -578,7 +782,7 @@ watch(() => props.selectedProjectId, (newId) => {
 const bookedProjectId = computed(() => initialBookedProjectId.value || props.selectedProjectId || null)
 const bookedProject = computed(() => {
   const id = bookedProjectId.value
-  return (id ? projects.find(p => p.id === id) : null) || activeProject.value
+  return (id ? projects.value.find(p => p.id === id) : null) || activeProject.value
 })
 
 const isNotViewingBookedProject = computed(() => {
@@ -588,7 +792,7 @@ const isNotViewingBookedProject = computed(() => {
   return activeProjectId.value !== targetId
 })
 
-const activeProject = computed(() => projects.find(p => p.id === activeProjectId.value) || null)
+const activeProject = computed(() => projects.value.find(p => p.id === activeProjectId.value) || null)
 
 // Multi-floor management for active project
 const activeProjectFloors = computed<ProjectFloor[]>(() => {
@@ -617,6 +821,17 @@ const getFloorAvailCount = (floorId: string): number => {
   return layout.available
 }
 
+const getFloorReservedCount = (floorId: string): number => {
+  if (!activeProject.value) return 0
+  const layout = getProjectStallLayout(activeProject.value, floorId)
+  return layout.reserved
+}
+
+const suggestedAvailableFloor = computed<ProjectFloor | null>(() => {
+  if (!activeProject.value?.floors || activeProject.value.floors.length <= 1) return null
+  return activeProject.value.floors.find(f => f.id !== currentFloorId.value && getFloorAvailCount(f.id) > 0) || null
+})
+
 const getFloorLayout = (project: ProjectZone, floorId: string) => {
   return getProjectStallLayout(project, floorId)
 }
@@ -630,10 +845,10 @@ const switchFloor = (floorId: string) => {
 }
 
 const currentProjectInfo = computed<ProjectZone | null>(() => {
-  return activeProject.value || hoveredProject.value || projects.find(p => p.id === 'proj-01') || projects[0] || null
+  return activeProject.value || hoveredProject.value || projects.value[0] || null
 })
 
-const currentProjectLayout = computed(() => (currentProjectInfo.value ? layouts.get(currentProjectInfo.value.id) || null : null))
+const currentProjectLayout = computed(() => (currentProjectInfo.value ? layouts.value.get(currentProjectInfo.value.id) || null : null))
 
 // Stall search and filter states in side panel
 const stallSearchQuery = ref('')
@@ -688,13 +903,8 @@ let map: any = null
 let projectMarkers: any[] = []
 let hoverPopup: any = null
 
-// Chatuchak Market Real Geo Center: Kamphaeng Phet 2 Rd, Chatuchak, Bangkok
-const CHATUCHAK_LNG = 100.5501
-const CHATUCHAK_LAT = 13.7998
-const OVERVIEW_ZOOM = 16.5
-
 // Interior label point (inside the polygon frame, not the vertex average)
-const projectToLngLat = (p: ProjectZone): [number, number] => layouts.get(p.id)?.labelPoint || p.centroid
+const projectToLngLat = (p: ProjectZone): [number, number] => layouts.value.get(p.id)?.labelPoint || p.centroid
 
 const getProjectBounds = (p: ProjectZone): [[number, number], [number, number]] => {
   const lngs = p.coordinates.map(c => c[0])
@@ -900,13 +1110,13 @@ const initMap = () => {
   map = new maplibregl.Map({
     container: props.containerId,
     style: getStyleConfig(currentStyle.value),
-    center: [CHATUCHAK_LNG, CHATUCHAK_LAT],
-    zoom: props.previewMode ? 18.5 : OVERVIEW_ZOOM,
-    minZoom: 14.5,
+    center: currentMarketCenter.value,
+    zoom: props.previewMode ? (currentMarketZoom.value + 1.2) : currentMarketZoom.value,
+    minZoom: 13.0,
     maxZoom: 21,
     maxPitch: 65,
-    pitch: props.previewMode ? 35 : DEFAULT_PITCH,
-    bearing: DEFAULT_BEARING,
+    pitch: props.previewMode ? 35 : currentMarketPitch.value,
+    bearing: currentMarketBearing.value,
     canvasContextAttributes: { antialias: true }
   })
 
@@ -925,7 +1135,7 @@ const initMap = () => {
     setupProjectLayers()
     bindMapEvents()
     if (props.selectedProjectId) {
-      const found = projects.find(p => p.id === props.selectedProjectId)
+      const found = projects.value.find(p => p.id === props.selectedProjectId)
       if (found) {
         enterProject(found)
       }
@@ -943,7 +1153,7 @@ const isProjectDimmed = (p: ProjectZone) => {
 const getProjectsGeoJson = () => {
   return {
     type: 'FeatureCollection',
-    features: projects.map((p, index) => {
+    features: projects.value.map((p, index) => {
       const isActive = activeProjectId.value === p.id
       const isOtherWhileActive = Boolean(activeProjectId.value) && !isActive
 
@@ -982,6 +1192,9 @@ const getStallsGeoJson = () => {
         id: idx + 1,
         geometry: { type: 'Polygon', coordinates: [s.coordinates] },
         properties: {
+          // Survey exports can reuse a human-readable stall code. Keep the
+          // layout index so map hit-testing always resolves the exact polygon.
+          stallIndex: idx,
           code: s.code,
           status: s.status,
           isSelected,
@@ -1170,7 +1383,7 @@ const getStallQueueCount = (code: string): number => {
 }
 
 const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
-  const layout = layouts.get(p.id)
+  const layout = layouts.value.get(p.id)
   const total = layout?.total ?? 0
   const available = layout?.available ?? 0
   const reserved = layout?.reserved ?? 0
@@ -1181,10 +1394,10 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
 
   const hasFloors = p.floors && p.floors.length > 1
   const floorBadge = hasFloors
-    ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.68rem;padding:2px 7px;border-radius:4px;background:#eff6ff;color:#2563eb;font-weight:700;border:1px solid #bfdbfe;margin-left:4px;">อาคาร ${p.floors.length} ชั้น</span>`
+    ? `<div class="mlp-building-row"><span class="mlp-building-badge">อาคาร ${p.floors.length} ชั้น</span></div>`
     : ''
   const hintText = hasFloors
-    ? '✨ อาคารนี้มี ' + p.floors.length + ' ชั้น: คลิกเพื่อเลือกระดับชั้นก่อนเลือกแผงค้า'
+    ? 'อาคารนี้มี ' + p.floors.length + ' ชั้น: คลิกเพื่อเลือกระดับชั้นก่อนเลือกแผงค้า'
     : (isFull ? 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเข้าคิวสำรอง' : 'คลิกที่กรอบโครงการเพื่อดูแผงย่อยและเลือกจอง')
 
   hoverPopup.setLngLat(lngLat).setHTML(`
@@ -1194,10 +1407,10 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
           <div class="mlp-title">
             <span class="mlp-dot"></span>
             <strong>${p.name}</strong>
-            ${floorBadge}
           </div>
           <span class="mlp-pill ${isFull ? 'is-full' : 'is-open'}">${isFull ? 'เต็มแล้ว' : `ว่าง ${available} แผง`}</span>
         </div>
+        ${floorBadge}
         <div class="mlp-sub">${p.category}</div>
 
         <div class="mlp-tiles">
@@ -1354,37 +1567,11 @@ const renderSelectedStallPins = () => {
   selectedStallMarkers.forEach(m => m.remove())
   selectedStallMarkers = []
 
-  // 1. หากอยู่ในโครงการที่เลือกจอง ให้แสดงหมุดเครื่องหมายถูกตรงกลางแผงแต่ละแผง
-  if (activeProjectId.value && activeProjectId.value === bookedProjectId.value) {
-    const selectedStallsList: MapStall[] = []
-    if (activeProject.value) {
-      (props.selectedStallCodes || []).forEach(code => {
-        const s = findStall(code)
-        if (s && (!s.floor || s.floor === currentFloorId.value)) {
-          selectedStallsList.push(s)
-        }
-      })
-    }
-
-    selectedStallsList.forEach(s => {
-      const el = document.createElement('div')
-      el.className = 'selected-stall-pin-marker'
-      const statusClass = s.status === 'reserved' ? 'is-reserved' : 'is-available'
-      el.innerHTML = `
-        <div class="stall-selected-check-icon ${statusClass}" title="แผง ${s.code} (แผงที่คุณเลือก)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
-      `
-      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
-        .setLngLat(s.center)
-        .addTo(map)
-      selectedStallMarkers.push(marker)
-    })
-  } else if (props.previewMode && bookedProject.value) {
-    // 2. หากอยู่ใน Step 3 แต่กำลังคลิกดูโครงการอื่น ให้ปักหมุด Beacon นำทางบนโครงการที่มีแผงที่เราจองไว้
-    const bLayout = layouts.get(bookedProjectId.value || '')
+  // The selected-stall fill/stroke is sufficient; do not cover its location
+  // with a floating check marker. Keep a beacon only when viewing another project.
+  if (props.previewMode && bookedProject.value && activeProjectId.value !== bookedProjectId.value) {
+    // หากอยู่ใน Step 3 แต่กำลังคลิกดูโครงการอื่น ให้ปักหมุด Beacon นำทางบนโครงการที่มีแผงที่จองไว้
+    const bLayout = layouts.value.get(bookedProjectId.value || '')
     const bookedStallsList = (bLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
     const pinLocation: [number, number] = bookedStallsList.length > 0
       ? bookedStallsList[0].center
@@ -1431,7 +1618,7 @@ const recenterMapView = () => {
   hoverPopup?.remove()
   if (activeProject.value) {
     const p = activeProject.value
-    const pLayout = layouts.get(p.id) || activeLayout.value
+    const pLayout = layouts.value.get(p.id) || activeLayout.value
     const selectedStallsList = (pLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
     const stallBounds = props.previewMode && selectedStallsList.length > 0 ? getStallsBounds(selectedStallsList) : null
 
@@ -1441,15 +1628,15 @@ const recenterMapView = () => {
         : { top: 70, bottom: 50, left: 320, right: 380 },
       maxZoom: 20.6,
       pitch: props.previewMode ? 35 : DRILL_PITCH,
-      bearing: DEFAULT_BEARING,
+      bearing: currentMarketBearing.value,
       duration: 800
     })
   } else {
     map.flyTo({
-      center: [CHATUCHAK_LNG, CHATUCHAK_LAT],
-      zoom: OVERVIEW_ZOOM,
-      pitch: DEFAULT_PITCH,
-      bearing: DEFAULT_BEARING,
+      center: currentMarketCenter.value,
+      zoom: currentMarketZoom.value,
+      pitch: currentMarketPitch.value,
+      bearing: currentMarketBearing.value,
       duration: 800
     })
   }
@@ -1484,13 +1671,15 @@ const enterProject = (p: ProjectZone, directToFloor?: string) => {
   if (directToFloor) {
     currentFloorId.value = directToFloor
   } else if (!currentFloorId.value || !p.floors?.some(f => f.id === currentFloorId.value)) {
-    currentFloorId.value = p.floors?.[0]?.id || '1'
+    // Smart auto-select: เลือกชั้นแรกที่มีแผงว่างให้อัตโนมัติ (ไม่เลือกชั้นที่เต็ม 0 แผงเป็นชั้นแรก)
+    const firstAvailFloor = p.floors?.find(f => getFloorLayout(p, f.id).available > 0)
+    currentFloorId.value = firstAvailFloor?.id || p.floors?.[0]?.id || '1'
   }
 
   refreshSources()
   setBuildingsOpacity(BUILDINGS_OPACITY_DRILL)
 
-  const pLayout = layouts.get(p.id) || activeLayout.value
+  const pLayout = layouts.value.get(p.id) || activeLayout.value
   const selectedStallsList = (pLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
   const stallBounds = props.previewMode && selectedStallsList.length > 0 ? getStallsBounds(selectedStallsList) : null
 
@@ -1515,10 +1704,10 @@ const exitProject = () => {
   refreshSources()
   setBuildingsOpacity(BUILDINGS_OPACITY)
   map?.flyTo({
-    center: [CHATUCHAK_LNG, CHATUCHAK_LAT],
-    zoom: OVERVIEW_ZOOM,
-    pitch: DEFAULT_PITCH,
-    bearing: DEFAULT_BEARING,
+    center: currentMarketCenter.value,
+    zoom: currentMarketZoom.value,
+    pitch: currentMarketPitch.value,
+    bearing: currentMarketBearing.value,
     duration: 700
   })
   emit('exitProject')
@@ -1541,11 +1730,39 @@ const findStall = (code: string): MapStall | null => {
   return null
 }
 
+const getStallFromFeature = (feature: any): MapStall | null => {
+  const layout = activeLayout.value
+  const stallIndex = Number(feature?.properties?.stallIndex)
+
+  // `code` is not a reliable map key: imported GIS data can contain repeated
+  // labels. `stallIndex` is generated from this exact GeoJSON feature.
+  if (layout && Number.isInteger(stallIndex) && stallIndex >= 0) {
+    const stall = layout.stalls[stallIndex]
+    if (stall) return stall
+  }
+
+  const code = feature?.properties?.code
+  return typeof code === 'string' ? findStall(code) : null
+}
+
 const setHoveredProject = (project: ProjectZone | null) => {
   if (hoveredProject.value?.id === project?.id) return
   hoveredProject.value = project
   // Update just the project source so the polygon outline follows the cursor.
   map?.getSource('projects-polygons')?.setData(getProjectsGeoJson())
+}
+
+const getMostSpecificProjectHit = (hits: any[]): ProjectZone | null => {
+  const matchingProjects = hits
+    .map(hit => projects.value.find(project => project.id === hit.properties.id))
+    .filter((project): project is ProjectZone => Boolean(project))
+
+  if (!matchingProjects.length) return null
+  // MapLibre returns features in paint order. The smallest footprint is the
+  // most specific zone when surveyed polygons overlap.
+  return matchingProjects.reduce((smallest, project) => (
+    projectFootprintArea(project) < projectFootprintArea(smallest) ? project : smallest
+  ))
 }
 
 const bindMapEvents = () => {
@@ -1560,7 +1777,7 @@ const bindMapEvents = () => {
       : []
     if (stallHit.length) {
       setHoveredProject(null)
-      const s = findStall(stallHit[0].properties.code)
+      const s = getStallFromFeature(stallHit[0])
       map.getCanvas().style.cursor = s && s.status !== 'occupied' ? 'pointer' : 'not-allowed'
       if (s) showPopupForStall(s)
       return
@@ -1569,7 +1786,7 @@ const bindMapEvents = () => {
     const projHit = map.getLayer('projects-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['projects-fill'] })
       : []
-    const p = projHit.length ? projects.find(item => item.id === projHit[0].properties.id) : null
+    const p = getMostSpecificProjectHit(projHit)
     if (p && p.id !== activeProjectId.value) {
       map.getCanvas().style.cursor = 'pointer'
       setHoveredProject(p)
@@ -1592,7 +1809,7 @@ const bindMapEvents = () => {
       ? map.queryRenderedFeatures(e.point, { layers: ['stalls-fill'] })
       : []
     if (stallHit.length) {
-      const s = findStall(stallHit[0].properties.code)
+      const s = getStallFromFeature(stallHit[0])
       if (props.previewMode) {
         if (s) showPopupForStall(s)
         return
@@ -1608,7 +1825,7 @@ const bindMapEvents = () => {
       ? map.queryRenderedFeatures(e.point, { layers: ['projects-fill'] })
       : []
     if (projHit.length) {
-      const p = projects.find(item => item.id === projHit[0].properties.id)
+      const p = getMostSpecificProjectHit(projHit)
       if (p && p.id !== activeProjectId.value) openProject(p)
     }
   })
@@ -1621,7 +1838,7 @@ const renderZoneLabels = () => {
   projectMarkers = []
 
   const zoom = map.getZoom()
-  const visibleProjects = projects.filter(p => p.id !== activeProjectId.value && !isProjectDimmed(p))
+  const visibleProjects = projects.value.filter(p => p.id !== activeProjectId.value && !isProjectDimmed(p))
   const useCompactLabels = zoom < 18.2
 
   // At broad zoom, use only small project numbers. They preserve the map context
@@ -1666,7 +1883,7 @@ const matchesSearch = (p: ProjectZone): boolean => {
 const handleSearchInput = () => {
   refreshSources()
   if (searchQuery.value.trim() && map && !activeProjectId.value) {
-    const found = projects.find(p => matchesSearch(p))
+    const found = projects.value.find(p => matchesSearch(p))
     if (found) {
       map.flyTo({ center: projectToLngLat(found), zoom: 17.5, duration: 800 })
     }
@@ -1677,7 +1894,7 @@ const clearSearch = () => {
   searchQuery.value = ''
   refreshSources()
   if (map && !activeProjectId.value) {
-    map.flyTo({ center: [CHATUCHAK_LNG, CHATUCHAK_LAT], zoom: OVERVIEW_ZOOM, duration: 800 })
+    map.flyTo({ center: currentMarketCenter.value, zoom: currentMarketZoom.value, duration: 800 })
   }
 }
 
@@ -1689,8 +1906,13 @@ const clearAllFilters = () => {
   refreshSources()
 }
 
+const applyFilters = () => {
+  showAdvancedFilters.value = false
+  refreshSources()
+}
+
 const toggleCategoryFilter = (catName: string) => {
-  if (props.categoryFilter === catName) {
+  if (props.categoryFilter === catName || !catName) {
     emit('update:categoryFilter', null)
   } else {
     emit('update:categoryFilter', catName)
@@ -1731,9 +1953,28 @@ watch(() => props.selectedStallCodes, () => {
 // Parent may switch project externally (e.g. deep-link); follow it if different
 watch(() => props.selectedProjectId, (newId) => {
   if (!map || !newId || newId === activeProjectId.value) return
-  const found = projects.find(p => p.id === newId)
+  const found = projects.value.find(p => p.id === newId)
   if (found) enterProject(found)
 })
+
+// Dynamic market switcher watcher: loads dedicated JSON file on demand and flies to market location
+watch(() => props.marketId, async (newMarketId) => {
+  activeProjectId.value = null
+  hoveredProject.value = null
+  currentFloorId.value = '1'
+  await syncMarketJson(newMarketId)
+  if (map) {
+    refreshSources()
+    renderSelectedStallPins()
+    map.flyTo({
+      center: currentMarketCenter.value,
+      zoom: currentMarketZoom.value,
+      pitch: currentMarketPitch.value,
+      bearing: currentMarketBearing.value,
+      duration: 900
+    })
+  }
+}, { immediate: true })
 
 const resize = () => {
   map?.resize()
@@ -1927,17 +2168,98 @@ onUnmounted(() => {
 }
 .map-filter-panel-footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mfp-result-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
   color: #64748b;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #eef2f6;
+}
+
+.mfp-result-label {
+  color: #94a3b8;
   font-size: 0.74rem;
 }
-.map-filter-panel-footer strong { color: #1d4ed8; }
-.map-filter-panel-footer button { border: 0; background: transparent; color: #2563eb; font: inherit; font-weight: 800; cursor: pointer; }
+
+.mfp-result-val strong {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.mfp-result-dot {
+  color: #cbd5e1;
+}
+
+.mfp-result-stalls strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.mfp-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-filter-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.btn-filter-reset:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-filter-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: all 0.16s ease;
+}
+
+.btn-filter-apply:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
 
 /* Category Select Dropdown */
 .map-category-select-wrapper {
@@ -2187,72 +2509,227 @@ onUnmounted(() => {
   }
 }
 
-/* Color Legend (read-only) */
-.color-legend-panel {
-  background: #ffffff;
-  border: 1px solid #eef2f6;
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  padding: 16px 20px;
-  margin-top: 14px;
-}
-.color-legend-header {
+/* Floating Map Layer Legend (inside map - Bottom Left) */
+.map-floating-legend-container {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 20;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Floating Capsule Button - สีน้ำเงิน Royal Blue ตัดขอบขาว โดดเด่นสะดุดตาบนแผนที่ */
+.map-floating-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 7px 16px 7px 12px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), 0 2px 6px rgba(15, 23, 42, 0.2);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.map-floating-legend-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: #1d4ed8;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.55), 0 4px 10px rgba(15, 23, 42, 0.25);
+}
+
+.map-floating-legend-btn.active {
+  background: #1e40af;
+  border-color: #93c5fd;
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.6);
+}
+
+.legend-btn-icon-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.map-floating-legend-btn:hover .legend-btn-icon-wrap {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.legend-btn-label {
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.legend-count-pill {
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 1.5px 7.5px;
+  border-radius: 9999px;
+  min-width: 22px;
+  text-align: center;
+  line-height: 1.2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.legend-chevron {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #ffffff;
+}
+
+.legend-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* Floating Popover Card */
+.map-floating-legend-card {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  max-height: 380px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 16px;
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 25;
+}
+
+.mflc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.mflc-title-group {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #475569;
-  margin-bottom: 12px;
-}
-.color-legend-title {
-  font-weight: 600;
-  font-size: 0.9rem;
   color: #1e293b;
+  font-size: 0.88rem;
 }
-.color-legend-sub {
-  font-size: 0.75rem;
+
+.mflc-title-group svg {
+  color: #2563eb;
+}
+
+.mflc-sub {
+  font-size: 0.72rem;
   color: #64748b;
   background: #f1f5f9;
+  padding: 2px 7px;
   border-radius: 6px;
-  padding: 2px 8px;
+  font-weight: 500;
 }
-.color-legend-grid {
+
+.mflc-close-btn {
+  background: transparent;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mflc-close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.mflc-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.mflc-grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 8px 18px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 14px;
 }
-.color-legend-item {
+
+.mflc-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 8px;
+  font-size: 0.78rem;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
 }
-.color-legend-swatch {
+
+.mflc-item:hover {
+  background: #f8fafc;
+}
+
+.mflc-swatch {
   flex-shrink: 0;
-  width: 18px;
+  width: 14px;
   height: 14px;
   margin-top: 2px;
   border-radius: 4px;
-  border: 2px solid;
-  opacity: 0.85;
+  border: 1.5px solid;
+  opacity: 0.9;
 }
-.color-legend-text {
+
+.mflc-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.color-legend-name {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #334155;
+
+.mflc-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
   line-height: 1.35;
 }
-.color-legend-projects {
-  font-size: 0.74rem;
+
+.mflc-projects {
+  font-size: 0.7rem;
   color: #64748b;
-  margin-top: 1px;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* Transitions */
+.legend-popover-fade-enter-active,
+.legend-popover-fade-leave-active {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.legend-popover-fade-enter-from,
+.legend-popover-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.97);
 }
 
 /* Modern Category Filter Panel */
@@ -2791,6 +3268,169 @@ onUnmounted(() => {
 
 .has-five-or-more-floors .smp-seg-avail {
   font-size: 0.67rem;
+}
+
+.smp-floor-segmented-btn.is-floor-full .smp-seg-avail.is-full {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.smp-floor-segmented-btn.is-floor-queue .smp-seg-avail.is-queue {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.smp-floor-segmented-btn.is-floor-full:not(.active) {
+  opacity: 0.8;
+  background: #fafbfc;
+}
+
+.smp-floor-segmented-btn.is-floor-queue:not(.active) {
+  background: #fffdf5;
+}
+
+.smp-floor-segmented-btn.is-floor-full.active {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.smp-floor-segmented-btn.is-floor-full.active .smp-seg-badge {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.smp-floor-segmented-btn.is-floor-full.active .smp-seg-name {
+  color: #b91c1c;
+}
+
+.smp-floor-segmented-btn.is-floor-queue.active {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.smp-floor-segmented-btn.is-floor-queue.active .smp-seg-badge {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.smp-floor-segmented-btn.is-floor-queue.active .smp-seg-name {
+  color: #b45309;
+}
+
+.smp-floor-full-banner {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06);
+}
+
+.sffb-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b91c1c;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.sffb-head svg {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.sffb-desc {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #7f1d1d;
+  line-height: 1.45;
+}
+
+.sffb-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 12px;
+  margin-top: 2px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.sffb-switch-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.smp-floor-queue-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.08);
+}
+
+.sfqb-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b45309;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.sfqb-head svg {
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+.sfqb-desc {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #92400e;
+  line-height: 1.45;
+}
+
+.sfqb-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 12px;
+  margin-top: 2px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.sfqb-switch-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 /* Compact project status and searchable stall list */
@@ -3352,6 +3992,90 @@ onUnmounted(() => {
   border-color: #e2e8f0;
 }
 
+.fsc-avail-chip.is-full {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.fsc-avail-chip.is-queue {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+.fsc-floor-item.is-floor-full {
+  background: #fafbfc;
+  opacity: 0.88;
+}
+
+.fsc-floor-item.is-floor-queue {
+  background: #ffffff;
+}
+
+.fsc-floor-item.is-floor-full:hover {
+  opacity: 1;
+  background: #fffafa;
+  border-color: #fecaca;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.08);
+}
+
+.fsc-pillar.is-full {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.fsc-pillar.is-full .fsc-pillar-level,
+.fsc-pillar.is-full .fsc-pillar-badge {
+  color: #64748b;
+}
+
+/* Do not apply the blue "available/select" hover treatment to a full floor. */
+.fsc-floor-item.is-floor-full:hover .fsc-pillar {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.fsc-floor-item.is-floor-full:hover .fsc-pillar .fsc-pillar-level,
+.fsc-floor-item.is-floor-full:hover .fsc-pillar .fsc-pillar-badge {
+  color: #64748b;
+}
+
+.fsc-meta-pill.is-full-tag {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+  border-color: #fecaca;
+}
+
+.fsc-select-action-btn.is-full-action {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+}
+
+.fsc-select-action-btn.is-queue-action {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  box-shadow: none;
+}
+
+.fsc-floor-item:hover .fsc-select-action-btn.is-queue-action {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.2);
+}
+
+.fsc-floor-item:hover .fsc-select-action-btn.is-full-action {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #94a3b8;
+  box-shadow: 0 2px 6px rgba(71, 85, 105, 0.12);
+}
+
 .fsc-chip-dot {
   width: 6px;
   height: 6px;
@@ -3602,11 +4326,118 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .maplibre-overview-wrapper {
+    height: 520px;
+  }
+
   .stall-mode-panel {
     top: auto;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
     width: auto;
-    right: 14px;
-    max-height: 45%;
+    max-height: 220px;
+    padding: 12px 14px;
+    gap: 8px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+    z-index: 15;
+  }
+
+  .smp-back-section {
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .smp-back-btn {
+    padding: 5px 10px;
+    font-size: 0.76rem;
+  }
+
+  .smp-title {
+    font-size: 0.95rem;
+  }
+
+  .smp-category {
+    font-size: 0.72rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: -4px;
+  }
+
+  /* Compact multi-floor row on mobile */
+  .smp-floor-section {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .smp-floor-header {
+    font-size: 0.75rem;
+  }
+
+  .smp-floor-segmented-row {
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .smp-floor-segmented-btn {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+  }
+
+  /* Hide bulky area box, legend and hint on mobile to prioritize map stalls visibility */
+  .smp-area-box {
+    display: none;
+  }
+
+  .smp-legend {
+    display: none;
+  }
+
+  .smp-hint {
+    display: none;
+  }
+
+  /* Compact 4-column stats on mobile */
+  .smp-stats {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .smp-stat {
+    padding: 5px 4px;
+    text-align: center;
+  }
+
+  .smp-stat-label {
+    font-size: 0.65rem;
+  }
+
+  .smp-stat strong {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-floating-top-controls {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .map-floating-style-switcher .map-mode-tab {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  .map-floating-recenter-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
   }
 }
 </style>
@@ -3796,18 +4627,15 @@ onUnmounted(() => {
 .mlp-project-context i { flex: 0 0 auto; color: #94a3b8; font-style: normal; }
 
 .mlp-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 8px;
-  flex-wrap: wrap;
 }
 .mlp-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1 1 0;
-  flex-wrap: wrap;
   min-width: 0;
 }
 .mlp-stall-heading {
@@ -3820,7 +4648,8 @@ onUnmounted(() => {
   font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
-  white-space: nowrap;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .mlp-dot {
   width: 10px;
@@ -3837,10 +4666,25 @@ onUnmounted(() => {
   border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: auto;
 }
 .mlp-pill.is-open { background: #dcfce7; color: #15803d; }
 .mlp-pill.is-full { background: #fee2e2; color: #dc2626; }
+
+.mlp-building-row {
+  margin: 5px 0 0 18px;
+}
+
+.mlp-building-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+  border: 1px solid #bfdbfe;
+}
 
 .mlp-sub {
   margin-top: 4px;
@@ -4115,16 +4959,97 @@ onUnmounted(() => {
   border-radius: 14px;
 }
 
+.projects-master-container.is-preview-mode .maplibre-overview-wrapper {
+  height: 540px;
+}
+
+@media (max-width: 768px) {
+  .projects-master-container.is-preview-mode .maplibre-overview-wrapper {
+    height: 440px;
+  }
+}
+
 .preview-top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 14px;
+  background: #ffffff;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef2f6;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+}
+
+.preview-head-left {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  background: #f8fafc;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  min-width: 0;
+}
+
+.preview-head-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.preview-head-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.preview-head-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-head-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.preview-head-cat-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 1px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.preview-head-subtitle {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 460px;
+}
+
+.preview-head-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .preview-project-info {
@@ -4186,34 +5111,10 @@ onUnmounted(() => {
   background: #f59e0b;
 }
 
-/* Selected Stall Checkmark Icon (Matching user screenshot) */
+/* Selected Stall Checkmark Icon */
 :deep(.selected-stall-pin-marker) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
   z-index: 25;
-  animation: checkPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-:deep(.stall-selected-check-icon) {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: #10b981;
-  border: 1.5px solid #d1fae5;
-  outline: 2.5px solid #2563eb;
-  outline-offset: 1.5px;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-}
-
-:deep(.stall-selected-check-icon.is-reserved) {
-  background: #f59e0b;
-  border-color: #fde68a;
 }
 
 /* Return to Booked Stalls Pill Button (Top bar) */
