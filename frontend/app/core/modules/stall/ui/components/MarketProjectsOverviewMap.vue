@@ -830,6 +830,9 @@ const categories = computed(() => {
 // Apply the authoritative market-level state before any counter, color,
 // filter, tooltip or click handler consumes a stall layout.
 const applyMarketStatus = (layout: ProjectStallLayout): ProjectStallLayout => {
+  if (!props.marketFull && Object.keys(props.stallStatusOverrides).length === 0) {
+    return layout
+  }
   const stalls = layout.stalls.map(stall => ({
     ...stall,
     status: props.marketFull
@@ -911,6 +914,9 @@ const projectHasMatchingStallWith = (
   rent: typeof rentFilter.value,
   availability: typeof availabilityFilter.value
 ) => {
+  // With no stall-level filter every project already matches. Avoid walking
+  // and cloning thousands of stall polygons on every project hover.
+  if (rent === 'all' && availability === 'all') return true
   return Array.from(getEffectiveFloorLayoutsForProject(project).values())
     .some(layout => layout.stalls.some(stall => matchesStallFiltersWith(stall, rent, availability)))
 }
@@ -937,6 +943,9 @@ const projectMatchesAllFilters = (project: ProjectZone) => projectMatchesAllFilt
 const filteredProjectCount = computed(() => overviewProjects.value.filter(projectMatchesAllFilters).length)
 const filteredStallCount = computed(() => overviewProjects.value.reduce((count, project) => {
   if (!projectMatchesAllFilters(project)) return count
+  if (appliedRentFilter.value === 'all' && appliedAvailabilityFilter.value === 'all') {
+    return count + (project.stalls?.length || project.totalStalls || 0)
+  }
   return count + Array.from(getEffectiveFloorLayoutsForProject(project).values())
     .reduce((floorCount, layout) => floorCount + layout.stalls.filter(matchesStallFilters).length, 0)
 }, 0))
@@ -950,6 +959,9 @@ const previewFilteredProjectCount = computed(() => overviewProjects.value.filter
 )).length)
 const previewFilteredStallCount = computed(() => overviewProjects.value.reduce((count, project) => {
   if (!projectMatchesAllFiltersWith(project, draftCategoryFilter.value, searchQuery.value, rentFilter.value, availabilityFilter.value)) return count
+  if (rentFilter.value === 'all' && availabilityFilter.value === 'all') {
+    return count + (project.stalls?.length || project.totalStalls || 0)
+  }
   return count + Array.from(getEffectiveFloorLayoutsForProject(project).values())
     .reduce((floorCount, layout) => floorCount + layout.stalls.filter(stall => matchesStallFiltersWith(stall, rentFilter.value, availabilityFilter.value)).length, 0)
 }, 0))
@@ -1110,11 +1122,26 @@ const isStallSelected = (stall: MapStall): boolean => {
   return (selectedKeys || []).includes(getStallSelectionKey(stall))
 }
 
-const setHoveredStall = (stall: MapStall | null) => {
+const setHoveredStall = (stall: MapStall | null): boolean => {
   const nextKey = stall ? getStallSelectionKey(stall) : null
-  if (hoveredStallKey.value === nextKey) return
+  if (hoveredStallKey.value === nextKey) return false
+
+  const layout = activeLayout.value
+  const previousKey = hoveredStallKey.value
+  if (map?.getSource('project-stalls') && layout && previousKey) {
+    const previousIndex = layout.stalls.findIndex(item => getStallSelectionKey(item) === previousKey)
+    if (previousIndex >= 0) {
+      map.setFeatureState({ source: 'project-stalls', id: previousIndex + 1 }, { isHovered: false })
+    }
+  }
   hoveredStallKey.value = nextKey
-  map?.getSource('project-stalls')?.setData(getStallsGeoJson())
+  if (map?.getSource('project-stalls') && layout && nextKey) {
+    const nextIndex = layout.stalls.findIndex(item => getStallSelectionKey(item) === nextKey)
+    if (nextIndex >= 0) {
+      map.setFeatureState({ source: 'project-stalls', id: nextIndex + 1 }, { isHovered: true })
+    }
+  }
+  return true
 }
 
 const handleStallCardHover = (stall: MapStall) => {
@@ -1576,7 +1603,7 @@ const setupProjectLayers = () => {
     id: 'stalls-hover-casing',
     type: 'line',
     source: 'project-stalls',
-    filter: ['boolean', ['get', 'isHovered'], false],
+    filter: ['boolean', ['feature-state', 'isHovered'], false],
     layout: {
       'line-join': 'round',
       'line-cap': 'round'
@@ -1598,7 +1625,7 @@ const setupProjectLayers = () => {
     id: 'stalls-hover-stroke',
     type: 'line',
     source: 'project-stalls',
-    filter: ['boolean', ['get', 'isHovered'], false],
+    filter: ['boolean', ['feature-state', 'isHovered'], false],
     layout: {
       'line-join': 'round',
       'line-cap': 'round'
@@ -2121,14 +2148,15 @@ const getStallFromFeature = (feature: any): MapStall | null => {
   return typeof code === 'string' ? findStall(code) : null
 }
 
-const setHoveredProject = (project: ProjectZone | null) => {
+const setHoveredProject = (project: ProjectZone | null): boolean => {
+  if (hoveredProject.value?.id === project?.id) return false
   projectMarkerElements.forEach((element, projectId) => {
     element.classList.toggle('is-project-hovered', projectId === project?.id)
   })
-  if (hoveredProject.value?.id === project?.id) return
   hoveredProject.value = project
   // Update just the project source so the polygon outline follows the cursor.
   map?.getSource('projects-polygons')?.setData(getProjectsGeoJson())
+  return true
 }
 
 const getMostSpecificProjectHit = (hits: any[]): ProjectZone | null => {
@@ -2157,10 +2185,10 @@ const bindMapEvents = () => {
     if (stallHit.length) {
       setHoveredProject(null)
       const s = getStallFromFeature(stallHit[0])
-      setHoveredStall(s)
+      const changedStall = setHoveredStall(s)
       const isMyBooked = Boolean(s && !props.previewMode && (props.myBookedStallCodes || []).includes(s.code))
       map.getCanvas().style.cursor = s && s.status !== 'occupied' && !isMyBooked ? 'pointer' : 'not-allowed'
-      if (s) showPopupForStall(s)
+      if (s && changedStall) showPopupForStall(s)
       return
     }
 
@@ -2172,8 +2200,8 @@ const bindMapEvents = () => {
     const p = getMostSpecificProjectHit(projHit)
     if (p && p.id !== activeProjectId.value) {
       map.getCanvas().style.cursor = 'pointer'
-      setHoveredProject(p)
-      showPopupForProject(p, [e.lngLat.lng, e.lngLat.lat])
+      const changedProject = setHoveredProject(p)
+      if (changedProject) showPopupForProject(p, [e.lngLat.lng, e.lngLat.lat])
     } else {
       map.getCanvas().style.cursor = ''
       setHoveredProject(null)

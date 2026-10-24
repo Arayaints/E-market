@@ -363,6 +363,9 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
 
   // If the project carries its own pre-surveyed real stalls (e.g. from official GIS shapefile)
   if (project.stalls && project.stalls.length > 0) {
+    const cachedSurveyLayout = layoutCache.get(cacheKey)
+    if (cachedSurveyLayout) return cachedSurveyLayout
+
     const matchingStalls = (project.stalls as MapStall[])
       .filter(s => !s.floor || s.floor === effectiveFloorId)
       .map((stall, index) => {
@@ -380,7 +383,7 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
     const available = matchingStalls.filter(s => s.status === 'available').length
     const reserved = matchingStalls.filter(s => s.status === 'reserved').length
     const currentFloor = project.floors?.find(f => f.id === effectiveFloorId)
-    return {
+    const surveyLayout: ProjectStallLayout = {
       stalls: matchingStalls,
       labelPoint: project.centroid,
       total: matchingStalls.length,
@@ -390,6 +393,8 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
       floorId: effectiveFloorId,
       floorName: currentFloor?.name || 'ชั้น 1'
     }
+    layoutCache.set(cacheKey, surveyLayout)
+    return surveyLayout
   }
 
   let layout = layoutCache.get(cacheKey)

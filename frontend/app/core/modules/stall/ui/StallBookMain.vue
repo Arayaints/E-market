@@ -1762,6 +1762,7 @@ interface BackendStallRecord {
   stall_ident?: string
   stall_number?: string
   status?: string
+  stall_status?: string
 }
 
 const backendStallsByIdent = ref<Record<string, BackendStallRecord>>({})
@@ -1775,10 +1776,19 @@ const normalizeBackendStallStatus = (status?: string): StallModel['status'] => {
   return 'occupied'
 }
 
+const getBackendRecordStatus = (stall?: BackendStallRecord): string | undefined => (
+  stall?.status || stall?.stall_status
+)
+
 const stallStatusOverrides = computed<Record<string, StallModel['status']>>(() => {
   const statuses: Record<string, StallModel['status']> = {}
   Object.entries(backendStallsByIdent.value).forEach(([ident, stall]) => {
-    if (stall.status) statuses[ident] = normalizeBackendStallStatus(stall.status)
+    const rawStatus = getBackendRecordStatus(stall)
+    if (!rawStatus) return
+    const status = normalizeBackendStallStatus(rawStatus)
+    // GIS layouts now default to available, so sending thousands of identical
+    // available overrides only increases Vue reactivity and map clone work.
+    if (status !== 'available') statuses[ident] = status
   })
   return statuses
 })
@@ -1791,10 +1801,12 @@ const refreshBackendStalls = async (): Promise<void> => {
     const list: BackendStallRecord[] = Array.isArray(response)
       ? response
       : (Array.isArray(response?.data) ? response.data : [])
-    const records: Record<string, BackendStallRecord> = { ...backendStallsByIdent.value }
+    const records: Record<string, BackendStallRecord> = {}
     list.forEach(stall => {
       const ident = getBackendStallIdent(stall)
-      if (ident) records[ident] = stall
+      const rawStatus = getBackendRecordStatus(stall)
+      if (!ident || !rawStatus) return
+      if (normalizeBackendStallStatus(rawStatus) !== 'available') records[ident] = stall
     })
     backendStallsByIdent.value = records
   } catch (error) {
@@ -2111,7 +2123,7 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
         code = r === 2 && c === 12 ? `${prefix}20A` : `${prefix}U${r}${String.fromCharCode(64 + c)}`
       }
 
-      const backendStatus = backendStallsByIdent.value[code]?.status
+      const backendStatus = getBackendRecordStatus(backendStallsByIdent.value[code])
       const status: StallModel['status'] = isMarketFull.value
         ? 'occupied'
         : (backendStatus ? normalizeBackendStallStatus(backendStatus) : 'available')
@@ -2142,7 +2154,7 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
         code = `${prefix}L${r}${String.fromCharCode(64 + c)}`
       }
 
-      const backendStatus = backendStallsByIdent.value[code]?.status
+      const backendStatus = getBackendRecordStatus(backendStallsByIdent.value[code])
       const status: StallModel['status'] = isMarketFull.value
         ? 'occupied'
         : (backendStatus ? normalizeBackendStallStatus(backendStatus) : 'available')
@@ -2185,7 +2197,7 @@ const handleExitProject = () => {
 // Stall clicked inside a project polygon on the GIS map
 const handleMapStallSelect = (stall: StallModel) => {
   const backendStall = backendStallsByIdent.value[stall.code]
-  const effectiveStatus = backendStall ? normalizeBackendStallStatus(backendStall.status) : stall.status
+  const effectiveStatus = backendStall ? normalizeBackendStallStatus(getBackendRecordStatus(backendStall)) : stall.status
   const resolvedProjectId = stall.projectId || selectedProject.value?.id || bookedProject.value?.id
   selectStall({ ...stall, projectId: resolvedProjectId, status: effectiveStatus, backendId: backendStall?.id })
 }
@@ -2708,7 +2720,7 @@ const submitBooking = async () => {
     const refreshedSelection = selectedStalls.value.map(stall => {
       const backendStall = backendStallsByIdent.value[stall.code]
       return backendStall
-        ? { ...stall, status: normalizeBackendStallStatus(backendStall.status), backendId: backendStall.id }
+        ? { ...stall, status: normalizeBackendStallStatus(getBackendRecordStatus(backendStall)), backendId: backendStall.id }
         : stall
     })
     const statusChanged = refreshedSelection.some((stall, index) => stall.status !== selectedStalls.value[index]?.status)
