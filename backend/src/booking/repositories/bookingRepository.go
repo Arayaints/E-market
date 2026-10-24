@@ -243,3 +243,15 @@ func (r *repository) UpdateStallStatus(stallIdent string, status string) error {
 		Where("ident = ?", stallIdent).
 		Update("stall_status", status).Error
 }
+
+func (r *repository) ClearAll() error {
+	return r.conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("1 = 1").Delete(&models.Notification{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("1 = 1").Delete(&models.Booking{}).Error; err != nil {
+			return err
+		}
+		return tx.Model(&models.Stall{}).Where("stall_status IN ('reserved', 'booked', 'occupied')").Update("stall_status", "available").Error
+	})
+}

@@ -12,6 +12,7 @@ type UseCase interface {
 	CreateBooking(userID int, req requests.CreateBookingRequest) (*responses.BookingResponse, error)
 	UpdateStatus(id int, userID int, req requests.UpdateBookingStatusRequest) (*responses.BookingResponse, error)
 	UpdateVisit(id int, actorID int, actorRole string, visitDate string, visitTime string) (*responses.BookingResponse, error)
+	ClearAll(actorRole string) error
 }
 
 type Repository interface {
@@ -23,4 +24,5 @@ type Repository interface {
 	Update(booking *models.Booking) error
 	CountActiveQueue(stallIdent string) (int64, error)
 	UpdateStallStatus(stallIdent string, status string) error
+	ClearAll() error
 }

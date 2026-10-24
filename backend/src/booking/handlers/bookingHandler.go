@@ -341,3 +341,11 @@ func (h *Handler) SelectSlot(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
+
+func (h *Handler) ClearAll(c *gin.Context) {
+	if err := h.useCase.ClearAll(middlewares.GetUserRole(c)); err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"cleared": true}, http.StatusOK))
+}

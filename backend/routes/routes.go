@@ -112,6 +112,7 @@ func SetupRouter() *gin.Engine {
 			bookingGroup.GET("/stall-queue/:ident", stallHandler.GetWaitingQueue)
 			bookingGroup.GET("/:id", bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
+			bookingGroup.POST("/clear", bookingHandler.ClearAll)
 			bookingGroup.POST("/:id/approve", bookingHandler.Approve)
 			bookingGroup.POST("/:id/reject", bookingHandler.Reject)
 			bookingGroup.POST("/:id/mark-visited", bookingHandler.MarkVisited)

@@ -207,3 +207,14 @@ func (u *useCase) UpdateVisit(id int, actorID int, actorRole string, visitDate s
 	res := toBookingResponse(booking)
 	return &res, nil
 }
+
+func (u *useCase) ClearAll(actorRole string) error {
+	if actorRole != "admin" {
+		return responses.NewAppErr(http.StatusForbidden, "เฉพาะผู้ดูแลระบบเท่านั้นที่ล้างข้อมูลทดสอบได้")
+	}
+	if err := u.repo.ClearAll(); err != nil {
+		logs.Error(err)
+		return responses.NewInternalServerError()
+	}
+	return nil
+}
