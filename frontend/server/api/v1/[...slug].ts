@@ -501,7 +501,10 @@ function loadAllRealStalls() {
             daily_rate: Math.round(monthly / 25),
             entry_fee: Number(s.entryFee) || (monthly * 10),
             deposit_fee: Number(s.depositFee) || monthly,
-            status: s.status === 'occupied' ? 'occupied' : 'available',
+            // The GIS files include illustrative occupied states for drawing
+            // the map. They are not lease records, so availability must start
+            // open and be derived below from real bookings/applications only.
+            status: 'available',
             coordinates: s.coordinates || null,
             center: s.center || null
           }
@@ -880,8 +883,12 @@ const INITIAL_BOOKINGS: any[] = [
   }
 ]
 
-const BOOKINGS_DATA: any[] = JSON.parse(JSON.stringify(INITIAL_BOOKINGS))
-let bookingsExplicitlyCleared = false
+// Demo bookings must never leak into the production availability count.
+// Enable them explicitly only when a test environment needs seeded journeys.
+const useDemoBookingSeed = process.env.NODE_ENV !== 'production'
+  || process.env.NUXT_PUBLIC_ENABLE_DEMO_SEED === 'true'
+const BOOKINGS_DATA: any[] = useDemoBookingSeed ? JSON.parse(JSON.stringify(INITIAL_BOOKINGS)) : []
+let bookingsExplicitlyCleared = !useDemoBookingSeed
 
 // =========================================================================
 // NOTIFICATION SYSTEM (Dual-Role Status Notifications: tenant & officer)
@@ -1110,22 +1117,14 @@ function pushNotification(payload: {
 
 // Synchronize all stall statuses with active bookings, applications, and contracts
 function syncAllStallStatuses() {
-  const fullMarketSlugs = new Set(
-    MARKETS_DATA.filter(m => m.status === 'full').map(m => m.slug)
-  )
-
   for (const s of REAL_STALLS_DATA) {
-    s.status = fullMarketSlugs.has(s.market_slug) ? 'occupied' : 'available'
+    s.status = 'available'
   }
   for (const b of BOOKINGS_DATA) {
     const numbers = String(b.stall_number || '').split(',').map((s: string) => s.trim())
     for (const num of numbers) {
       const stall = REAL_STALLS_MAP.get(num)
       if (!stall) continue
-      if (fullMarketSlugs.has(stall.market_slug)) {
-        stall.status = 'occupied'
-        continue
-      }
       if (['lease_applied', 'completed'].includes(b.status)) {
         stall.status = 'occupied'
       } else if (b.holding_stall && !['rejected', 'not_interested', 'cancelled', 'no_show'].includes(b.status)) {
@@ -1140,20 +1139,15 @@ function syncAllStallStatuses() {
     if (marketStalls.length === 0) continue
 
     const total = marketStalls.length
-    const available = m.status === 'full'
-      ? 0
-      : marketStalls.filter(s => s.status === 'available').length
-    const reserved = m.status === 'full'
-      ? 0
-      : marketStalls.filter(s => s.status === 'reserved').length
-    const occupied = m.status === 'full'
-      ? total
-      : marketStalls.filter(s => s.status === 'occupied').length
+    const available = marketStalls.filter(s => s.status === 'available').length
+    const reserved = marketStalls.filter(s => s.status === 'reserved').length
+    const occupied = marketStalls.filter(s => s.status === 'occupied').length
 
     m.total_stalls = total
     m.available_stalls = available
     m.reserved_stalls = reserved
     m.occupied_stalls = occupied
+    m.status = total > 0 && available === 0 ? 'full' : 'open'
 
     const rents = marketStalls.map(s => Number(s.monthly_rate)).filter(r => Number.isFinite(r) && r > 0)
     if (rents.length > 0) {

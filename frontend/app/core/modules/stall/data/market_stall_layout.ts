@@ -424,9 +424,11 @@ export const getMarketStallSummary = (
   visibleProjects.forEach(project => {
     getAllFloorLayoutsForProject(project).forEach(layout => {
       layout.stalls.forEach(stall => {
+        // A status embedded in the GIS layout is illustrative only. Runtime
+        // availability comes from the booking API's explicit overrides.
         const status: StallStatus = marketFull
           ? 'occupied'
-          : (statusOverrides[stall.code] || stall.status)
+          : (statusOverrides[stall.code] || 'available')
         summary.total += 1
         summary[status] += 1
         const rent = Number(stall.monthlyRent) || 0
