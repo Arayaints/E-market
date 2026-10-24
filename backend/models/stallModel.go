@@ -4,7 +4,12 @@ import "time"
 
 type Stall struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	ZoneID             int       `gorm:"column:zone_id" json:"zone_id"`
+	MarketID           int       `gorm:"column:market_id;index" json:"market_id"`
+	MarketSlug         string    `gorm:"size:100;column:market_slug;index" json:"market_slug"`
+	MarketName         string    `gorm:"size:255;column:market_name" json:"market_name"`
+	ZoneID             int       `gorm:"column:zone_id;index" json:"zone_id"`
+	ZoneName           string    `gorm:"size:255;column:zone_name" json:"zone_name"`
+	ProjectName        string    `gorm:"size:255;column:project_name" json:"project_name"`
 	Ident              string    `gorm:"size:50;unique;not null;column:ident" json:"ident"`
 	Name               string    `gorm:"size:255;column:name" json:"name"`
 	Width              float64   `gorm:"column:width" json:"width"`
@@ -25,3 +30,4 @@ type Stall struct {
 func (Stall) TableName() string {
 	return "stall"
 }
+

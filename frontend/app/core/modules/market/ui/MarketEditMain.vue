@@ -126,7 +126,12 @@ const saveMarket = async () => {
 }
 const formatUpdatedAt = (value: string) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 onMounted(async () => {
-  try { const market = await get(`/markets/${marketKey.value}`); originalMarket.value = applyMarketOverride(market); assignForm(originalMarket.value) }
+  try {
+    const res: any = await get(`/markets/${marketKey.value}`)
+    const market = res?.data || res
+    originalMarket.value = applyMarketOverride(market)
+    assignForm(originalMarket.value)
+  }
   catch { showError('ไม่สามารถโหลดข้อมูลตลาดได้') }
   finally { loading.value = false }
 })

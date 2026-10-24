@@ -15,14 +15,28 @@ CREATE TABLE IF NOT EXISTS "user" (
 
 CREATE TABLE IF NOT EXISTS "market" (
     id SERIAL PRIMARY KEY,
+    slug VARCHAR(100) UNIQUE,
     name VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255),
     code VARCHAR(50) UNIQUE NOT NULL,
     location VARCHAR(255),
+    address TEXT,
+    district VARCHAR(100),
     latitude DECIMAL(10, 7),
     longitude DECIMAL(10, 7),
+    lat DECIMAL(10, 7),
+    lng DECIMAL(10, 7),
     total_stalls INT DEFAULT 0,
+    available_stalls INT DEFAULT 0,
+    occupied_stalls INT DEFAULT 0,
+    reserved_stalls INT DEFAULT 0,
+    starting_price_daily DECIMAL(10, 2) DEFAULT 0,
+    starting_price_monthly DECIMAL(10, 2) DEFAULT 0,
+    image_url VARCHAR(500),
+    category VARCHAR(100),
+    operating_hours VARCHAR(255),
     description TEXT,
-    status CHAR(1) DEFAULT 'A',
+    status VARCHAR(50) DEFAULT 'open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -41,7 +55,12 @@ CREATE TABLE IF NOT EXISTS "zone" (
 
 CREATE TABLE IF NOT EXISTS "stall" (
     id SERIAL PRIMARY KEY,
+    market_id INT,
+    market_slug VARCHAR(100),
+    market_name VARCHAR(255),
     zone_id INT REFERENCES "zone"(id),
+    zone_name VARCHAR(255),
+    project_name VARCHAR(255),
     ident VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255),
     width DECIMAL(5, 2) NOT NULL,

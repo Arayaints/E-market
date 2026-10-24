@@ -157,7 +157,13 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.setItem("user_role", normalized)
 				localStorage.setItem("user_info", JSON.stringify(this.currentUser))
 				localStorage.setItem("emarket_user", JSON.stringify(this.currentUser))
-				fetch("/api/v1/auth/switch-role", {
+				let switchUrl = "/api/v1/auth/switch-role"
+				try {
+					const config = useRuntimeConfig()
+					const base = (config.public?.apiUrl || config.public?.apiBase || "/api/v1") as string
+					switchUrl = `${base.replace(/\/+$/, "")}/auth/switch-role`
+				} catch {}
+				fetch(switchUrl, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ role: normalized }),

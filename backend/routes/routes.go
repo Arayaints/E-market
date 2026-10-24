@@ -28,6 +28,10 @@ import (
 	contractRepoPkg "emarket-api/src/contract/repositories"
 	contractUsecasePkg "emarket-api/src/contract/usecases"
 
+	marketHandlerPkg "emarket-api/src/market/handlers"
+	marketRepoPkg "emarket-api/src/market/repositories"
+	marketUsecasePkg "emarket-api/src/market/usecases"
+
 	itemHandlerPkg "emarket-api/src/item/handlers"
 	itemRepoPkg "emarket-api/src/item/repositories"
 	itemUsecasePkg "emarket-api/src/item/usecases"
@@ -79,6 +83,10 @@ func SetupRouter() *gin.Engine {
 	contractUC := contractUsecasePkg.NewUseCase(contractRepo)
 	contractHandler := contractHandlerPkg.NewHandler(contractUC)
 
+	marketRepo := marketRepoPkg.NewRepository(db)
+	marketUC := marketUsecasePkg.NewUseCase(marketRepo)
+	marketHandler := marketHandlerPkg.NewHandler(marketUC)
+
 	itemRepo := itemRepoPkg.NewRepository(db)
 	itemUC := itemUsecasePkg.NewUseCase(itemRepo)
 	itemHandler := itemHandlerPkg.NewHandler(itemUC)
@@ -91,6 +99,16 @@ func SetupRouter() *gin.Engine {
 		{
 			authGroup.POST("/login", authHandler.Login)
 			authGroup.GET("/me", middlewares.AuthorizeJWT(), authHandler.GetProfile)
+			authGroup.POST("/switch-role", authHandler.SwitchRole)
+			authGroup.POST("/refresh_token", authHandler.RefreshToken)
+		}
+
+		// Market Routes
+		marketGroup := api.Group("/markets")
+		{
+			marketGroup.GET("", marketHandler.GetMarkets)
+			marketGroup.GET("/:id", marketHandler.GetMarketByID)
+			marketGroup.GET("/:id/zones", marketHandler.GetMarketZones)
 		}
 
 		// Stall Routes

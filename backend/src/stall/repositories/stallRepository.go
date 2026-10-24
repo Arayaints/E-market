@@ -21,6 +21,16 @@ func (r *repository) FindAll(filter requests.StallFilter) ([]models.Stall, error
 	var stalls []models.Stall
 	query := r.conn.Model(&models.Stall{}).Where("status = 'A'")
 
+	if filter.MarketID > 0 {
+		query = query.Where("market_id = ?", filter.MarketID)
+	}
+	marketKey := filter.Market
+	if marketKey == "" {
+		marketKey = filter.Slug
+	}
+	if marketKey != "" {
+		query = query.Where("market_slug = ? OR market_name LIKE ?", marketKey, "%"+marketKey+"%")
+	}
 	if filter.ZoneID > 0 {
 		query = query.Where("zone_id = ?", filter.ZoneID)
 	}

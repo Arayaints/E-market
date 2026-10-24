@@ -30,23 +30,6 @@ export const useApi = () => {
       if (err?.response?.status === 401) {
         logout()
       }
-      const isReadOnly = String(options.method || 'GET').toUpperCase() === 'GET'
-      const isMarketsRead = isReadOnly && cleanEndpoint.startsWith('/markets')
-      const isNetworkOrMissingRoute = err?.name === 'FetchError' ||
-        err?.message?.includes('Failed to fetch') ||
-        !err?.response ||
-        (isMarketsRead && err?.response?.status === 404)
-      if (isReadOnly && !url.startsWith('/api/v1') && isNetworkOrMissingRoute) {
-        try {
-          const fallbackUrl = `/api/v1${cleanEndpoint}`
-          return await $fetch<T>(fallbackUrl, {
-            ...options,
-            headers
-          })
-        } catch {
-          // rethrow original
-        }
-      }
       throw err
     }
   }

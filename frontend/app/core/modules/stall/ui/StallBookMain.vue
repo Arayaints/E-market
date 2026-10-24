@@ -2921,8 +2921,9 @@ onMounted(async () => {
     }
 
     try {
-      const markets = await get('/markets')
-      const found = markets.find((m: any) => String(m.id) === queryStr || m.slug === queryStr)
+      const marketsRes: any = await get('/markets')
+      const marketsList = Array.isArray(marketsRes) ? marketsRes : (Array.isArray(marketsRes?.data) ? marketsRes.data : [])
+      const found = marketsList.find((m: any) => String(m.id) === queryStr || m.slug === queryStr)
       if (found) {
         const resolved = applyMarketOverride(found)
         currentMarket.value = resolved

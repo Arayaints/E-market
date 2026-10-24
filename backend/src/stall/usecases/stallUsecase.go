@@ -25,8 +25,15 @@ func NewUseCase(repo domains.Repository) domains.UseCase {
 func toStallResponse(s *models.Stall) responses.StallResponse {
 	return responses.StallResponse{
 		ID:                 s.ID,
+		MarketID:           s.MarketID,
+		MarketSlug:         s.MarketSlug,
+		MarketName:         s.MarketName,
 		ZoneID:             s.ZoneID,
+		ZoneName:           s.ZoneName,
+		ProjectName:        s.ProjectName,
 		Ident:              s.Ident,
+		StallIdent:         s.Ident,
+		StallNumber:        s.Ident,
 		Name:               s.Name,
 		Width:              s.Width,
 		Depth:              s.Depth,
@@ -34,6 +41,7 @@ func toStallResponse(s *models.Stall) responses.StallResponse {
 		DailyRent:          s.DailyRent,
 		MonthlyRent:        s.MonthlyRent,
 		Status:             s.StallStatus,
+		StallStatus:        s.StallStatus,
 		Floor:              s.Floor,
 		CoordinatesGeoJSON: s.CoordinatesGeoJSON,
 		CreatedAt:          s.CreatedAt,
@@ -141,7 +149,12 @@ func (u *useCase) GetWaitingQueue(ident string) (*responses.WaitingQueueResponse
 func (u *useCase) CreateStall(userID int, req requests.CreateStallRequest) (*responses.StallResponse, error) {
 	area := req.Width * req.Depth
 	stall := models.Stall{
+		MarketID:           req.MarketID,
+		MarketSlug:         req.MarketSlug,
+		MarketName:         req.MarketName,
 		ZoneID:             req.ZoneID,
+		ZoneName:           req.ZoneName,
+		ProjectName:        req.ProjectName,
 		Ident:              req.Ident,
 		Name:               req.Name,
 		Width:              req.Width,

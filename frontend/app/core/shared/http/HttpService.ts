@@ -125,34 +125,6 @@ export abstract class HttpService {
 			}
 			return this.handleError<T>(response.status, payload, response.statusText)
 		} catch (error: any) {
-			const isReadOnly = String(fetchOptions.method || "GET").toUpperCase() === "GET"
-			const isLocalBrowser = typeof window !== "undefined" && window.location.hostname === "localhost"
-			// Never replay login or another mutation against the volatile Nitro demo
-			// API in production. A transient backend failure must remain a failure.
-			if (isReadOnly && isLocalBrowser && !url.startsWith("/api/v1")) {
-				try {
-					const cleanEp = endpoint.startsWith("/") ? endpoint : `/${endpoint}`
-					const subPath = this.path ? `/${this.path.replace(/^\/+|\/+$/g, "")}` : ""
-					let fallbackUrl = `/api/v1${subPath}${cleanEp}`
-					if (params) {
-						const searchParams = this.createParams(params).toString()
-						if (searchParams) {
-							fallbackUrl += (fallbackUrl.includes("?") ? "&" : "?") + searchParams
-						}
-					}
-					const fallbackRes = await fetch(fallbackUrl, {
-						...fetchOptions,
-						headers,
-						body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
-					})
-					const payload = await fallbackRes.json().catch(() => null)
-					if (fallbackRes.ok) {
-						return this.handleResponse<T>(fallbackRes.status, payload)
-					}
-				} catch {
-					// fallback failed, continue to standard error handling
-				}
-			}
 			return this.handleError<T>(0, null, error?.message || "Network Error: Please check your connection")
 		}
 	}

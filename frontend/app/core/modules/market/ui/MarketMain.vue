@@ -521,8 +521,9 @@ const filteredMarkets = ref<any[]>([])
 const loadData = async () => {
   loadingMarkets.value = true
   try {
-    const marketsRes = await get('/markets')
-    marketsList.value = (marketsRes || []).map((market: any) => applyMarketOverride(market))
+    const marketsRes: any = await get('/markets')
+    const list = Array.isArray(marketsRes) ? marketsRes : (Array.isArray(marketsRes?.data) ? marketsRes.data : [])
+    marketsList.value = list.map((market: any) => applyMarketOverride(market))
     filteredMarkets.value = marketsList.value
   } catch (err) {
     console.error('Failed to load markets:', err)
