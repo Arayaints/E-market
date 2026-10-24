@@ -371,7 +371,9 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
           ...stall,
           coordinates,
           center: getPolygonCenter(coordinates),
-          status: normalizeStallStatus(stall.status),
+          // Statuses embedded in the GIS file are illustrative. Runtime
+          // booking data is applied by MarketProjectsOverviewMap.
+          status: 'available' as StallStatus,
           selectionId: stall.selectionId || `${project.id}:${effectiveFloorId}:${index}`
         }
       })

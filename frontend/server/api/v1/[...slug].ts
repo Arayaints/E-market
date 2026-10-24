@@ -1383,6 +1383,44 @@ export default defineEventHandler(async (event) => {
         String(s.market_id) === mq
       )
       if (filtered.length > 0) return filtered
+
+      // Static GIS assets may not be readable from a production serverless
+      // function. Return compact runtime overrides from bookings so the map
+      // can still paint reserved/occupied stalls without trusting GIS demo
+      // statuses or exposing tenant details.
+      const market = MARKETS_DATA.find(m => String(m.id) === mq || m.slug === mq)
+      const runtimeStatuses = new Map<string, 'reserved' | 'occupied'>()
+      BOOKINGS_DATA.forEach((booking: any) => {
+        const bookingMarketName = String(booking.market_name || '').trim()
+        const matchesMarket = String(booking.market_id || '') === String(market?.id || mq)
+          || Boolean(market && bookingMarketName && (
+            bookingMarketName === market.name ||
+            bookingMarketName.includes(market.name) ||
+            market.name.includes(bookingMarketName)
+          ))
+        if (!matchesMarket) return
+
+        const bookingStatus = String(booking.status || '')
+        const status = ['lease_applied', 'completed'].includes(bookingStatus)
+          ? 'occupied' as const
+          : (booking.holding_stall && !['rejected', 'not_interested', 'cancelled', 'no_show'].includes(bookingStatus)
+              ? 'reserved' as const
+              : null)
+        if (!status) return
+
+        String(booking.stall_number || '').split(',').forEach((rawNumber: string) => {
+          const ident = rawNumber.trim()
+          if (!ident) return
+          if (status === 'occupied' || !runtimeStatuses.has(ident)) runtimeStatuses.set(ident, status)
+        })
+      })
+      return Array.from(runtimeStatuses, ([ident, status]) => ({
+        id: ident,
+        ident,
+        stall_ident: ident,
+        stall_number: ident,
+        status
+      }))
     }
     return STALLS_DATA
   }

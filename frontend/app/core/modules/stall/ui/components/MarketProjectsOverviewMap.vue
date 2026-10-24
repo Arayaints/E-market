@@ -834,7 +834,7 @@ const applyMarketStatus = (layout: ProjectStallLayout): ProjectStallLayout => {
     ...stall,
     status: props.marketFull
       ? 'occupied' as const
-      : (props.stallStatusOverrides[stall.code] || stall.status)
+      : (props.stallStatusOverrides[stall.code] || 'available')
   }))
   const available = stalls.filter(stall => stall.status === 'available').length
   const reserved = stalls.filter(stall => stall.status === 'reserved').length
