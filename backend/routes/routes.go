@@ -18,6 +18,7 @@ import (
 	bookingHandlerPkg "emarket-api/src/booking/handlers"
 	bookingRepoPkg "emarket-api/src/booking/repositories"
 	bookingUsecasePkg "emarket-api/src/booking/usecases"
+	notificationHandlerPkg "emarket-api/src/notification/handlers"
 
 	appHandlerPkg "emarket-api/src/application/handlers"
 	appRepoPkg "emarket-api/src/application/repositories"
@@ -40,6 +41,11 @@ func SetupRouter() *gin.Engine {
 	r.Use(middlewares.Cors())
 	r.Use(middlewares.Recovery())
 	r.Use(middlewares.LogRequest())
+	r.Use(func(c *gin.Context) {
+		c.Header("Cache-Control", "private, no-store, max-age=0")
+		c.Header("Pragma", "no-cache")
+		c.Next()
+	})
 
 	// Health Check
 	r.GET("/health", func(c *gin.Context) {
@@ -63,6 +69,7 @@ func SetupRouter() *gin.Engine {
 	bookingRepo := bookingRepoPkg.NewRepository(db)
 	bookingUC := bookingUsecasePkg.NewUseCase(bookingRepo)
 	bookingHandler := bookingHandlerPkg.NewHandler(bookingUC)
+	notificationHandler := notificationHandlerPkg.NewHandler(db)
 
 	appRepo := appRepoPkg.NewRepository(db)
 	appUC := appUsecasePkg.NewUseCase(appRepo)
@@ -98,12 +105,31 @@ func SetupRouter() *gin.Engine {
 		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT())
 		{
 			bookingGroup.GET("", bookingHandler.GetBookings)
+			bookingGroup.GET("/visit-capacity", bookingHandler.GetVisitCapacity)
 			// This endpoint returns only masked queue data, so a signed-in tenant can
 			// determine their real queue position without exposing another tenant's PII.
 			bookingGroup.GET("/waiting-queue/:ident", stallHandler.GetWaitingQueue)
+			bookingGroup.GET("/stall-queue/:ident", stallHandler.GetWaitingQueue)
 			bookingGroup.GET("/:id", bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
+			bookingGroup.POST("/:id/approve", bookingHandler.Approve)
+			bookingGroup.POST("/:id/reject", bookingHandler.Reject)
+			bookingGroup.POST("/:id/mark-visited", bookingHandler.MarkVisited)
+			bookingGroup.POST("/:id/visited", bookingHandler.MarkVisited)
+			bookingGroup.POST("/:id/no-show", bookingHandler.NoShow)
+			bookingGroup.POST("/:id/noshow", bookingHandler.NoShow)
+			bookingGroup.POST("/:id/decide", bookingHandler.Decide)
+			bookingGroup.POST("/:id/officer-record-proxy", bookingHandler.OfficerRecordProxy)
+			bookingGroup.POST("/:id/cancel", bookingHandler.Cancel)
+			bookingGroup.POST("/:id/select-slot", bookingHandler.SelectSlot)
 			bookingGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdateBookingStatus)
+		}
+
+		notificationGroup := api.Group("/notifications", middlewares.AuthorizeJWT())
+		{
+			notificationGroup.GET("", notificationHandler.GetNotifications)
+			notificationGroup.POST("/read-all", notificationHandler.MarkAllRead)
+			notificationGroup.POST("/:id/read", notificationHandler.MarkRead)
 		}
 
 		// Application Routes

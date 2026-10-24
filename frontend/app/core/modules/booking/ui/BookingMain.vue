@@ -2746,8 +2746,10 @@ watch(slotDate, () => {
 const loadBookings = async () => {
   loading.value = true
   try {
-    const res = await get('/bookings', { _t: Date.now() })
-    bookings.value = Array.isArray(res) ? res : []
+    const res: any = await get('/bookings', { _t: Date.now() })
+    // Nitro returns an array directly while the persistent Go API uses the
+    // standard { status, code, data } envelope.
+    bookings.value = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
     setCachedScheduleBookings(bookings.value)
     await fetchNotifications()
   } catch (err) {

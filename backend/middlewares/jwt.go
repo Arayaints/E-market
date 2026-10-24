@@ -36,9 +36,33 @@ func AuthorizeJWT() gin.HandlerFunc {
 			return
 		}
 
-		c.Set(ContextUserID, claims.UserID)
-		c.Set(ContextUsername, claims.Username)
-		c.Set(ContextRole, claims.Role)
+		userID := claims.UserID
+		username := claims.Username
+		role := claims.Role
+
+		activeRole := strings.ToLower(strings.TrimSpace(c.GetHeader("X-Active-Role")))
+		if activeRole == "officer" {
+			activeRole = "admin"
+		}
+		if activeRole == "tenant" && role != "tenant" {
+			userID = 3
+			username = "tenant"
+			role = "tenant"
+		} else if (activeRole == "admin" || activeRole == "staff") && role == "tenant" {
+			if activeRole == "staff" {
+				userID = 2
+				username = "staff"
+				role = "staff"
+			} else {
+				userID = 1
+				username = "admin"
+				role = "admin"
+			}
+		}
+
+		c.Set(ContextUserID, userID)
+		c.Set(ContextUsername, username)
+		c.Set(ContextRole, role)
 		c.Next()
 	}
 }

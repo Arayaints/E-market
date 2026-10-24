@@ -4,6 +4,20 @@ import type { IUser } from "../models/AuthModel"
 
 const normalizeRole = (role?: string | null) => role === "officer" ? "staff" : (role || "tenant")
 
+const normalizeLegacyTenantProfile = (user: IUser | null): IUser | null => {
+	if (!user) return null
+	if (user.username === "tenant" && (!user.full_name || user.full_name.includes("สมศักดิ์"))) {
+		return {
+			...user,
+			id: user.id || 3,
+			full_name: "สมชาย ใจดี",
+			phone: user.phone && user.phone !== "081-999-8877" ? user.phone : "081-234-5678",
+			role: "tenant",
+		}
+	}
+	return user
+}
+
 export interface IAuthState {
 	currentUser: IUser | null
 	accessToken: string | null
@@ -28,7 +42,7 @@ export const useAuthStore = defineStore("auth", {
 			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
 			if (rawUser) {
 				try {
-					user = JSON.parse(rawUser)
+					user = normalizeLegacyTenantProfile(JSON.parse(rawUser))
 				} catch {}
 			}
 			// If token exists but no user info, create initial active session
@@ -36,8 +50,9 @@ export const useAuthStore = defineStore("auth", {
 				user = {
 					id: storedRole === "tenant" ? 3 : 1,
 					username: storedRole === "tenant" ? "tenant" : "admin",
-					full_name: storedRole === "tenant" ? "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)" : "ผู้ดูแลระบบ (Admin)",
-					role: storedRole,
+					full_name: storedRole === "tenant" ? "สมชาย ใจดี" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
+					phone: storedRole === "tenant" ? "081-234-5678" : "02-123-4567",
+					role: storedRole || "tenant",
 				}
 			}
 		}
@@ -46,7 +61,7 @@ export const useAuthStore = defineStore("auth", {
 			currentUser: user,
 			accessToken: token,
 			refreshToken: null,
-			role: storedRole,
+			role: storedRole || user?.role || "",
 			isLoading: false,
 		}
 	},
@@ -69,7 +84,10 @@ export const useAuthStore = defineStore("auth", {
 			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
 			if (rawUser) {
 				try {
-					this.currentUser = JSON.parse(rawUser)
+					this.currentUser = normalizeLegacyTenantProfile(JSON.parse(rawUser))
+					if (this.currentUser && !this.role) {
+						this.role = normalizeRole(this.currentUser.role)
+					}
 				} catch {
 					this.currentUser = null
 				}
@@ -77,8 +95,9 @@ export const useAuthStore = defineStore("auth", {
 				this.currentUser = {
 					id: this.role === "tenant" ? 3 : 1,
 					username: this.role === "tenant" ? "tenant" : "admin",
-					full_name: this.role === "tenant" ? "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)" : "ผู้ดูแลระบบ (Admin)",
-					role: this.role,
+					full_name: this.role === "tenant" ? "สมชาย ใจดี" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
+					phone: this.role === "tenant" ? "081-234-5678" : "02-123-4567",
+					role: this.role || "tenant",
 				}
 			} else {
 				// Never retain the previous account in memory after its token was removed.
@@ -102,38 +121,56 @@ export const useAuthStore = defineStore("auth", {
 		},
 
 		setUser(user: IUser) {
-			this.currentUser = user
-			this.role = normalizeRole(user.role || this.role)
+			const normalized = normalizeLegacyTenantProfile(user) || user
+			this.currentUser = normalized
+			this.role = normalizeRole(normalized.role || this.role)
 			if (typeof window !== "undefined") {
-				localStorage.setItem("user_info", JSON.stringify(user))
-				localStorage.setItem("emarket_user", JSON.stringify(user))
+				localStorage.setItem("user_info", JSON.stringify(normalized))
+				localStorage.setItem("emarket_user", JSON.stringify(normalized))
 				localStorage.setItem("user_role", this.role)
 			}
 		},
 
 		switchRole(newRole: "tenant" | "admin" | "staff") {
-			this.role = newRole
-			if (newRole === "tenant") {
+			const normalized = normalizeRole(newRole) as "tenant" | "admin" | "staff"
+			this.role = normalized
+			if (normalized === "tenant") {
 				this.currentUser = {
 					id: 3,
 					username: "tenant",
-					full_name: "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)",
+					full_name: "สมชาย ใจดี",
 					role: "tenant",
-					phone: "081-999-8877",
+					phone: "081-234-5678",
+					email: "tenant@emarket.bma.go.th",
 				}
 			} else {
 				this.currentUser = {
-					id: 1,
-					username: "admin",
-					full_name: "ผู้ดูแลระบบตลาด (Admin)",
-					role: "admin",
+					id: normalized === "staff" ? 2 : 1,
+					username: normalized === "staff" ? "staff" : "admin",
+					full_name: normalized === "staff" ? "เจ้าหน้าที่ตลาด (Staff)" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
+					role: normalized,
 					phone: "02-123-4567",
+					email: `${normalized}@emarket.bma.go.th`,
 				}
 			}
 			if (typeof window !== "undefined") {
-				localStorage.setItem("user_role", newRole)
+				localStorage.setItem("user_role", normalized)
 				localStorage.setItem("user_info", JSON.stringify(this.currentUser))
 				localStorage.setItem("emarket_user", JSON.stringify(this.currentUser))
+				fetch("/api/v1/auth/switch-role", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ role: normalized }),
+				})
+					.then((r) => (r.ok ? r.json() : null))
+					.then((payload) => {
+						const token = payload?.data?.access_token || payload?.access_token
+						const refresh = payload?.data?.refresh_token || payload?.refresh_token
+						if (token) {
+							this.setToken(token, refresh)
+						}
+					})
+					.catch(() => {})
 			}
 		},
 
@@ -148,9 +185,10 @@ export const useAuthStore = defineStore("auth", {
 					const userRole = normalizeRole(data.role || data.user?.role || (credentials.username.startsWith("tenant") ? "tenant" : credentials.username === "staff" ? "staff" : "admin"))
 					this.role = userRole
 					this.setUser(data.user || {
-						id: credentials.username === "tenant" ? 3 : 1,
+						id: credentials.username === "tenant" ? 3 : credentials.username === "tenant2" ? 4 : 1,
 						username: credentials.username,
-						full_name: credentials.username === "tenant" ? "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)" : "ผู้ดูแลระบบ (Admin)",
+						full_name: credentials.username === "tenant" ? "สมชาย ใจดี" : credentials.username === "tenant2" ? "นภาพร รัตนศิลป์" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
+						phone: credentials.username === "tenant" ? "081-234-5678" : credentials.username === "tenant2" ? "089-111-2233" : "02-123-4567",
 						role: userRole,
 					})
 					return res.data

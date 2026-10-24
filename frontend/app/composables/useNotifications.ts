@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 export interface INotificationItem {
   id: number
@@ -20,8 +20,8 @@ export interface INotificationItem {
   created_at: string
 }
 
-let lastTopNotifId = 0
-let isInitialFetchDone = false
+type NotificationCursor = { lastTopId: number; initialized: boolean }
+const notificationCursors = new Map<string, NotificationCursor>()
 
 export const useNotifications = () => {
   const { get, post } = useApi()
@@ -33,6 +33,7 @@ export const useNotifications = () => {
   const officerUnreadCount = useState<number>('global_notifications_officer_unread', () => 0)
   const loading = useState<boolean>('global_notifications_loading', () => false)
   const toastQueue = useState<INotificationItem[]>('global_notifications_toast_queue', () => [])
+  const notificationOwnerKey = useState<string>('global_notifications_owner_key', () => '')
 
   // Determine the active role context ('tenant' vs 'officer')
   const activeRole = computed<'tenant' | 'officer'>(() => {
@@ -42,6 +43,30 @@ export const useNotifications = () => {
     const currentAuthRole = String(user.value?.role || authRole.value || '').toLowerCase()
     return currentAuthRole === 'tenant' ? 'tenant' : 'officer'
   })
+
+  const sessionKey = computed(() => {
+    const currentUser = user.value as any
+    return currentUser?.id ? `${currentUser.id}:${activeRole.value}` : 'anonymous'
+  })
+
+  const clearClientNotificationState = () => {
+    notifications.value = []
+    tenantUnreadCount.value = 0
+    officerUnreadCount.value = 0
+    toastQueue.value = []
+  }
+
+  // Nuxt useState survives client-side navigation. Scope that state to the
+  // authenticated account so logout/login and role changes cannot briefly show
+  // another user's notifications or reuse their "latest notification" cursor.
+  watch(sessionKey, (nextKey, previousKey) => {
+    if (notificationOwnerKey.value === nextKey) return
+    clearClientNotificationState()
+    if (nextKey === 'anonymous' && previousKey && previousKey !== 'anonymous') {
+      notificationCursors.delete(previousKey)
+    }
+    notificationOwnerKey.value = nextKey
+  }, { immediate: true })
 
   const normalizeOwnerName = (value: unknown) => String(value || '')
     .replace(/^(คุณ|นาย|นางสาว|นาง|น\.ส\.)\s*/g, '')
@@ -86,6 +111,11 @@ export const useNotifications = () => {
   }
 
   const fetchNotifications = async (showNewAsToast = true) => {
+    const requestedSessionKey = sessionKey.value
+    if (requestedSessionKey === 'anonymous') {
+      clearClientNotificationState()
+      return
+    }
     loading.value = true
     try {
       const res: any = await get('/notifications', { role: 'all', _t: Date.now() })
@@ -95,11 +125,15 @@ export const useNotifications = () => {
           ? res
           : []
       const visibleList = list.filter(isNotificationVisibleToActiveUser)
+      // Ignore a late response belonging to the account that just logged out.
+      if (requestedSessionKey !== sessionKey.value) return
 
-      if (isInitialFetchDone && showNewAsToast && visibleList.length > 0 && lastTopNotifId > 0) {
+      const cursor = notificationCursors.get(requestedSessionKey) || { lastTopId: 0, initialized: false }
+
+      if (cursor.initialized && showNewAsToast && visibleList.length > 0 && cursor.lastTopId > 0) {
         const newlyAdded: INotificationItem[] = []
         for (const n of visibleList) {
-          if (n.id === lastTopNotifId) break
+          if (n.id === cursor.lastTopId) break
           if (!n.is_read) {
             newlyAdded.push(n)
           }
@@ -110,9 +144,10 @@ export const useNotifications = () => {
       }
 
       if (visibleList.length > 0) {
-        lastTopNotifId = visibleList[0].id
+        cursor.lastTopId = visibleList[0].id
       }
-      isInitialFetchDone = true
+      cursor.initialized = true
+      notificationCursors.set(requestedSessionKey, cursor)
 
       notifications.value = visibleList
       tenantUnreadCount.value = visibleList.filter((n: INotificationItem) => n.recipient_role === 'tenant' && !n.is_read).length
@@ -126,6 +161,7 @@ export const useNotifications = () => {
 
   const markAsRead = async (id: number) => {
     const target = notifications.value.find(n => n.id === id)
+    const wasUnread = Boolean(target && !target.is_read)
     if (target && !target.is_read) {
       target.is_read = true
       if (target.recipient_role === 'tenant') {
@@ -137,11 +173,17 @@ export const useNotifications = () => {
     dismissToast(id)
     try {
       await post(`/notifications/${id}/read`, { user_id: (user.value as any)?.id, role: activeRole.value })
-    } catch {}
+    } catch (error) {
+      // Do not leave a false read state when persistence failed.
+      if (target && wasUnread) target.is_read = false
+      await fetchNotifications(false)
+      console.error('Failed to persist notification read state:', error)
+    }
   }
 
   const markAllAsRead = async (roleFilter?: 'tenant' | 'officer' | 'all') => {
     const targetRole = roleFilter || activeRole.value
+    const previousReadState = new Map(notifications.value.map(n => [n.id, n.is_read]))
     notifications.value.forEach((n) => {
       if (targetRole === 'all' || n.recipient_role === targetRole) {
         n.is_read = true
@@ -152,7 +194,13 @@ export const useNotifications = () => {
 
     try {
       await post('/notifications/read-all', { role: targetRole, user_id: (user.value as any)?.id })
-    } catch {}
+    } catch (error) {
+      notifications.value.forEach((n) => {
+        n.is_read = previousReadState.get(n.id) ?? n.is_read
+      })
+      await fetchNotifications(false)
+      console.error('Failed to persist notification read-all state:', error)
+    }
   }
 
   const tenantNotifications = computed(() =>

@@ -1,6 +1,7 @@
-import { defineEventHandler, getRouterParam, getMethod, getQuery, readBody, setResponseStatus } from 'h3'
+import { defineEventHandler, getRouterParam, getMethod, getQuery, readBody, setHeader, setResponseStatus } from 'h3'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 
 function base64UrlEncode(str: string): string {
@@ -11,7 +12,13 @@ function base64UrlEncode(str: string): string {
     .replace(/\//g, '_')
 }
 
-function generateRfc7519Jwt(payload: Record<string, any>, secret: string = 'bma-emarket-jwt-secret-key-2026'): string {
+const KNOWN_JWT_SECRETS = Array.from(new Set([
+  process.env.JWT_SECRET || '',
+  'bma-emarket-jwt-secret-key-2026',
+  'emarket-secret-super-key-2026'
+].filter(Boolean)))
+
+function generateRfc7519Jwt(payload: Record<string, any>, secret: string = KNOWN_JWT_SECRETS[0] || 'bma-emarket-jwt-secret-key-2026'): string {
   const header = { alg: 'HS256', typ: 'JWT' }
   const encodedHeader = base64UrlEncode(JSON.stringify(header))
   const encodedPayload = base64UrlEncode(JSON.stringify({
@@ -44,25 +51,46 @@ function base64UrlDecode(value: string): string {
   return Buffer.from(normalized + '='.repeat((4 - normalized.length % 4) % 4), 'base64').toString('utf8')
 }
 
+function resolveRoleSwitchActor(baseActor: MockActor, activeRoleHeader: string): MockActor {
+  const normalizedHeader = activeRoleHeader === 'officer' ? 'admin' : activeRoleHeader
+  if (!['admin', 'staff', 'tenant'].includes(normalizedHeader)) return baseActor
+  if (normalizedHeader === 'tenant' && baseActor.role !== 'tenant') {
+    return { id: MOCK_USERS.tenant.id, username: MOCK_USERS.tenant.username, role: 'tenant' }
+  }
+  if ((normalizedHeader === 'admin' || normalizedHeader === 'staff') && baseActor.role === 'tenant') {
+    const target = MOCK_USERS[normalizedHeader] || MOCK_USERS.admin
+    return { id: target.id, username: target.username, role: target.role }
+  }
+  return baseActor
+}
+
 function getMockActor(event: any): MockActor | null {
   const authHeader = String(event.node.req.headers.authorization || '')
+  const activeRoleHeader = String(event.node.req.headers['x-active-role'] || '').trim().toLowerCase()
   const token = authHeader.match(/^Bearer\s+(.+)$/i)?.[1]
   if (!token) return null
 
   const [encodedHeader, encodedPayload, signature] = token.split('.')
   if (!encodedHeader || !encodedPayload || !signature) return null
-  const expectedSignature = crypto.createHmac('sha256', 'bma-emarket-jwt-secret-key-2026')
-    .update(`${encodedHeader}.${encodedPayload}`)
-    .digest('base64url')
-  if (signature.length !== expectedSignature.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) return null
+
+  const signatureValid = KNOWN_JWT_SECRETS.some((secret) => {
+    const expectedSignature = crypto.createHmac('sha256', secret)
+      .update(`${encodedHeader}.${encodedPayload}`)
+      .digest('base64url')
+    return signature.length === expectedSignature.length &&
+      crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
+  })
+  if (!signatureValid) return null
 
   try {
     const payload = JSON.parse(base64UrlDecode(encodedPayload))
     const id = Number(payload.user_id)
     const username = String(payload.username || '')
-    const role = String(payload.role || '') as MockActor['role']
+    const rawRole = String(payload.role || '')
+    const role = (rawRole === 'officer' ? 'staff' : rawRole) as MockActor['role']
     if (!Number.isInteger(id) || !username || !['admin', 'staff', 'tenant'].includes(role) || (payload.exp && Number(payload.exp) < Math.floor(Date.now() / 1000))) return null
-    return { id, username, role }
+    const actor: MockActor = { id, username, role }
+    return activeRoleHeader ? resolveRoleSwitchActor(actor, activeRoleHeader) : actor
   } catch {
     return null
   }
@@ -902,10 +930,8 @@ const INITIAL_BOOKINGS: any[] = [
   }
 ]
 
-// Demo bookings must never leak into the production availability count.
-// Enable them explicitly only when a test environment needs seeded journeys.
-const useDemoBookingSeed = process.env.NODE_ENV !== 'production'
-  || process.env.NUXT_PUBLIC_ENABLE_DEMO_SEED === 'true'
+// Enable demo seed by default unless explicitly disabled via NUXT_PUBLIC_DISABLE_DEMO_SEED.
+const useDemoBookingSeed = process.env.NUXT_PUBLIC_DISABLE_DEMO_SEED !== 'true'
 const BOOKINGS_DATA: any[] = useDemoBookingSeed ? JSON.parse(JSON.stringify(INITIAL_BOOKINGS)) : []
 let bookingsExplicitlyCleared = !useDemoBookingSeed
 
@@ -1080,7 +1106,7 @@ const INITIAL_NOTIFICATIONS: any[] = [
   }
 ]
 
-const NOTIFICATIONS_DATA: any[] = JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS))
+const NOTIFICATIONS_DATA: any[] = useDemoBookingSeed ? JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS)) : []
 
 function formatIsoDatesInThai(text: string): string {
   if (!text) return ''
@@ -1109,10 +1135,13 @@ function pushNotification(payload: {
   project_name?: string
   target_url?: string
 }) {
+  const bookingOwnerId = payload.booking_id
+    ? BOOKINGS_DATA.find((booking: any) => Number(booking.id) === Number(payload.booking_id))?.tenant_user_id
+    : undefined
   const newNotif = {
     id: Date.now() + Math.floor(Math.random() * 10000),
     recipient_role: payload.recipient_role,
-    recipient_user_id: payload.recipient_user_id || (payload.recipient_role === 'tenant'
+    recipient_user_id: payload.recipient_user_id ?? bookingOwnerId ?? (payload.recipient_role === 'tenant'
       ? (/นภาพร\s+รัตนศิลป์/i.test(payload.recipient_name || '') ? 4 : /สมชาย\s+ใจดี/i.test(payload.recipient_name || '') ? 3 : undefined)
       : undefined),
     recipient_name: payload.recipient_name || (payload.recipient_role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'เจ้าหน้าที่ดูแลตลาด'),
@@ -1306,7 +1335,65 @@ const CONTRACTS_DATA: any[] = [
 ]
 
 
-export default defineEventHandler(async (event) => {
+const RUNTIME_STATE_FILE = path.join(os.tmpdir(), 'bma-emarket-runtime-state.json')
+let lastLoadedMtimeMs = 0
+
+function loadPersistedRuntimeState() {
+  try {
+    if (!fs.existsSync(RUNTIME_STATE_FILE)) return
+    const stat = fs.statSync(RUNTIME_STATE_FILE)
+    if (stat.mtimeMs <= lastLoadedMtimeMs) return
+    const raw = fs.readFileSync(RUNTIME_STATE_FILE, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') {
+      if (typeof parsed.bookingsExplicitlyCleared === 'boolean') {
+        bookingsExplicitlyCleared = parsed.bookingsExplicitlyCleared
+      }
+      if (Array.isArray(parsed.bookings)) {
+        BOOKINGS_DATA.splice(0, BOOKINGS_DATA.length, ...parsed.bookings)
+      }
+      if (Array.isArray(parsed.notifications)) {
+        NOTIFICATIONS_DATA.splice(0, NOTIFICATIONS_DATA.length, ...parsed.notifications)
+      }
+      if (Array.isArray(parsed.applications)) {
+        APPLICATIONS_DATA.splice(0, APPLICATIONS_DATA.length, ...parsed.applications)
+      }
+      if (Array.isArray(parsed.contracts)) {
+        CONTRACTS_DATA.splice(0, CONTRACTS_DATA.length, ...parsed.contracts)
+      }
+      lastLoadedMtimeMs = stat.mtimeMs
+      syncAllStallStatuses()
+    }
+  } catch {
+    // Ignore read errors in read-only or ephemeral environments
+  }
+}
+
+function savePersistedRuntimeState() {
+  try {
+    const payload = JSON.stringify({
+      bookingsExplicitlyCleared,
+      bookings: BOOKINGS_DATA,
+      notifications: NOTIFICATIONS_DATA,
+      applications: APPLICATIONS_DATA,
+      contracts: CONTRACTS_DATA,
+      updatedAt: new Date().toISOString()
+    })
+    fs.writeFileSync(RUNTIME_STATE_FILE, payload, 'utf8')
+    const stat = fs.statSync(RUNTIME_STATE_FILE)
+    lastLoadedMtimeMs = stat.mtimeMs
+  } catch {
+    // Ignore write errors in read-only environments
+  }
+}
+
+loadPersistedRuntimeState()
+
+const handleApiRequest = async (event: any) => {
+  // Authenticated operational data must never be served from a browser/CDN cache.
+  setHeader(event, 'Cache-Control', 'private, no-store, max-age=0')
+  setHeader(event, 'Pragma', 'no-cache')
+  loadPersistedRuntimeState()
   const slug = getRouterParam(event, 'slug') || ''
   const method = getMethod(event)
   const query = getQuery(event)
@@ -1338,9 +1425,24 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 2. Built-in Nitro Mock API Responses for Vercel & Offline Mode
+  // 2. Built-in Nitro API Responses for Production & Standalone Mode
   // Clean slug
   const cleanSlug = slug.replace(/^\/+|\/+$/g, '')
+
+  const isPersistentOperation = cleanSlug.startsWith('bookings') || cleanSlug.startsWith('notifications')
+  const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method)
+  const configuredPersistentApi = String(process.env.NUXT_PUBLIC_API_BASE || process.env.NUXT_PUBLIC_API_URL || '')
+  const hasPersistentApi = /^https?:\/\//i.test(configuredPersistentApi)
+  const strictPersistentApi = process.env.NUXT_PUBLIC_STRICT_PERSISTENT_API === 'true'
+  if (process.env.NODE_ENV === 'production' && strictPersistentApi && isPersistentOperation && isMutation && !hasPersistentApi) {
+    setResponseStatus(event, 503)
+    return {
+      status: false,
+      code: 503,
+      detail: 'Production API ยังไม่ได้ตั้งค่า NUXT_PUBLIC_API_BASE จึงระงับการเขียนข้อมูลเพื่อป้องกันการจองสูญหาย',
+      message: 'Persistent API is not configured'
+    }
+  }
 
   // --- /markets ---
   if (cleanSlug === 'markets' || cleanSlug === 'markets/') {
@@ -2422,7 +2524,7 @@ export default defineEventHandler(async (event) => {
     if (parts.length === 1 && method === 'POST') {
       if (actor.role !== 'tenant') return forbiddenResponse(event, 'เฉพาะบัญชีผู้เช่าเท่านั้นที่สร้างรายการจองได้')
       const body = await readBody(event).catch(() => ({}))
-      const tenantProfile = MOCK_USERS[actor.username]
+      const tenantProfile = MOCK_USERS[actor.username] || (actor.role === 'tenant' ? MOCK_USERS.tenant : undefined)
       const stallIdent = String(body.stall_ident || body.stall_number || '').trim()
       const realStall = REAL_STALLS_MAP.get(stallIdent)
       const randomNum = Math.floor(1000 + Math.random() * 9000)
@@ -2454,12 +2556,6 @@ export default defineEventHandler(async (event) => {
         // either duplicate detection or access control.
         if (!existingOwnerId) return false
         if (reqOwnerId !== existingOwnerId) return false
-        const bNameNorm = normalizePersonName(b.tenant_name)
-        const bPhoneNorm = normalizeDigits(b.tenant_phone)
-        const bIdCardNorm = normalizeDigits(b.tenant_id_card)
-        const nameMatch = Boolean(reqNameNorm && bNameNorm && reqNameNorm === bNameNorm)
-        const phoneMatch = Boolean(reqPhoneNorm.length >= 9 && bPhoneNorm.length >= 9 && reqPhoneNorm === bPhoneNorm)
-        const idCardMatch = Boolean(reqIdCardNorm.length === 13 && bIdCardNorm.length === 13 && reqIdCardNorm === bIdCardNorm)
         return true
       })
 
@@ -2536,9 +2632,6 @@ export default defineEventHandler(async (event) => {
             return false
           }
 
-          const bNameNorm = normalizePersonName(b.tenant_name)
-          const bPhoneNorm = normalizeDigits(b.tenant_phone)
-          const bIdCardNorm = normalizeDigits(b.tenant_id_card)
           const isSameTenant = b.tenant_user_id !== undefined && b.tenant_user_id !== null && reqOwnerId === String(b.tenant_user_id)
           if (!isSameTenant) return false
 
@@ -2576,14 +2669,14 @@ export default defineEventHandler(async (event) => {
         market_name: body.market_name || realStall?.market_name || 'ตลาดบางแคภิรมย์',
         market_district: realStall?.market_slug || body.market_district || 'กรุงเทพมหานคร',
         meeting_point: `หน้ากองอำนวยการ${body.market_name || realStall?.market_name || 'ตลาด'} เสาธง 1`,
-        tenant_name: tenantProfile?.full_name || body.applicant_name || body.tenant_name || 'ผู้เช่าทดสอบ',
+        tenant_name: tenantProfile?.full_name || body.applicant_name || body.tenant_name || 'สมชาย ใจดี',
         tenant_user_id: actor.id,
-        tenant_phone: tenantProfile?.phone || body.applicant_phone || body.tenant_phone || '',
+        tenant_phone: tenantProfile?.phone || body.applicant_phone || body.tenant_phone || '081-234-5678',
         tenant_email: body.applicant_email || body.tenant_email || `${actor.username}@emarket.bma.go.th`,
         tenant_id_card: tenantProfile?.citizen_id || body.tenant_id_card || '',
         intended_business: body.business_type || body.intended_business || 'จำหน่ายสินค้าทั่วไป',
-        visit_date: body.visit_date || (effectiveIsQueue ? undefined : new Date().toISOString().slice(0, 10)),
-        visit_time_slot: (body.visit_time || body.visit_time_slot) || (effectiveIsQueue ? undefined : '09.30 - 10.30 น.'),
+        visit_date: effectiveIsQueue ? undefined : (body.visit_date || new Date().toISOString().slice(0, 10)),
+        visit_time_slot: effectiveIsQueue ? undefined : ((body.visit_time || body.visit_time_slot) || '09.30 - 10.30 น.'),
         status: effectiveIsQueue ? 'waiting_queue' : 'pending_approval',
         holding_stall: !effectiveIsQueue,
         appointment_group_id: body.appointment_group_id || undefined,
@@ -2595,7 +2688,7 @@ export default defineEventHandler(async (event) => {
           {
             action: effectiveIsQueue ? `เข้าต่อคิวแผงติดจอง (คิวที่ ${queuePos})` : 'ยื่นขอนัดดูแผง (รอเจ้าหน้าที่อนุมัติ)',
             actor_role: 'tenant',
-            actor_name: tenantProfile?.full_name || 'ผู้เช่าทดสอบ',
+            actor_name: tenantProfile?.full_name || 'สมชาย ใจดี',
             timestamp: new Date().toISOString(),
             note: effectiveIsQueue ? `ต่อคิวลำดับที่ ${queuePos}` : `เลือกวันนัด ${body.visit_date} เวลา ${body.visit_time || body.visit_time_slot} (รอเจ้าหน้าที่อนุมัติ)`
           }
@@ -2677,7 +2770,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 10. GET /bookings
+    // 10. GET /bookings or GET /bookings/:id
     if (!bookingsExplicitlyCleared && BOOKINGS_DATA.length === 0) {
       INITIAL_BOOKINGS.forEach(ib => {
         BOOKINGS_DATA.push({ ...ib })
@@ -2690,6 +2783,20 @@ export default defineEventHandler(async (event) => {
       if (ownerName === 'สมชาย ใจดี') booking.tenant_user_id = 3
       if (ownerName === 'นภาพร รัตนศิลป์') booking.tenant_user_id = 4
     })
+
+    if (parts.length === 2 && method === 'GET' && /^\d+$/.test(parts[1])) {
+      const targetId = Number(parts[1])
+      const found = BOOKINGS_DATA.find((booking: any) => Number(booking.id) === targetId)
+      if (!found) {
+        setResponseStatus(event, 404)
+        return { status: false, code: 404, detail: 'ไม่พบข้อมูลการจอง', message: 'ไม่พบข้อมูลการจอง' }
+      }
+      if (!canManageBookings && !isBookingOwner(found)) {
+        return forbiddenResponse(event, 'คุณไม่มีสิทธิ์ดูรายละเอียดการจองนี้')
+      }
+      return { status: true, code: 200, data: found, ...found }
+    }
+
     return canManageBookings
       ? BOOKINGS_DATA
       : BOOKINGS_DATA.filter((booking: any) => isBookingOwner(booking))
@@ -3010,13 +3117,64 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // --- /auth/switch-role ---
+  if (cleanSlug === 'auth/switch-role' && method === 'POST') {
+    const body = await readBody(event).catch(() => ({}))
+    const requestedRole = String(body?.role || '').trim().toLowerCase()
+    const targetUsername = requestedRole === 'tenant'
+      ? 'tenant'
+      : requestedRole === 'staff'
+        ? 'staff'
+        : 'admin'
+    const demoUser = MOCK_USERS[targetUsername] || MOCK_USERS.tenant
+    const userInfo = {
+      id: demoUser.id,
+      username: demoUser.username,
+      full_name: demoUser.full_name,
+      email: `${demoUser.username}@emarket.bma.go.th`,
+      phone: demoUser.phone,
+      citizen_id: demoUser.citizen_id,
+      role: demoUser.role
+    }
+    const accessToken = generateRfc7519Jwt({
+      user_id: userInfo.id,
+      username: userInfo.username,
+      role: userInfo.role
+    })
+    const refreshToken = generateRfc7519Jwt({
+      user_id: userInfo.id,
+      username: userInfo.username,
+      type: 'refresh'
+    })
+    return {
+      status: true,
+      code: 200,
+      data: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'bearer',
+        role: userInfo.role,
+        user: userInfo
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      role: userInfo.role,
+      user: userInfo
+    }
+  }
+
   // --- /auth/refresh_token ---
   if (cleanSlug === 'auth/refresh_token') {
     const body = await readBody(event).catch(() => ({}))
+    const actor = getMockActor(event)
+    const fallbackRole = String(event.node.req.headers['x-active-role'] || '').trim().toLowerCase()
+    const resolvedUser = actor
+      ? (MOCK_USERS[actor.username] || (actor.role === 'tenant' ? MOCK_USERS.tenant : MOCK_USERS.admin))
+      : (fallbackRole === 'tenant' ? MOCK_USERS.tenant : MOCK_USERS.admin)
     const newAccessToken = generateRfc7519Jwt({
-      user_id: 1,
-      username: 'admin',
-      role: 'admin'
+      user_id: actor?.id || resolvedUser.id,
+      username: actor?.username || resolvedUser.username,
+      role: actor?.role || resolvedUser.role
     })
     return {
       status: true,
@@ -3031,19 +3189,33 @@ export default defineEventHandler(async (event) => {
 
   // --- /auth/me ---
   if (cleanSlug === 'auth/me') {
+    const actor = getMockActor(event)
+    if (!actor) return unauthorizedResponse(event, 'กรุณาเข้าสู่ระบบก่อนดำเนินการ')
+    const demoUser = MOCK_USERS[actor.username] || (actor.role === 'tenant' ? MOCK_USERS.tenant : MOCK_USERS.admin)
     return {
       status: true,
       code: 200,
       data: {
-        id: 1,
-        username: 'admin',
-        full_name: 'ผู้ดูแลระบบตลาด กทม. (Admin)',
-        email: 'admin@emarket.bma.go.th',
-        role: 'admin'
+        id: actor.id,
+        username: actor.username,
+        full_name: demoUser.full_name,
+        email: `${actor.username}@emarket.bma.go.th`,
+        phone: demoUser.phone,
+        citizen_id: demoUser.citizen_id,
+        role: actor.role
       }
     }
   }
 
   // Fallback default response
   return { status: true, message: 'BMA e-Market API Ready', slug: cleanSlug }
+}
+
+export default defineEventHandler(async (event) => {
+  const method = getMethod(event)
+  const result = await handleApiRequest(event)
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    savePersistedRuntimeState()
+  }
+  return result
 })

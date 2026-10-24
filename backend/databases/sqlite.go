@@ -31,6 +31,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Zone{},
 		&models.Stall{},
 		&models.Booking{},
+		&models.Notification{},
 		&models.Application{},
 		&models.Contract{},
 		&models.Item{},

@@ -239,8 +239,13 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const targetRecord = activeBookingRecord.value || props.booking
+    const numericStallId = typeof targetStallId.value === 'number'
+      ? targetStallId.value
+      : (typeof targetStallId.value === 'string' && /^\d+$/.test(targetStallId.value) ? Number(targetStallId.value) : undefined)
+    const periodMonths = Number(form.value.requested_period_months) || 12
     const res = await post('/applications', {
-      stall_id: targetStallId.value,
+      stall_id: numericStallId,
+      stall_ident: targetStallNumber.value,
       stall_number: targetStallNumber.value,
       market_name: targetRecord?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
       booking_id: targetRecord?.id || null,
@@ -251,16 +256,19 @@ const handleSubmit = async () => {
       applicant_address: form.value.applicant_address,
       shop_name: form.value.shop_name,
       product_type: form.value.product_type,
+      product_category: form.value.product_type,
       requested_start_date: form.value.requested_start_date,
-      requested_period_months: Number(form.value.requested_period_months) || 12,
+      requested_period_months: periodMonths,
+      lease_term_months: periodMonths,
       proposed_rent_type: form.value.proposed_rent_type
     })
 
-    successAppNumber.value = res.application_number
+    const createdApp = res?.data || res
+    successAppNumber.value = createdApp?.application_number || createdApp?.application_no || res?.application_number || res?.application_no || ''
     isSuccess.value = true
     emit('success')
   } catch (err: any) {
-    await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการยื่นคำร้อง', 'ยื่นคำร้องไม่สำเร็จ')
+    await showError(err?.data?.detail || err?.data?.error?.message || err?.data?.message || 'เกิดข้อผิดพลาดในการยื่นคำร้อง', 'ยื่นคำร้องไม่สำเร็จ')
   } finally {
     submitting.value = false
   }

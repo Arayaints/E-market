@@ -1,3 +1,7 @@
+const configuredApiBase = process.env.NUXT_PUBLIC_API_BASE
+  || process.env.NUXT_PUBLIC_API_URL
+  || '/api/v1'
+
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
@@ -43,8 +47,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api/v1',
-      apiUrl: process.env.NUXT_PUBLIC_API_URL || '/api/v1'
+      // Both HTTP clients must use the same backend. Previously one could use
+      // apiUrl while the other silently stayed on the volatile Nitro API.
+      apiBase: configuredApiBase,
+      apiUrl: configuredApiBase
     }
   }
 })

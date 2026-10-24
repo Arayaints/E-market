@@ -50,7 +50,19 @@ func (r *repository) Create(app *models.Application) error {
 	app.CreatedAt = now
 	app.UpdatedAt = now
 	app.Status = "A"
-	return r.conn.Create(app).Error
+	return r.conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(app).Error; err != nil {
+			return err
+		}
+		// Mark any matching active booking for this stall as lease_applied
+		_ = tx.Model(&models.Booking{}).
+			Where("stall_ident = ? AND status = 'A' AND booking_status IN ('interested', 'approved', 'pending_decision')", app.StallIdent).
+			Update("booking_status", "lease_applied").Error
+		_ = tx.Model(&models.Stall{}).
+			Where("ident = ?", app.StallIdent).
+			Update("stall_status", "occupied").Error
+		return nil
+	})
 }
 
 func (r *repository) Update(app *models.Application) error {

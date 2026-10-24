@@ -11,12 +11,14 @@ type UseCase interface {
 	GetBookingByID(id int, actorID int, actorRole string) (*responses.BookingResponse, error)
 	CreateBooking(userID int, req requests.CreateBookingRequest) (*responses.BookingResponse, error)
 	UpdateStatus(id int, userID int, req requests.UpdateBookingStatusRequest) (*responses.BookingResponse, error)
+	UpdateVisit(id int, actorID int, actorRole string, visitDate string, visitTime string) (*responses.BookingResponse, error)
 }
 
 type Repository interface {
 	FindAll(filter requests.BookingFilter, ownerID *int) ([]models.Booking, error)
 	FindByID(id int) (*models.Booking, error)
 	FindActiveDuplicate(stallIdent string, userID int, applicantName string, applicantPhone string) (*models.Booking, error)
+	HasActiveHolder(stallIdent string) (bool, error)
 	Create(booking *models.Booking) error
 	Update(booking *models.Booking) error
 	CountActiveQueue(stallIdent string) (int64, error)

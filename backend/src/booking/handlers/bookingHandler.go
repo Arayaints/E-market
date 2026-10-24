@@ -147,3 +147,197 @@ func (h *Handler) UpdateBookingStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
+
+func (h *Handler) transition(c *gin.Context, status string, officerOnly bool) {
+	role := middlewares.GetUserRole(c)
+	if officerOnly && role != "admin" && role != "staff" {
+		respondError(c, responses.NewAppErr(http.StatusForbidden, "เฉพาะเจ้าหน้าที่เท่านั้นที่ดำเนินการนี้ได้"))
+		return
+	}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	if !officerOnly && role != "admin" && role != "staff" {
+		if _, err := h.useCase.GetBookingByID(id, middlewares.GetUserID(c), role); err != nil {
+			respondError(c, err)
+			return
+		}
+	}
+	var body struct {
+		Reason          string `json:"reason"`
+		RejectionReason string `json:"rejection_reason"`
+		OfficerNotes    string `json:"officer_notes"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	reason := body.Reason
+	if reason == "" {
+		reason = body.RejectionReason
+	}
+	if reason == "" {
+		reason = body.OfficerNotes
+	}
+	res, err := h.useCase.UpdateStatus(id, middlewares.GetUserID(c), requests.UpdateBookingStatusRequest{
+		Status: status,
+		Reason: reason,
+	})
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) Approve(c *gin.Context) {
+	h.transition(c, "approved", true)
+}
+
+func (h *Handler) Reject(c *gin.Context) {
+	h.transition(c, "rejected", true)
+}
+
+func (h *Handler) MarkVisited(c *gin.Context) {
+	h.transition(c, "interested", true)
+}
+
+func (h *Handler) NoShow(c *gin.Context) {
+	h.transition(c, "no_show", true)
+}
+
+func (h *Handler) Cancel(c *gin.Context) {
+	h.transition(c, "cancelled", false)
+}
+
+func (h *Handler) Decide(c *gin.Context) {
+	var body struct {
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	targetStatus := "not_interested"
+	if body.Decision == "interested" {
+		targetStatus = "interested"
+	}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	role := middlewares.GetUserRole(c)
+	if role != "admin" && role != "staff" {
+		if _, err := h.useCase.GetBookingByID(id, middlewares.GetUserID(c), role); err != nil {
+			respondError(c, err)
+			return
+		}
+	}
+	res, err := h.useCase.UpdateStatus(id, middlewares.GetUserID(c), requests.UpdateBookingStatusRequest{
+		Status: targetStatus,
+		Reason: body.Reason,
+	})
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) OfficerRecordProxy(c *gin.Context) {
+	role := middlewares.GetUserRole(c)
+	if role != "admin" && role != "staff" {
+		respondError(c, responses.NewAppErr(http.StatusForbidden, "เฉพาะเจ้าหน้าที่เท่านั้นที่ดำเนินการนี้ได้"))
+		return
+	}
+	var body struct {
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+		Notes    string `json:"notes"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	targetStatus := "not_interested"
+	if body.Decision == "interested" {
+		targetStatus = "interested"
+	}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	res, err := h.useCase.UpdateStatus(id, middlewares.GetUserID(c), requests.UpdateBookingStatusRequest{
+		Status: targetStatus,
+		Reason: body.Reason,
+	})
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) GetVisitCapacity(c *gin.Context) {
+	items, err := h.useCase.GetBookings(requests.BookingFilter{}, 1, "admin")
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	marketKey := c.Query("market_id")
+	type capacityEntry struct {
+		MarketID      any    `json:"market_id"`
+		MarketName    string `json:"market_name"`
+		VisitDate     string `json:"visit_date"`
+		VisitTimeSlot string `json:"visit_time_slot"`
+		BookedCount   int    `json:"booked_count"`
+	}
+	counts := map[string]*capacityEntry{}
+	for _, b := range items {
+		if b.Status != "pending" && b.Status != "pending_approval" && b.Status != "approved" {
+			continue
+		}
+		if b.VisitDate == "" || b.VisitTime == "" {
+			continue
+		}
+		if marketKey != "" && b.MarketID != nil && strconv.Itoa(*b.MarketID) != marketKey {
+			continue
+		}
+		key := b.VisitDate + "__" + b.VisitTime
+		entry, exists := counts[key]
+		if !exists {
+			entry = &capacityEntry{
+				MarketID:      b.MarketID,
+				MarketName:    b.MarketName,
+				VisitDate:     b.VisitDate,
+				VisitTimeSlot: b.VisitTime,
+				BookedCount:   0,
+			}
+			counts[key] = entry
+		}
+		entry.BookedCount++
+	}
+	result := make([]capacityEntry, 0, len(counts))
+	for _, entry := range counts {
+		result = append(result, *entry)
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(result, http.StatusOK))
+}
+
+func (h *Handler) SelectSlot(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	var body struct {
+		VisitDate     string `json:"visit_date"`
+		VisitTimeSlot string `json:"visit_time_slot"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		respondError(c, err)
+		return
+	}
+	res, err := h.useCase.UpdateVisit(id, middlewares.GetUserID(c), middlewares.GetUserRole(c), body.VisitDate, body.VisitTimeSlot)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}

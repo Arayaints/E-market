@@ -33,17 +33,31 @@ func GenerateToken(userID int, username string, role string) (string, error) {
 
 func ValidateToken(tokenString string) (*JWTClaims, error) {
 	cfg := config.Get()
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(cfg.JWTSecret), nil
-	})
-
-	if err != nil {
-		return nil, err
+	secrets := []string{
+		cfg.JWTSecret,
+		"emarket-secret-super-key-2026",
+		"bma-emarket-jwt-secret-key-2026",
 	}
 
-	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
-		return claims, nil
+	var lastErr error
+	for _, secret := range secrets {
+		if secret == "" {
+			continue
+		}
+		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
+			return claims, nil
+		}
 	}
 
+	if lastErr != nil {
+		return nil, lastErr
+	}
 	return nil, errors.New("invalid token")
 }

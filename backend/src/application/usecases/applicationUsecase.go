@@ -24,21 +24,26 @@ func NewUseCase(repo domains.Repository) domains.UseCase {
 
 func toApplicationResponse(a *models.Application) responses.ApplicationResponse {
 	return responses.ApplicationResponse{
-		ID:              a.ID,
-		ApplicationNo:   a.ApplicationNo,
-		StallID:         a.StallID,
-		StallIdent:      a.StallIdent,
-		ApplicantName:   a.ApplicantName,
-		ApplicantPhone:  a.ApplicantPhone,
-		ApplicantIDCard: a.ApplicantIDCard,
-		ShopName:        a.ShopName,
-		ProductCategory: a.ProductCategory,
-		LeaseTermMonths: a.LeaseTermMonths,
-		MonthlyRate:     a.MonthlyRate,
-		Status:          a.ApplicationState,
-		ReviewedAt:      a.ReviewedAt,
-		ReviewNote:      a.ReviewNote,
-		CreatedAt:       a.CreatedAt,
+		ID:                a.ID,
+		ApplicationNo:     a.ApplicationNo,
+		ApplicationNumber: a.ApplicationNo,
+		StallID:           a.StallID,
+		StallIdent:        a.StallIdent,
+		StallNumber:       a.StallIdent,
+		ApplicantName:     a.ApplicantName,
+		TenantName:        a.ApplicantName,
+		ApplicantPhone:    a.ApplicantPhone,
+		TenantPhone:       a.ApplicantPhone,
+		ApplicantIDCard:   a.ApplicantIDCard,
+		ShopName:          a.ShopName,
+		ProductCategory:   a.ProductCategory,
+		ProductType:       a.ProductCategory,
+		LeaseTermMonths:   a.LeaseTermMonths,
+		MonthlyRate:       a.MonthlyRate,
+		Status:            a.ApplicationState,
+		ReviewedAt:        a.ReviewedAt,
+		ReviewNote:        a.ReviewNote,
+		CreatedAt:         a.CreatedAt,
 	}
 }
 
@@ -70,18 +75,37 @@ func (u *useCase) GetApplicationByID(id int) (*responses.ApplicationResponse, er
 }
 
 func (u *useCase) CreateApplication(userID int, req requests.CreateApplicationRequest) (*responses.ApplicationResponse, error) {
+	stallIdent := req.StallIdent
+	if stallIdent == "" {
+		stallIdent = req.StallNumber
+	}
+	if stallIdent == "" {
+		return nil, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาระบุรหัสแผงค้า")
+	}
+	productCategory := req.ProductCategory
+	if productCategory == "" {
+		productCategory = req.ProductType
+	}
+	leaseTerm := req.LeaseTermMonths
+	if leaseTerm <= 0 {
+		leaseTerm = req.RequestedPeriodMonths
+	}
+	if leaseTerm <= 0 {
+		leaseTerm = 12
+	}
+
 	appNo := fmt.Sprintf("APP-%s-%d", time.Now().Format("20060102"), time.Now().UnixNano()%100000)
 
 	app := models.Application{
 		ApplicationNo:    appNo,
-		StallIdent:       req.StallIdent,
+		StallIdent:       stallIdent,
 		ApplicantName:    req.ApplicantName,
 		ApplicantPhone:   req.ApplicantPhone,
 		ApplicantIDCard:  req.ApplicantIDCard,
 		ShopName:         req.ShopName,
-		ProductCategory:  req.ProductCategory,
-		LeaseTermMonths:  req.LeaseTermMonths,
-		ApplicationState: "submitted",
+		ProductCategory:  productCategory,
+		LeaseTermMonths:  leaseTerm,
+		ApplicationState: "pending_officer",
 	}
 	if userID > 0 {
 		app.CreatedBy = &userID

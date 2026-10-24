@@ -763,7 +763,7 @@ const loadBooking = async () => {
   loading.value = true
   try {
     const response: any = await get('/bookings', { _t: Date.now() })
-    const items = Array.isArray(response) ? response : []
+    const items = Array.isArray(response) ? response : (Array.isArray(response?.data) ? response.data : [])
     allBookings.value = items
     setCachedScheduleBookings(items)
     const key = String(route.params.id || '')

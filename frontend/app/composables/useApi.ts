@@ -1,13 +1,11 @@
 export const useApi = () => {
   const config = useRuntimeConfig()
-  const { token, logout } = useAuth()
+  const { token, role, logout } = useAuth()
 
   const apiFetch = async <T = any>(endpoint: string, options: any = {}): Promise<T> => {
-    // When running on production cloud (e.g. Vercel) or when localhost backend is blocked, use relative /api/v1
-    let base = config.public.apiBase || '/api/v1'
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-      base = '/api/v1'
-    }
+    // Production must honour NUXT_PUBLIC_API_BASE so writes reach the persistent
+    // Go API/database when configured, while falling back cleanly to Nitro /api/v1.
+    const base = String(config.public.apiBase || config.public.apiUrl || '/api/v1')
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
     const url = base.endsWith('/') ? `${base.slice(0, -1)}${cleanEndpoint}` : `${base}${cleanEndpoint}`
 
@@ -19,6 +17,9 @@ export const useApi = () => {
     if (token.value) {
       headers['Authorization'] = `Bearer ${token.value}`
     }
+    if (role.value) {
+      headers['X-Active-Role'] = String(role.value)
+    }
 
     try {
       return await $fetch<T>(url, {
@@ -29,8 +30,13 @@ export const useApi = () => {
       if (err?.response?.status === 401) {
         logout()
       }
-      // If fetching from external backend failed, retry with internal Nitro API route
-      if (!url.startsWith('/api/v1') && (err?.name === 'FetchError' || err?.message?.includes('Failed to fetch') || !err?.response)) {
+      const isReadOnly = String(options.method || 'GET').toUpperCase() === 'GET'
+      const isMarketsRead = isReadOnly && cleanEndpoint.startsWith('/markets')
+      const isNetworkOrMissingRoute = err?.name === 'FetchError' ||
+        err?.message?.includes('Failed to fetch') ||
+        !err?.response ||
+        (isMarketsRead && err?.response?.status === 404)
+      if (isReadOnly && !url.startsWith('/api/v1') && isNetworkOrMissingRoute) {
         try {
           const fallbackUrl = `/api/v1${cleanEndpoint}`
           return await $fetch<T>(fallbackUrl, {

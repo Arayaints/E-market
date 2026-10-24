@@ -1556,21 +1556,31 @@ const bookingForm = ref({
 
 const isBookingOwnedByCurrentTenant = (b: any): boolean => {
   if (!b || ['rejected', 'not_interested', 'cancelled', 'no_show'].includes(b.status)) return false
+  const currentUser = user.value as any
+  if (currentUser?.id !== undefined && currentUser?.id !== null && b.tenant_user_id !== undefined && b.tenant_user_id !== null) {
+    return String(b.tenant_user_id) === String(currentUser.id)
+  }
+
+  const demoOwnerNames: Record<string, string> = {
+    tenant: 'สมชาย ใจดี',
+    tenant2: 'นภาพร รัตนศิลป์'
+  }
+  const demoName = normalizePersonName(demoOwnerNames[String(currentUser?.username || '')])
   const bName = normalizePersonName(b.tenant_name || b.applicant_name)
   const bPhone = normalizeDigitsOnly(b.tenant_phone || b.applicant_phone)
   const bIdCard = normalizeDigitsOnly(b.tenant_id_card || b.citizen_id)
 
   const formFullName = normalizePersonName(`${bookingForm.value?.firstName || ''} ${bookingForm.value?.lastName || ''}`)
-  const userFullName = normalizePersonName((user.value as any)?.full_name)
-  const candidateNames = new Set([formFullName, userFullName, 'สมชาย ใจดี'].filter(Boolean))
+  const userFullName = normalizePersonName(currentUser?.full_name)
+  const candidateNames = new Set([userFullName, demoName, formFullName].filter(Boolean))
 
   const formPhone = normalizeDigitsOnly(bookingForm.value?.phone)
-  const userPhone = normalizeDigitsOnly((user.value as any)?.phone || (user.value as any)?.phone_number)
-  const candidatePhones = new Set([formPhone, userPhone, '0812345678'].filter(p => p.length >= 9))
+  const userPhone = normalizeDigitsOnly(currentUser?.phone || currentUser?.phone_number)
+  const candidatePhones = new Set([userPhone, formPhone].filter(p => p.length >= 9))
 
   const formIdCard = normalizeDigitsOnly(bookingForm.value?.idCard)
-  const userIdCard = normalizeDigitsOnly((user.value as any)?.citizen_id || (user.value as any)?.id_card)
-  const candidateIdCards = new Set([formIdCard, userIdCard, '1100400234567'].filter(id => id.length === 13))
+  const userIdCard = normalizeDigitsOnly(currentUser?.citizen_id || currentUser?.id_card)
+  const candidateIdCards = new Set([userIdCard, formIdCard].filter(id => id.length === 13))
 
   if (bName && candidateNames.has(bName)) return true
   if (bPhone.length >= 9 && candidatePhones.has(bPhone)) return true
@@ -2750,13 +2760,24 @@ const submitBooking = async () => {
       try {
         const backendStall = backendStallsByIdent.value[stallItem.code]
         const stallId = stallItem.backendId || backendStall?.id
+        const numericStallId = typeof stallId === 'number' && Number.isInteger(stallId)
+          ? stallId
+          : (typeof stallId === 'string' && /^\d+$/.test(stallId) ? Number(stallId) : undefined)
+        const resolvedMarketNumericId = Number(
+          currentMarket.value?.id ||
+          getMarketGisConfig(currentMarketId.value)?.id ||
+          currentMarketId.value
+        )
+        const numericMarketId = Number.isInteger(resolvedMarketNumericId) && resolvedMarketNumericId > 0
+          ? resolvedMarketNumericId
+          : 1
         const isQueue = stallItem.status === 'reserved'
         const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
         const contactPhone = (bookingForm.value.phone || '081-234-5678').trim()
         const contactEmail = (bookingForm.value.email || '').trim()
         const idCard = (bookingForm.value.idCard || '1-1004-00234-56-7').trim()
-        const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
-        const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
+        const visitDate = isQueue ? '' : (bookingForm.value.visitDate || new Date().toISOString().split('T')[0])
+        const visitTime = isQueue ? '' : (bookingForm.value.visitSlot || '13:00 - 14:00')
 
         const res = await post('/bookings', {
           // Standard Go backend fields (CreateBookingRequest)
@@ -2770,9 +2791,9 @@ const submitBooking = async () => {
           note: bookingForm.value.notes || '',
 
           // Backward compatibility & client-side metadata fields
-          stall_id: stallId,
+          stall_id: numericStallId,
           stall_number: stallItem.code,
-          market_id: currentMarketId.value,
+          market_id: numericMarketId,
           project_name: selectedProject.value?.name || stallItem.zone || 'โครงการ 01',
           market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
           tenant_name: fullName,
@@ -2825,13 +2846,14 @@ const submitBooking = async () => {
         )
       } else {
         const firstError = failedBookings[0]?.error
+        const errMsg = firstError?.data?.detail || firstError?.data?.error?.message || firstError?.data?.message
         if (firstError?.status === 409 || firstError?.statusCode === 409 || firstError?.data?.code === 409) {
           showWarning(
-            firstError?.data?.detail || firstError?.data?.message || 'คุณได้ทำการจองแผงหรือรอบเวลานี้ไว้แล้ว ไม่สามารถจองซ้ำได้',
+            errMsg || 'คุณได้ทำการจองแผงหรือรอบเวลานี้ไว้แล้ว ไม่สามารถจองซ้ำได้',
             'ไม่สามารถจองซ้ำได้'
           )
         } else {
-          showError(firstError?.data?.detail || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
+          showError(errMsg || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
         }
       }
       return
@@ -2849,7 +2871,7 @@ const submitBooking = async () => {
     showSuccessModal.value = true
     launchConfetti()
   } catch (err: any) {
-    showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
+    showError(err?.data?.detail || err?.data?.error?.message || err?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
   } finally {
     submitting.value = false
   }

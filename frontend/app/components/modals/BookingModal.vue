@@ -195,7 +195,13 @@ const handleSubmit = async () => {
   submitting.value = true
 
   try {
-    const res = await post('/bookings', {
+    const res: any = await post('/bookings', {
+      stall_ident: props.stall.stall_number,
+      applicant_name: form.value.tenant_name,
+      applicant_phone: form.value.tenant_phone,
+      applicant_email: form.value.tenant_email,
+      business_type: form.value.intended_business,
+      visit_time: isQueueMode.value ? 'รอเลือกเวลาเมื่อถึงคิว' : form.value.visit_time_slot,
       stall_id: props.stall.id,
       stall_number: props.stall.stall_number,
       market_name: props.stall.market_name,
@@ -203,13 +209,14 @@ const handleSubmit = async () => {
       tenant_phone: form.value.tenant_phone,
       tenant_email: form.value.tenant_email,
       tenant_id_card: form.value.tenant_id_card,
-      visit_date: isQueueMode.value ? undefined : form.value.visit_date,
+      visit_date: isQueueMode.value ? 'รอเลือกวันเมื่อถึงคิว' : form.value.visit_date,
       visit_time_slot: isQueueMode.value ? undefined : form.value.visit_time_slot,
       intended_business: form.value.intended_business,
       is_queue: isQueueMode.value
     })
 
-    successBookingNumber.value = res.booking_number
+    const created = res?.data || res
+    successBookingNumber.value = created?.booking_number || created?.booking_no || ''
     isSuccess.value = true
     emit('success')
   } catch (err: any) {

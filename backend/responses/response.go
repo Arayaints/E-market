@@ -13,9 +13,11 @@ type Success struct {
 }
 
 type Fail struct {
-	Status bool      `json:"status"`
-	Code   int       `json:"code"`
-	Error  FailError `json:"error"`
+	Status  bool      `json:"status"`
+	Code    int       `json:"code"`
+	Message string    `json:"message"`
+	Detail  string    `json:"detail"`
+	Error   FailError `json:"error"`
 }
 
 type FailError struct {
@@ -85,8 +87,10 @@ func FailRespone(err error) Fail {
 	}
 
 	return Fail{
-		Status: false,
-		Code:   statusCode,
+		Status:  false,
+		Code:    statusCode,
+		Message: message,
+		Detail:  message,
 		Error: FailError{
 			Message: message,
 			Field:   map[string]string{},
@@ -96,8 +100,10 @@ func FailRespone(err error) Fail {
 
 func ValidateResponse(fields map[string]string) Fail {
 	return Fail{
-		Status: false,
-		Code:   http.StatusUnprocessableEntity,
+		Status:  false,
+		Code:    http.StatusUnprocessableEntity,
+		Message: constants.VALIDATE_ERROR,
+		Detail:  constants.VALIDATE_ERROR,
 		Error: FailError{
 			Message: constants.VALIDATE_ERROR,
 			Field:   fields,

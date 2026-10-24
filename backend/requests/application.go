@@ -9,13 +9,17 @@ type ApplicationFilter struct {
 }
 
 type CreateApplicationRequest struct {
-	StallIdent      string `json:"stall_ident" validate:"nonzero"`
-	ApplicantName   string `json:"applicant_name" validate:"nonzero"`
-	ApplicantPhone  string `json:"applicant_phone" validate:"nonzero"`
-	ApplicantIDCard string `json:"applicant_id_card" validate:"nonzero"`
-	ShopName        string `json:"shop_name" validate:"nonzero"`
-	ProductCategory string `json:"product_category"`
-	LeaseTermMonths int    `json:"lease_term_months" validate:"nonzero"`
+	BookingID             *int   `json:"booking_id"`
+	StallIdent            string `json:"stall_ident"`
+	StallNumber           string `json:"stall_number"`
+	ApplicantName         string `json:"applicant_name" validate:"nonzero"`
+	ApplicantPhone        string `json:"applicant_phone" validate:"nonzero"`
+	ApplicantIDCard       string `json:"applicant_id_card" validate:"nonzero"`
+	ShopName              string `json:"shop_name" validate:"nonzero"`
+	ProductCategory       string `json:"product_category"`
+	ProductType           string `json:"product_type"`
+	LeaseTermMonths       int    `json:"lease_term_months"`
+	RequestedPeriodMonths int    `json:"requested_period_months"`
 }
 
 type UpdateApplicationStatusRequest struct {

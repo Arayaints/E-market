@@ -78,12 +78,19 @@ export abstract class HttpService {
 			if (authStore.isLoggedIn && authStore.accessToken) {
 				headers.set("Authorization", `Bearer ${authStore.accessToken}`)
 			}
+			if (authStore.role) {
+				headers.set("X-Active-Role", authStore.role)
+			}
 		} catch {
 			// Auth store might not be ready yet in SSR or early lifecycle
 			if (typeof window !== "undefined") {
 				const token = localStorage.getItem("token") || localStorage.getItem("access_token")
 				if (token) {
 					headers.set("Authorization", `Bearer ${token}`)
+				}
+				const role = localStorage.getItem("user_role")
+				if (role) {
+					headers.set("X-Active-Role", role)
 				}
 			}
 		}
@@ -118,7 +125,11 @@ export abstract class HttpService {
 			}
 			return this.handleError<T>(response.status, payload, response.statusText)
 		} catch (error: any) {
-			if (!url.startsWith("/api/v1")) {
+			const isReadOnly = String(fetchOptions.method || "GET").toUpperCase() === "GET"
+			const isLocalBrowser = typeof window !== "undefined" && window.location.hostname === "localhost"
+			// Never replay login or another mutation against the volatile Nitro demo
+			// API in production. A transient backend failure must remain a failure.
+			if (isReadOnly && isLocalBrowser && !url.startsWith("/api/v1")) {
 				try {
 					const cleanEp = endpoint.startsWith("/") ? endpoint : `/${endpoint}`
 					const subPath = this.path ? `/${this.path.replace(/^\/+|\/+$/g, "")}` : ""
