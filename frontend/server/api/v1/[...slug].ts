@@ -349,6 +349,25 @@ const MARKETS_DATA = [
   }
 ]
 
+// Number of rentable stalls in each client-side GIS layout after excluding
+// overview boundary projects. Production serverless runtimes serve these JSON
+// files as static assets and cannot reliably read them via fs, so this compact
+// summary keeps market cards consistent with the detail-page GIS calculation.
+const GIS_MARKET_STALL_TOTALS: Record<string, number> = {
+  'chatuchak': 9522,
+  'pracha-niwet-1': 528,
+  'min-buri': 2029,
+  'singhanat': 91,
+  'thewarat': 475,
+  'rat-burana': 1,
+  'bang-kapi': 710,
+  'wongwian-lek': 648,
+  'nong-chok': 268,
+  'ratchadaphisek': 128,
+  'thonburi-sanamluang-2': 4263,
+  'bang-khae-phirom': 624
+}
+
 // Events Dataset
 const EVENTS_DATA = [
   {
@@ -1136,7 +1155,46 @@ function syncAllStallStatuses() {
   // Synchronize MARKETS_DATA summary stats with REAL_STALLS_DATA so all market cards & detail pages relate 100%
   for (const m of MARKETS_DATA as any[]) {
     const marketStalls = REAL_STALLS_DATA.filter(s => s.market_slug === m.slug)
-    if (marketStalls.length === 0) continue
+    if (marketStalls.length === 0) {
+      const total = GIS_MARKET_STALL_TOTALS[m.slug] || Number(m.total_stalls) || 0
+      const marketBookings = BOOKINGS_DATA.filter((booking: any) => {
+        const sameMarketId = String(booking.market_id || '') === String(m.id)
+        const bookingMarketName = String(booking.market_name || '').trim()
+        const sameMarketName = Boolean(bookingMarketName) && (
+          bookingMarketName === m.name ||
+          bookingMarketName.includes(m.name) ||
+          m.name.includes(bookingMarketName)
+        )
+        return sameMarketId || sameMarketName
+      })
+      const reservedStalls = new Set<string>()
+      const occupiedStalls = new Set<string>()
+      marketBookings.forEach((booking: any) => {
+        const stallNumbers = String(booking.stall_number || '')
+          .split(',')
+          .map((number: string) => number.trim())
+          .filter(Boolean)
+        if (['lease_applied', 'completed'].includes(String(booking.status || ''))) {
+          stallNumbers.forEach((number: string) => occupiedStalls.add(number))
+        } else if (
+          booking.holding_stall &&
+          !['rejected', 'not_interested', 'cancelled', 'no_show'].includes(String(booking.status || ''))
+        ) {
+          stallNumbers.forEach((number: string) => reservedStalls.add(number))
+        }
+      })
+      occupiedStalls.forEach(number => reservedStalls.delete(number))
+      const occupied = occupiedStalls.size
+      const reserved = reservedStalls.size
+      const available = Math.max(0, total - occupied - reserved)
+
+      m.total_stalls = total
+      m.available_stalls = available
+      m.reserved_stalls = reserved
+      m.occupied_stalls = occupied
+      m.status = total > 0 && available === 0 ? 'full' : 'open'
+      continue
+    }
 
     const total = marketStalls.length
     const available = marketStalls.filter(s => s.status === 'available').length
