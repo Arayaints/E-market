@@ -1,4 +1,4 @@
-import { defineEventHandler, getRouterParam, getMethod, getQuery, readBody, setHeader, setResponseStatus } from 'h3'
+import { defineEventHandler, getHeader, getRouterParam, getMethod, getQuery, readBody, setHeader, setResponseStatus } from 'h3'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -1393,9 +1393,26 @@ const handleApiRequest = async (event: any) => {
   // Authenticated operational data must never be served from a browser/CDN cache.
   setHeader(event, 'Cache-Control', 'private, no-store, max-age=0')
   setHeader(event, 'Pragma', 'no-cache')
+  const method = getMethod(event)
+  const origin = getHeader(event, 'origin')
+  const allowedOrigins = new Set([
+    'https://e-market-mauve.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ])
+  if (origin && allowedOrigins.has(origin)) {
+    setHeader(event, 'Access-Control-Allow-Origin', origin)
+    setHeader(event, 'Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+    setHeader(event, 'Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Active-Role')
+    setHeader(event, 'Vary', 'Origin')
+  }
+  if (method === 'OPTIONS') {
+    setResponseStatus(event, 204)
+    return ''
+  }
+
   loadPersistedRuntimeState()
   const slug = getRouterParam(event, 'slug') || ''
-  const method = getMethod(event)
   const query = getQuery(event)
 
   // 1. Try proxying to Local Python FastAPI backend if available and not on Vercel production

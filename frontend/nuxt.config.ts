@@ -3,6 +3,13 @@ const configuredApiBase = process.env.NUXT_PUBLIC_API_BASE
   || '/api/v1'
 
 export default defineNuxtConfig({
+  vite: {
+    server: {
+      // Used only for an explicitly enabled local testing tunnel. Production
+      // builds do not run the Vite development server.
+      allowedHosts: process.env.NUXT_ALLOW_TUNNEL_HOSTS === 'true' ? true : undefined
+    }
+  },
   future: {
     compatibilityVersion: 4,
   },
