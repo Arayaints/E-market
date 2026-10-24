@@ -107,40 +107,19 @@
       </NuxtLink>
     </nav>
 
-    <!-- Footer Logout Button -->
-    <div class="sidebar-footer">
-      <button class="nav-icon-link logout-btn" @click="handleLogout" :title="isExpanded ? '' : 'ออกจากระบบ (Logout)'">
-        <span class="nav-icon-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </span>
-        <span v-if="isExpanded" class="nav-label" style="color: #ef4444; font-weight: 600;">ออกจากระบบ</span>
-      </button>
-    </div>
   </aside>
 </template>
 
 <script setup lang="ts">
 const route = useRoute()
-const { user, logout } = useAuth()
+const { user } = useAuth()
 const { isExpanded, collapse } = useSidebar()
-const { showConfirm } = useAppAlert()
 
 watch(() => route.fullPath, () => {
   if (process.client && window.innerWidth <= 768) {
     collapse()
   }
 })
-
-const handleLogout = async () => {
-  const confirmed = await showConfirm('คุณต้องการออกจากระบบหรือไม่?', 'ยืนยันออกจากระบบ')
-  if (confirmed) {
-    await logout()
-  }
-}
 </script>
 
 <style scoped>
@@ -175,15 +154,5 @@ const handleLogout = async () => {
   background: #eff6ff;
   color: #2563eb;
   box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.5);
-}
-
-.logout-btn {
-  color: #ef4444;
-  transition: all 0.2s ease;
-}
-
-.logout-btn:hover {
-  background: #fff1f2 !important;
-  color: #dc2626 !important;
 }
 </style>

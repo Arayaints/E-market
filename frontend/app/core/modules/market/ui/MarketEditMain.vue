@@ -2,14 +2,12 @@
   <div>
     <AppHeader />
     <main class="content-body market-edit-page">
-      <div class="edit-breadcrumb">
-        <NuxtLink :to="detailLink" class="back-button" aria-label="กลับหน้ารายละเอียดตลาด">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-        </NuxtLink>
-        <NuxtLink to="/" class="crumb-link">รายการตลาด</NuxtLink><span>/</span>
-        <NuxtLink :to="detailLink" class="crumb-link">{{ originalMarket.name || 'ข้อมูลตลาด' }}</NuxtLink><span>/</span>
-        <strong>แก้ไขข้อมูลตลาด</strong>
-      </div>
+      <AppBreadcrumb
+        :market="originalMarket.name"
+        :marketId="originalMarket.id || marketKey"
+        current="แก้ไขข้อมูลตลาด"
+        :backTo="detailLink"
+      />
 
       <div class="edit-title-row">
         <div><span class="eyebrow">MARKET PROFILE</span><h1>แก้ไขข้อมูลตลาด</h1><p>ข้อมูลที่บันทึกจะนำไปแสดงในหน้ารายละเอียดตลาด</p></div>
@@ -70,6 +68,7 @@
 <script setup lang="ts">
 import AppSelect from '~/components/AppSelect.vue'
 import MediaField from '~/components/market/MediaField.vue'
+import { getMarketGisConfig } from '~/core/modules/stall/data/markets_registry'
 
 const route = useRoute()
 const router = useRouter()
@@ -78,9 +77,21 @@ const { showSuccess, showError } = useAppAlert()
 const { applyMarketOverride, saveMarketOverride } = useMarketOverrides()
 const loading = ref(true)
 const saving = ref(false)
-const originalMarket = ref<any>({})
-const lastUpdated = ref('')
 const marketKey = computed(() => String(route.params.id || route.query.market || '1'))
+const buildInitialMarket = (key: string) => {
+  const cfg = getMarketGisConfig(key)
+  return applyMarketOverride({
+    id: cfg.id,
+    slug: cfg.slug,
+    name: cfg.name,
+    district: cfg.district,
+    description: cfg.description,
+    lat: cfg.center[1],
+    lng: cfg.center[0]
+  })
+}
+const originalMarket = ref<any>(buildInitialMarket(marketKey.value))
+const lastUpdated = ref('')
 const detailLink = computed(() => `/stalls?market=${originalMarket.value.id || marketKey.value}`)
 const dayOptions = ['ทุกวัน', 'จันทร์ - ศุกร์', 'เสาร์ - อาทิตย์', 'อังคาร - อาทิตย์'].map(value => ({ value, label: value }))
 const form = reactive<any>({})

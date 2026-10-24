@@ -17,12 +17,15 @@ func NewRepository(db *gorm.DB) domains.Repository {
 	return &repository{conn: db}
 }
 
-func (r *repository) FindAll(filter requests.BookingFilter) ([]models.Booking, error) {
+func (r *repository) FindAll(filter requests.BookingFilter, ownerID *int) ([]models.Booking, error) {
 	var bookings []models.Booking
 	query := r.conn.Model(&models.Booking{}).Where("status = 'A'")
 
 	if filter.StallIdent != "" {
 		query = query.Where("stall_ident = ?", filter.StallIdent)
+	}
+	if ownerID != nil {
+		query = query.Where("created_by = ?", *ownerID)
 	}
 	if filter.Status != "" {
 		query = query.Where("booking_status = ?", filter.Status)
@@ -39,6 +42,26 @@ func (r *repository) FindAll(filter requests.BookingFilter) ([]models.Booking, e
 func (r *repository) FindByID(id int) (*models.Booking, error) {
 	var booking models.Booking
 	err := r.conn.Where("id = ? AND status = 'A'", id).First(&booking).Error
+	if err != nil {
+		return nil, err
+	}
+	return &booking, nil
+}
+
+func (r *repository) FindActiveDuplicate(stallIdent string, userID int, applicantName string, applicantPhone string) (*models.Booking, error) {
+	var booking models.Booking
+	query := r.conn.Model(&models.Booking{}).
+		Where("stall_ident = ? AND status = 'A' AND booking_status NOT IN ('rejected', 'cancelled', 'not_interested', 'no_show')", stallIdent)
+
+	if userID > 0 {
+		// The authenticated account is the only authoritative owner. Contact fields
+		// are editable profile data and must never make two tenants look identical.
+		query = query.Where("created_by = ?", userID)
+	} else {
+		query = query.Where("(applicant_phone = ? OR applicant_name = ?)", applicantPhone, applicantName)
+	}
+
+	err := query.Order("id DESC").First(&booking).Error
 	if err != nil {
 		return nil, err
 	}

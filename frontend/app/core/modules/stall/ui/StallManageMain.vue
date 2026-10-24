@@ -2,7 +2,12 @@
   <div>
     <AppHeader />
     <main class="content-body manage-page">
-      <AppBreadcrumb :market="marketName" :marketId="marketId" current="จัดการแผงเช่า" :backTo="'/'" />
+      <AppBreadcrumb
+        :market="marketName"
+        :marketId="marketId"
+        current="จัดการแผงเช่า"
+        :backTo="`/stalls?market=${marketId}`"
+      />
 
       <section class="manage-header">
         <div>
@@ -30,6 +35,7 @@
           :marketId="marketId"
           :selectedProjectId="selectedProject?.id"
           :selectedStallCodes="[]"
+          :stallStatusOverrides="stallStatusOverrides"
           :onlyAvailable="false"
           :categoryFilter="null"
           mapStyle="standard"
@@ -52,24 +58,73 @@
 
 <script setup lang="ts">
 import AppSelect from '~/components/AppSelect.vue'
+import { getMarketGisConfig } from '../data/markets_registry'
 
 const route = useRoute()
 const { get, post } = useApi()
 const { showSuccess, showError } = useAppAlert()
+const { applyMarketOverride } = useMarketOverrides()
 const marketId = computed(() => String(route.query.market || '1'))
-const marketName = ref('ตลาดนัดจตุจักร')
+const apiMarketName = ref('')
+const marketName = computed(() => {
+  const cfg = getMarketGisConfig(marketId.value)
+  const overridden = applyMarketOverride({ id: cfg.id, slug: cfg.slug, name: apiMarketName.value || cfg.name })
+  return overridden?.name || cfg.name
+})
 const stalls = ref<any[]>([])
 const selectedProject = ref<any>(null)
 const showAddStall = ref(false)
 const saving = ref(false)
+const stallStatusOverrides = computed<Record<string, 'available' | 'reserved' | 'occupied'>>(() => {
+  const statuses: Record<string, 'available' | 'reserved' | 'occupied'> = {}
+  stalls.value.forEach(stall => {
+    const ident = String(stall.ident || stall.stall_ident || stall.stall_number || '').trim()
+    if (!ident) return
+    statuses[ident] = stall.status === 'available' || stall.status === 'reserved' || stall.status === 'occupied'
+      ? stall.status
+      : 'occupied'
+  })
+  return statuses
+})
 const zoneOptions = [{ value: 1, label: 'โซน A' }, { value: 2, label: 'โซน B' }, { value: 3, label: 'โซน C' }, { value: 4, label: 'โซน D' }]
 const emptyForm = () => ({ ident: '', name: '', zone_id: 1, floor: 'ชั้น 1', width: 2, depth: 2, daily_rent: 0, monthly_rent: 0 })
 const stallForm = ref(emptyForm())
 const availableStalls = computed(() => stalls.value.filter(stall => stall.status === 'available').length)
 const selectProject = (project: any) => { selectedProject.value = project }
 const createStall = async () => { saving.value = true; try { await post('/stalls', stallForm.value); await loadData(); showAddStall.value = false; stallForm.value = emptyForm(); showSuccess('แผงใหม่ถูกเพิ่มเข้าสู่ระบบแล้ว', 'เพิ่มแผงเช่าสำเร็จ') } catch (error) { showError('กรุณาตรวจสอบข้อมูลและสิทธิ์ของบัญชีเจ้าหน้าที่', 'ไม่สามารถเพิ่มแผงเช่าได้') } finally { saving.value = false } }
-const loadData = async () => { try { const [markets, stallData] = await Promise.all([get('/markets'), get('/stalls')]); const market = (markets || []).find((item: any) => String(item.id) === marketId.value || item.slug === marketId.value); if (market) marketName.value = market.name; stalls.value = (stallData || []).filter((stall: any) => !stall.market_id || String(stall.market_id) === String(market?.id)) } catch { stalls.value = [] } }
+const loadData = async () => {
+  const cfg = getMarketGisConfig(marketId.value)
+  apiMarketName.value = cfg.name
+  try {
+    const [marketRes, stallRes] = await Promise.allSettled([
+      get('/markets'),
+      get(`/stalls?market=${encodeURIComponent(marketId.value)}`)
+    ])
+    let matchedMarketId: string | number = cfg.id
+    if (marketRes.status === 'fulfilled') {
+      const markets = Array.isArray(marketRes.value) ? marketRes.value : (marketRes.value?.data || [])
+      const market = markets.find((item: any) => String(item.id) === marketId.value || item.slug === marketId.value || String(item.id) === String(cfg.id))
+      if (market) {
+        const resolved = applyMarketOverride(market)
+        apiMarketName.value = resolved.name || cfg.name
+        matchedMarketId = resolved.id ?? cfg.id
+      }
+    }
+    if (stallRes.status === 'fulfilled') {
+      const stallData = Array.isArray(stallRes.value) ? stallRes.value : (stallRes.value?.data || [])
+      stalls.value = stallData.filter((stall: any) => !stall.market_id || String(stall.market_id) === String(matchedMarketId))
+    } else {
+      stalls.value = []
+    }
+  } catch {
+    stalls.value = []
+  }
+}
 onMounted(loadData)
+watch(marketId, () => {
+  selectedProject.value = null
+  void loadData()
+})
 </script>
 
 <style scoped>

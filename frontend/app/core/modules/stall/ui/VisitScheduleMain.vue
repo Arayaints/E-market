@@ -108,6 +108,9 @@
                     <div class="dmi-bot-row">
                       <span v-if="weeklyMaster[dayObj.dayOfWeek]?.enabled" class="dmi-status-open">
                         เปิด {{ openWeeklySlotCount(dayObj.dayOfWeek) }} รอบ · {{ getWeeklyTotalCapacity(dayObj.dayOfWeek) }} คิว
+                        <template v-if="getDayBookedCount(dayObj.dayOfWeek) > 0">
+                          <span style="color: #2563eb; font-weight: 700;"> (จองแล้ว {{ getDayBookedCount(dayObj.dayOfWeek) }} คิว)</span>
+                        </template>
                       </span>
                       <span v-else class="dmi-status-closed">
                         ปิดรับนัด
@@ -472,15 +475,41 @@ import {
   createDefaultWeeklyMaster,
   createDefaultSlotList,
   parseSlotTimeRange,
-  formatSlotTime
+  formatSlotTime,
+  setCachedScheduleBookings,
+  isBookingOccupyingVisitSlot,
+  doesBookingMatchMarket,
+  doesBookingMatchSlotTime,
+  normalizeVisitDateToIso,
+  getAppointmentRoundKey
 } from '../composables/useMarketVisitSchedule'
+import { getMarketGisConfig } from '../data/markets_registry'
 
 const route = useRoute()
 const { get } = useApi()
 const { showSuccess } = useAppAlert()
+const { applyMarketOverride } = useMarketOverrides()
 
 const marketId = computed(() => String(route.query.market || '1'))
-const marketName = ref('ตลาดนัดจตุจักร')
+const apiMarketName = ref('')
+const marketName = computed(() => {
+  const cfg = getMarketGisConfig(marketId.value)
+  const overridden = applyMarketOverride({ id: cfg.id, slug: cfg.slug, name: apiMarketName.value || cfg.name })
+  return overridden?.name || cfg.name
+})
+const scheduleBookings = ref<any[]>([])
+
+const getDayBookedCount = (dayOfWeek: number): number => {
+  const matched = scheduleBookings.value.filter(b => {
+    if (!isBookingOccupyingVisitSlot(b)) return false
+    if (!doesBookingMatchMarket(b, marketId.value, marketName.value)) return false
+    const iso = normalizeVisitDateToIso(b.visit_date)
+    if (!iso) return false
+    const d = new Date(iso)
+    return !isNaN(d.getTime()) && d.getDay() === dayOfWeek
+  })
+  return matched.length
+}
 
 const showPresetMenu = ref(false)
 const showWeeklyCopyModal = ref(false)
@@ -763,23 +792,54 @@ const handleSaveAll = () => {
   )
 }
 
-onMounted(async () => {
+const loadMarketAndBookings = async () => {
   initAllData()
+  const cfg = getMarketGisConfig(marketId.value)
+  apiMarketName.value = cfg.name
 
   try {
-    const markets = await get('/markets')
-    const market = (markets || []).find((m: any) => String(m.id) === marketId.value || m.slug === marketId.value)
-    if (market) marketName.value = market.name
-  } catch (e) {
-    console.warn('Could not fetch market:', e)
-  }
-
-  window.addEventListener('click', (e: MouseEvent) => {
-    const target = e.target as HTMLElement
-    if (!target.closest('.preset-dropdown-wrap')) {
-      showPresetMenu.value = false
+    const [marketsRes, bookingsRes] = await Promise.allSettled([
+      get('/markets'),
+      get('/bookings')
+    ])
+    if (marketsRes.status === 'fulfilled') {
+      const markets = Array.isArray(marketsRes.value) ? marketsRes.value : (marketsRes.value?.data || [])
+      const market = markets.find((m: any) => String(m.id) === marketId.value || m.slug === marketId.value || String(m.id) === String(cfg.id))
+      if (market) {
+        const resolved = applyMarketOverride(market)
+        apiMarketName.value = resolved.name || cfg.name
+      }
     }
-  })
+    if (bookingsRes.status === 'fulfilled') {
+      const bList = Array.isArray(bookingsRes.value)
+        ? bookingsRes.value
+        : (Array.isArray((bookingsRes.value as any)?.data) ? (bookingsRes.value as any).data : [])
+      scheduleBookings.value = bList
+      setCachedScheduleBookings(bList)
+    }
+  } catch (e) {
+    console.warn('Could not fetch market or bookings:', e)
+  }
+}
+
+const handleDocumentClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  if (!target.closest?.('.preset-dropdown-wrap')) {
+    showPresetMenu.value = false
+  }
+}
+
+onMounted(() => {
+  void loadMarketAndBookings()
+  window.addEventListener('click', handleDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleDocumentClick)
+})
+
+watch(marketId, () => {
+  void loadMarketAndBookings()
 })
 </script>
 

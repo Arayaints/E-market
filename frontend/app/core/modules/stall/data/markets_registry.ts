@@ -5,7 +5,7 @@
 // architectural building/zone polygons for all 12 BMA markets across Bangkok.
 // ============================================================================
 
-import { CHATUCHAK_PROJECTS, type ProjectZone, type ProjectFloor } from './chatuchak_real_polygons'
+import type { ProjectZone } from './market_gis_types'
 
 export interface MarketGisConfig {
   id: number
@@ -96,7 +96,7 @@ const PRACHA_NIWET_PROJECTS: ProjectZone[] = [
     sectionNumber: 'A',
     category: 'อาหารปรุงสำเร็จ สตรีทฟู้ด และของหวาน',
     color: '#e06456',
-    stallsAvailable: 4,
+    stallsAvailable: 48,
     totalStalls: 48,
     realAreaSqm: bPNA.realAreaSqm,
     centroid: bPNA.centroid,
@@ -112,7 +112,7 @@ const PRACHA_NIWET_PROJECTS: ProjectZone[] = [
     sectionNumber: 'B',
     category: 'อาหารสด ผักผลไม้ และเนื้อสัตว์ปลอดสาร',
     color: '#4eb5b7',
-    stallsAvailable: 2,
+    stallsAvailable: 56,
     totalStalls: 56,
     realAreaSqm: bPNB.realAreaSqm,
     centroid: bPNB.centroid,
@@ -127,7 +127,7 @@ const PRACHA_NIWET_PROJECTS: ProjectZone[] = [
     sectionNumber: 'C',
     category: 'เสื้อผ้าแฟชั่นและของใช้เบ็ดเตล็ดในบ้าน',
     color: '#7e8ee8',
-    stallsAvailable: 1,
+    stallsAvailable: 40,
     totalStalls: 40,
     realAreaSqm: bPNC.realAreaSqm,
     centroid: bPNC.centroid,
@@ -142,7 +142,7 @@ const PRACHA_NIWET_PROJECTS: ProjectZone[] = [
     sectionNumber: 'D',
     category: 'สินค้าเกษตรอินทรีย์และต้นไม้',
     color: '#10b981',
-    stallsAvailable: 1,
+    stallsAvailable: 36,
     totalStalls: 36,
     realAreaSqm: bPND.realAreaSqm,
     centroid: bPND.centroid,
@@ -172,7 +172,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'ผักผลไม้สดค้าส่งและค้าปลีก',
     color: '#10b981',
-    stallsAvailable: 5,
+    stallsAvailable: 80,
     totalStalls: 80,
     realAreaSqm: bMB1.realAreaSqm,
     centroid: bMB1.centroid,
@@ -185,7 +185,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'อาหารสด เนื้อสัตว์ อาหารทะเลสด',
     color: '#3b82f6',
-    stallsAvailable: 4,
+    stallsAvailable: 80,
     totalStalls: 80,
     realAreaSqm: bMB2.realAreaSqm,
     centroid: bMB2.centroid,
@@ -198,7 +198,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'เสื้อผ้า เครื่องหนัง เครื่องประดับแฟชั่น',
     color: '#ab77c8',
-    stallsAvailable: 3,
+    stallsAvailable: 65,
     totalStalls: 65,
     realAreaSqm: bMB3.realAreaSqm,
     centroid: bMB3.centroid,
@@ -214,7 +214,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'ศูนย์อาหาร เครื่องดื่ม และเบเกอรี่',
     color: '#e06456',
-    stallsAvailable: 2,
+    stallsAvailable: 65,
     totalStalls: 65,
     realAreaSqm: bMB4.realAreaSqm,
     centroid: bMB4.centroid,
@@ -227,7 +227,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '05',
     category: 'สินค้าโอทอปและต้นไม้ตกแต่ง',
     color: '#e87a4d',
-    stallsAvailable: 1,
+    stallsAvailable: 50,
     totalStalls: 50,
     realAreaSqm: bMB5.realAreaSqm,
     centroid: bMB5.centroid,
@@ -237,7 +237,7 @@ const MIN_BURI_PROJECTS: ProjectZone[] = [
 ]
 
 // ----------------------------------------------------------------------------
-// Market 4: ตลาดสิงหนาท (เขตคลองเตย)
+// Market 4: ตลาดสิงหา (เขตคลองเตย)
 // ----------------------------------------------------------------------------
 const SN_LNG = 100.5642
 const SN_LAT = 13.7285
@@ -253,7 +253,7 @@ const SINGHANAT_PROJECTS: ProjectZone[] = [
     sectionNumber: 'A',
     category: 'อาหารตามสั่ง ก๋วยเตี๋ยว ข้าวแกง สตรีทฟู้ด',
     color: '#e06456',
-    stallsAvailable: 2,
+    stallsAvailable: 36,
     totalStalls: 36,
     realAreaSqm: bSNA.realAreaSqm,
     centroid: bSNA.centroid,
@@ -266,7 +266,7 @@ const SINGHANAT_PROJECTS: ProjectZone[] = [
     sectionNumber: 'B',
     category: 'เครื่องดื่ม กาแฟสด เบเกอรี่ และขนมทานเล่น',
     color: '#f59e0b',
-    stallsAvailable: 1,
+    stallsAvailable: 28,
     totalStalls: 28,
     realAreaSqm: bSNB.realAreaSqm,
     centroid: bSNB.centroid,
@@ -279,7 +279,7 @@ const SINGHANAT_PROJECTS: ProjectZone[] = [
     sectionNumber: 'C',
     category: 'เสื้อผ้าแฟชั่นทำงานและของใช้ประจำวัน',
     color: '#4eb5b7',
-    stallsAvailable: 1,
+    stallsAvailable: 34,
     totalStalls: 34,
     realAreaSqm: bSNC.realAreaSqm,
     centroid: bSNC.centroid,
@@ -302,7 +302,7 @@ const THEWARAT_PROJECTS: ProjectZone[] = [
     "sectionNumber": "01",
     "category": "เนื้อสัตว์ ผักสด อาหารทะเล และของสด",
     "color": "#0284c7",
-    "stallsAvailable": 61,
+    "stallsAvailable": 306,
     "totalStalls": 306,
     "realAreaSqm": 1213,
     "centroid": [
@@ -374,7 +374,7 @@ const THEWARAT_PROJECTS: ProjectZone[] = [
     "sectionNumber": "02",
     "category": "ของแห้ง วัตถุดิบ เครื่องเทศ และเบ็ดเตล็ด",
     "color": "#0d9488",
-    "stallsAvailable": 20,
+    "stallsAvailable": 92,
     "totalStalls": 92,
     "realAreaSqm": 333,
     "centroid": [
@@ -446,7 +446,7 @@ const THEWARAT_PROJECTS: ProjectZone[] = [
     "sectionNumber": "03",
     "category": "อาหารปรุงสำเร็จ ข้าวแกง เครื่องดื่ม ขนมไทย",
     "color": "#ea580c",
-    "stallsAvailable": 6,
+    "stallsAvailable": 44,
     "totalStalls": 44,
     "realAreaSqm": 248,
     "centroid": [
@@ -534,7 +534,7 @@ const THEWARAT_PROJECTS: ProjectZone[] = [
     "sectionNumber": "04",
     "category": "ไม้ดอกไม้ประดับ แคคตัส กระถาง และสินค้าทั่วไป",
     "color": "#16a34a",
-    "stallsAvailable": 8,
+    "stallsAvailable": 33,
     "totalStalls": 33,
     "realAreaSqm": 131,
     "centroid": [
@@ -620,7 +620,7 @@ const RAT_BURANA_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'อาหารทะเลสด กุ้ง หอย ปู ปลา',
     color: '#0284c7',
-    stallsAvailable: 2,
+    stallsAvailable: 48,
     totalStalls: 48,
     realAreaSqm: bRB1.realAreaSqm,
     centroid: bRB1.centroid,
@@ -633,7 +633,7 @@ const RAT_BURANA_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'เนื้อสัตว์ ผักสด และเครื่องปรุง',
     color: '#10b981',
-    stallsAvailable: 2,
+    stallsAvailable: 48,
     totalStalls: 48,
     realAreaSqm: bRB2.realAreaSqm,
     centroid: bRB2.centroid,
@@ -646,7 +646,7 @@ const RAT_BURANA_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'อาหารปรุงสุก ข้าวแกง อาหารตามสั่ง',
     color: '#e06456',
-    stallsAvailable: 1,
+    stallsAvailable: 40,
     totalStalls: 40,
     realAreaSqm: bRB3.realAreaSqm,
     centroid: bRB3.centroid,
@@ -659,7 +659,7 @@ const RAT_BURANA_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'เสื้อผ้า เครื่องแต่งกาย และของใช้ในครัวเรือน',
     color: '#7e8ee8',
-    stallsAvailable: 1,
+    stallsAvailable: 38,
     totalStalls: 38,
     realAreaSqm: bRB4.realAreaSqm,
     centroid: bRB4.centroid,
@@ -686,7 +686,7 @@ const BANG_KAPI_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'เสื้อผ้าแฟชั่น เครื่องประดับ รองเท้า กระเป๋า',
     color: '#ab77c8',
-    stallsAvailable: 4,
+    stallsAvailable: 72,
     totalStalls: 72,
     realAreaSqm: bBKP1.realAreaSqm,
     centroid: bBKP1.centroid,
@@ -702,7 +702,7 @@ const BANG_KAPI_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'อาหารสด ผักผลไม้ และเนื้อสัตว์ค้าส่ง',
     color: '#10b981',
-    stallsAvailable: 3,
+    stallsAvailable: 72,
     totalStalls: 72,
     realAreaSqm: bBKP2.realAreaSqm,
     centroid: bBKP2.centroid,
@@ -715,7 +715,7 @@ const BANG_KAPI_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'สตรีทฟู้ด ข้าวขาหมู ก๋วยเตี๋ยวเรือ และเครื่องดื่ม',
     color: '#e06456',
-    stallsAvailable: 2,
+    stallsAvailable: 56,
     totalStalls: 56,
     realAreaSqm: bBKP3.realAreaSqm,
     centroid: bBKP3.centroid,
@@ -728,7 +728,7 @@ const BANG_KAPI_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'ตลาดนัดยามเย็น สินค้าไอที และของใช้ชุมชน',
     color: '#e87a4d',
-    stallsAvailable: 2,
+    stallsAvailable: 55,
     totalStalls: 55,
     realAreaSqm: bBKP4.realAreaSqm,
     centroid: bBKP4.centroid,
@@ -738,7 +738,7 @@ const BANG_KAPI_PROJECTS: ProjectZone[] = [
 ]
 
 // ----------------------------------------------------------------------------
-// Market 8: ตลาดวงเวียนเล็ก (เขตคลองสาน) - ศูนย์รวมพระเครื่อง (สถานะ: เต็มแล้ว)
+// Market 8: ตลาดพระเครื่องวงเวียนเล็ก (เขตคลองสาน) - ศูนย์รวมพระเครื่อง
 // ----------------------------------------------------------------------------
 const WWL_LNG = 100.4965
 const WWL_LAT = 13.7335
@@ -755,12 +755,12 @@ const WONGWIAN_LEK_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'พระเครื่องเบญจภาคี เหรียญเกจิคณาจารย์ยอดนิยม',
     color: '#d97706',
-    stallsAvailable: 0,
+    stallsAvailable: 36,
     totalStalls: 36,
     realAreaSqm: bWWL1.realAreaSqm,
     centroid: bWWL1.centroid,
     coordinates: bWWL1.coordinates,
-    floors: [{ id: '1', name: 'ชั้น 1 (พระเครื่องเบญจภาคี)', shortLabel: '1F', level: 1, isFull: true }]
+    floors: [{ id: '1', name: 'ชั้น 1 (พระเครื่องเบญจภาคี)', shortLabel: '1F', level: 1, isFull: false }]
   },
   {
     id: 'wwl-02',
@@ -768,12 +768,12 @@ const WONGWIAN_LEK_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'เครื่องรางของขลัง ตะกรุด มีดหมอ และพระบูชา',
     color: '#b45309',
-    stallsAvailable: 0,
+    stallsAvailable: 36,
     totalStalls: 36,
     realAreaSqm: bWWL2.realAreaSqm,
     centroid: bWWL2.centroid,
     coordinates: bWWL2.coordinates,
-    floors: [{ id: '1', name: 'ชั้น 1 (เครื่องรางและพระบูชา)', shortLabel: '1F', level: 1, isFull: true }]
+    floors: [{ id: '1', name: 'ชั้น 1 (เครื่องรางและพระบูชา)', shortLabel: '1F', level: 1, isFull: false }]
   },
   {
     id: 'wwl-03',
@@ -781,12 +781,12 @@ const WONGWIAN_LEK_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'งานศิลปะโบราณ พระพุทธรูป กล้องส่องพระ และตลับพระ',
     color: '#78350f',
-    stallsAvailable: 0,
+    stallsAvailable: 30,
     totalStalls: 30,
     realAreaSqm: bWWL3.realAreaSqm,
     centroid: bWWL3.centroid,
     coordinates: bWWL3.coordinates,
-    floors: [{ id: '1', name: 'ชั้น 1 (อุปกรณ์และของสะสม)', shortLabel: '1F', level: 1, isFull: true }]
+    floors: [{ id: '1', name: 'ชั้น 1 (อุปกรณ์และของสะสม)', shortLabel: '1F', level: 1, isFull: false }]
   },
   {
     id: 'wwl-04',
@@ -794,12 +794,12 @@ const WONGWIAN_LEK_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'เลี่ยมกรอบพระกันน้ำ ชุบทองไมครอน ตรวจสอบพระแท้',
     color: '#e87a4d',
-    stallsAvailable: 0,
+    stallsAvailable: 30,
     totalStalls: 30,
     realAreaSqm: bWWL4.realAreaSqm,
     centroid: bWWL4.centroid,
     coordinates: bWWL4.coordinates,
-    floors: [{ id: '1', name: 'ชั้น 1 (บริการเลี่ยมและตรวจสอบ)', shortLabel: '1F', level: 1, isFull: true }]
+    floors: [{ id: '1', name: 'ชั้น 1 (บริการเลี่ยมและตรวจสอบ)', shortLabel: '1F', level: 1, isFull: false }]
   }
 ]
 
@@ -821,7 +821,7 @@ const NONG_CHOK_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'อาหารฮาลาล ข้าวหมกไก่ ซุปหางวัว โรตี มะตะบะ',
     color: '#10b981',
-    stallsAvailable: 4,
+    stallsAvailable: 58,
     totalStalls: 58,
     realAreaSqm: bNJ1.realAreaSqm,
     centroid: bNJ1.centroid,
@@ -834,7 +834,7 @@ const NONG_CHOK_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'เนื้อวัวฮาลาล เนื้อไก่สด และปลาแม่น้ำสด',
     color: '#059669',
-    stallsAvailable: 4,
+    stallsAvailable: 58,
     totalStalls: 58,
     realAreaSqm: bNJ2.realAreaSqm,
     centroid: bNJ2.centroid,
@@ -847,7 +847,7 @@ const NONG_CHOK_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'ผักปลอดสารพิษ ผลไม้สดจากสวนชุมชนหนองจอก',
     color: '#84cc16',
-    stallsAvailable: 3,
+    stallsAvailable: 45,
     totalStalls: 45,
     realAreaSqm: bNJ3.realAreaSqm,
     centroid: bNJ3.centroid,
@@ -860,7 +860,7 @@ const NONG_CHOK_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'ฮิญาบ เสื้อผ้ามุสลิม เครื่องหอม และของใช้ในบ้าน',
     color: '#0284c7',
-    stallsAvailable: 3,
+    stallsAvailable: 44,
     totalStalls: 44,
     realAreaSqm: bNJ4.realAreaSqm,
     centroid: bNJ4.centroid,
@@ -887,7 +887,7 @@ const RATCHADA_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'สตรีทฟู้ดตลาดพลู กุยช่ายโบราณ บะหมี่เกี๊ยว',
     color: '#e06456',
-    stallsAvailable: 3,
+    stallsAvailable: 45,
     totalStalls: 45,
     realAreaSqm: bRCD1.realAreaSqm,
     centroid: bRCD1.centroid,
@@ -900,7 +900,7 @@ const RATCHADA_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'ขนมไทยโบราณ ทองหยิบ ฝอยทอง หม้อแกง ขนมเบื้อง',
     color: '#f59e0b',
-    stallsAvailable: 2,
+    stallsAvailable: 45,
     totalStalls: 45,
     realAreaSqm: bRCD2.realAreaSqm,
     centroid: bRCD2.centroid,
@@ -913,7 +913,7 @@ const RATCHADA_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'ผักผลไม้สด ดอกไม้ไหว้พระ และของแห้ง',
     color: '#10b981',
-    stallsAvailable: 2,
+    stallsAvailable: 40,
     totalStalls: 40,
     realAreaSqm: bRCD3.realAreaSqm,
     centroid: bRCD3.centroid,
@@ -926,7 +926,7 @@ const RATCHADA_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'เสื้อผ้าสำเร็จรูป รองเท้า และของใช้ชุมชน',
     color: '#7e8ee8',
-    stallsAvailable: 2,
+    stallsAvailable: 38,
     totalStalls: 38,
     realAreaSqm: bRCD4.realAreaSqm,
     centroid: bRCD4.centroid,
@@ -955,7 +955,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '01',
     category: 'ไม้ดอก ไม้ประดับ ไม้ผล ไม้ดัด และอุปกรณ์จัดสวน',
     color: '#10b981',
-    stallsAvailable: 5,
+    stallsAvailable: 140,
     totalStalls: 140,
     realAreaSqm: bTB1.realAreaSqm,
     centroid: bTB1.centroid,
@@ -968,7 +968,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '02',
     category: 'สัตว์เลี้ยง ปลาสวยงาม นก สุนัข แมว และตู้ปลา',
     color: '#3b82f6',
-    stallsAvailable: 4,
+    stallsAvailable: 140,
     totalStalls: 140,
     realAreaSqm: bTB2.realAreaSqm,
     centroid: bTB2.centroid,
@@ -981,7 +981,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '03',
     category: 'พระเครื่อง วัตถุโบราณ งานไม้สัก เฟอร์นิเจอร์วินเทจ',
     color: '#d97706',
-    stallsAvailable: 4,
+    stallsAvailable: 125,
     totalStalls: 125,
     realAreaSqm: bTB3.realAreaSqm,
     centroid: bTB3.centroid,
@@ -994,7 +994,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '04',
     category: 'อาหารพื้นบ้าน สตรีทฟู้ด ขนมไทย อาหารตามสั่งริมน้ำ',
     color: '#e06456',
-    stallsAvailable: 3,
+    stallsAvailable: 125,
     totalStalls: 125,
     realAreaSqm: bTB4.realAreaSqm,
     centroid: bTB4.centroid,
@@ -1007,7 +1007,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '05',
     category: 'เสื้อผ้าแฟชั่น ผ้าทอมือ สินค้าหัตถกรรม OTOP',
     color: '#ab77c8',
-    stallsAvailable: 3,
+    stallsAvailable: 110,
     totalStalls: 110,
     realAreaSqm: bTB5.realAreaSqm,
     centroid: bTB5.centroid,
@@ -1020,7 +1020,7 @@ const THONBURI_PROJECTS: ProjectZone[] = [
     sectionNumber: '06',
     category: 'เซรามิก เครื่องปั้นดินเผา และของแต่งบ้านวินเทจ',
     color: '#6366f1',
-    stallsAvailable: 3,
+    stallsAvailable: 110,
     totalStalls: 110,
     realAreaSqm: bTB6.realAreaSqm,
     centroid: bTB6.centroid,
@@ -1047,7 +1047,7 @@ const BANG_KHAE_PROJECTS: ProjectZone[] = [
     sectionNumber: 'A',
     category: 'สินค้าออร์แกนิก ผักสลัดไฮโดรโปนิกส์ ผลไม้ปลอดสาร',
     color: '#10b981',
-    stallsAvailable: 2,
+    stallsAvailable: 45,
     totalStalls: 45,
     realAreaSqm: bBKPA.realAreaSqm,
     centroid: bBKPA.centroid,
@@ -1060,7 +1060,7 @@ const BANG_KHAE_PROJECTS: ProjectZone[] = [
     sectionNumber: 'B',
     category: 'อาหารเพื่อสุขภาพ สลัดบาร์ น้ำผลไม้สกัดเย็น อาหารคลีน',
     color: '#84cc16',
-    stallsAvailable: 1,
+    stallsAvailable: 45,
     totalStalls: 45,
     realAreaSqm: bBKPB.realAreaSqm,
     centroid: bBKPB.centroid,
@@ -1073,7 +1073,7 @@ const BANG_KHAE_PROJECTS: ProjectZone[] = [
     sectionNumber: 'C',
     category: 'งานฝีมือ สินค้าแฮนด์เมด DIY สินค้าชุมชน',
     color: '#f59e0b',
-    stallsAvailable: 1,
+    stallsAvailable: 40,
     totalStalls: 40,
     realAreaSqm: bBKPC.realAreaSqm,
     centroid: bBKPC.centroid,
@@ -1086,7 +1086,7 @@ const BANG_KHAE_PROJECTS: ProjectZone[] = [
     sectionNumber: 'D',
     category: 'ต้นไม้ฟอกอากาศ ไม้มงคล แคคตัส และกระถางเซรามิก',
     color: '#059669',
-    stallsAvailable: 1,
+    stallsAvailable: 40,
     totalStalls: 40,
     realAreaSqm: bBKPD.realAreaSqm,
     centroid: bBKPD.centroid,
@@ -1104,12 +1104,13 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
     slug: 'chatuchak',
     name: 'ตลาดนัดจตุจักร',
     district: 'เขตจตุจักร',
-    center: [100.5503, 13.7999],
+    center: [100.55048, 13.7998023],
     overviewZoom: 16.6,
     bearing: 22,
     pitch: 35,
     description: 'ตลาดนัดระดับโลก แหล่งรวมสินค้าหัตถกรรม แฟชั่น ของแต่งบ้าน และต้นไม้ มี 30 โครงการ',
-    projects: CHATUCHAK_PROJECTS
+    // Loaded on demand from /data/markets/chatuchak.json.
+    projects: []
   },
   '2': {
     id: 2,
@@ -1128,7 +1129,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 32,
+            "stallsAvailable": 134,
             "totalStalls": 134,
             "realAreaSqm": 549,
             "centroid": [
@@ -1216,7 +1217,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 12,
+            "stallsAvailable": 70,
             "totalStalls": 70,
             "realAreaSqm": 280,
             "centroid": [
@@ -1288,7 +1289,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 9,
+            "stallsAvailable": 60,
             "totalStalls": 60,
             "realAreaSqm": 240,
             "centroid": [
@@ -1376,7 +1377,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 6,
+            "stallsAvailable": 52,
             "totalStalls": 52,
             "realAreaSqm": 208,
             "centroid": [
@@ -1480,7 +1481,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 7,
+            "stallsAvailable": 22,
             "totalStalls": 22,
             "realAreaSqm": 91,
             "centroid": [
@@ -1560,7 +1561,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 6,
+            "stallsAvailable": 22,
             "totalStalls": 22,
             "realAreaSqm": 91,
             "centroid": [
@@ -1644,7 +1645,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "07",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#e11d48",
-            "stallsAvailable": 6,
+            "stallsAvailable": 22,
             "totalStalls": 22,
             "realAreaSqm": 91,
             "centroid": [
@@ -1724,7 +1725,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "08",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#84cc16",
-            "stallsAvailable": 4,
+            "stallsAvailable": 22,
             "totalStalls": 22,
             "realAreaSqm": 91,
             "centroid": [
@@ -1800,7 +1801,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "09",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#d97706",
-            "stallsAvailable": 7,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 140,
             "centroid": [
@@ -1876,7 +1877,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "10",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#6366f1",
-            "stallsAvailable": 2,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 89,
             "centroid": [
@@ -1936,7 +1937,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "11",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#14b8a6",
-            "stallsAvailable": 2,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 89,
             "centroid": [
@@ -1996,7 +1997,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "12",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f97316",
-            "stallsAvailable": 2,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 89,
             "centroid": [
@@ -2072,7 +2073,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "13",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#a855f7",
-            "stallsAvailable": 3,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 89,
             "centroid": [
@@ -2140,7 +2141,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "14",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#0284c7",
-            "stallsAvailable": 3,
+            "stallsAvailable": 20,
             "totalStalls": 20,
             "realAreaSqm": 89,
             "centroid": [
@@ -2208,7 +2209,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "15",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#059669",
-            "stallsAvailable": 0,
+            "stallsAvailable": 11,
             "totalStalls": 11,
             "realAreaSqm": 12736,
             "centroid": [
@@ -2288,7 +2289,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "16",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#4f46e5",
-            "stallsAvailable": 1,
+            "stallsAvailable": 4,
             "totalStalls": 4,
             "realAreaSqm": 4,
             "centroid": [
@@ -2361,7 +2362,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 0,
+            "stallsAvailable": 945,
             "totalStalls": 945,
             "realAreaSqm": 13065413,
             "centroid": [
@@ -2447,7 +2448,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 0,
+            "stallsAvailable": 538,
             "totalStalls": 538,
             "realAreaSqm": 2672,
             "centroid": [
@@ -2549,7 +2550,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 42,
+            "stallsAvailable": 188,
             "totalStalls": 188,
             "realAreaSqm": 1122,
             "centroid": [
@@ -2643,7 +2644,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 39,
+            "stallsAvailable": 182,
             "totalStalls": 182,
             "realAreaSqm": 1031,
             "centroid": [
@@ -2729,7 +2730,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 33,
+            "stallsAvailable": 177,
             "totalStalls": 177,
             "realAreaSqm": 926,
             "centroid": [
@@ -2819,7 +2820,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 35,
+            "stallsAvailable": 176,
             "totalStalls": 176,
             "realAreaSqm": 912,
             "centroid": [
@@ -2905,7 +2906,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "07",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#e11d48",
-            "stallsAvailable": 32,
+            "stallsAvailable": 156,
             "totalStalls": 156,
             "realAreaSqm": 780,
             "centroid": [
@@ -2995,7 +2996,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "08",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#84cc16",
-            "stallsAvailable": 36,
+            "stallsAvailable": 156,
             "totalStalls": 156,
             "realAreaSqm": 780,
             "centroid": [
@@ -3081,7 +3082,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "09",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#d97706",
-            "stallsAvailable": 44,
+            "stallsAvailable": 155,
             "totalStalls": 155,
             "realAreaSqm": 775,
             "centroid": [
@@ -3175,7 +3176,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "10",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#6366f1",
-            "stallsAvailable": 30,
+            "stallsAvailable": 154,
             "totalStalls": 154,
             "realAreaSqm": 770,
             "centroid": [
@@ -3261,7 +3262,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "11",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#14b8a6",
-            "stallsAvailable": 0,
+            "stallsAvailable": 139,
             "totalStalls": 139,
             "realAreaSqm": 696,
             "centroid": [
@@ -3359,7 +3360,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "12",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f97316",
-            "stallsAvailable": 5,
+            "stallsAvailable": 8,
             "totalStalls": 8,
             "realAreaSqm": 834,
             "centroid": [
@@ -3440,7 +3441,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
   '4': {
     id: 4,
     slug: 'singhanat',
-    name: 'ตลาดสิงหนาท',
+    name: 'ตลาดสิงหา',
     district: 'เขตคลองเตย',
     center: [100.5967214, 13.7113411],
     overviewZoom: 18.8,
@@ -3450,11 +3451,11 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
     projects: [
       {
             "id": "sin-01",
-            "name": "โครงการ 01 (โซนแผงค้าตลาดสิงหนาท)",
+            "name": "โครงการ 01 (โซนแผงค้าตลาดสิงหา)",
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 19,
+            "stallsAvailable": 91,
             "totalStalls": 91,
             "realAreaSqm": 753,
             "centroid": [
@@ -3547,7 +3548,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "เนื้อสัตว์ ผักสด อาหารทะเล และของสด",
             "color": "#0284c7",
-            "stallsAvailable": 61,
+            "stallsAvailable": 306,
             "totalStalls": 306,
             "realAreaSqm": 1213,
             "centroid": [
@@ -3619,7 +3620,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "ของแห้ง วัตถุดิบ เครื่องเทศ และเบ็ดเตล็ด",
             "color": "#0d9488",
-            "stallsAvailable": 20,
+            "stallsAvailable": 92,
             "totalStalls": 92,
             "realAreaSqm": 333,
             "centroid": [
@@ -3691,7 +3692,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "อาหารปรุงสำเร็จ ข้าวแกง เครื่องดื่ม ขนมไทย",
             "color": "#ea580c",
-            "stallsAvailable": 6,
+            "stallsAvailable": 44,
             "totalStalls": 44,
             "realAreaSqm": 248,
             "centroid": [
@@ -3779,7 +3780,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "ไม้ดอกไม้ประดับ แคคตัส กระถาง และสินค้าทั่วไป",
             "color": "#16a34a",
-            "stallsAvailable": 8,
+            "stallsAvailable": 33,
             "totalStalls": 33,
             "realAreaSqm": 131,
             "centroid": [
@@ -3864,7 +3865,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 0,
+            "stallsAvailable": 1,
             "totalStalls": 1,
             "realAreaSqm": 1284,
             "centroid": [
@@ -3921,7 +3922,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 126,
+            "stallsAvailable": 689,
             "totalStalls": 689,
             "realAreaSqm": 2756,
             "centroid": [
@@ -4025,7 +4026,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 2,
+            "stallsAvailable": 19,
             "totalStalls": 19,
             "realAreaSqm": 880,
             "centroid": [
@@ -4133,7 +4134,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 0,
+            "stallsAvailable": 1,
             "totalStalls": 1,
             "realAreaSqm": 668,
             "centroid": [
@@ -4176,7 +4177,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
   '8': {
     id: 8,
     slug: 'wongwian-lek',
-    name: 'ตลาดวงเวียนเล็ก',
+    name: 'ตลาดพระเครื่องวงเวียนเล็ก',
     district: 'เขตคลองสาน',
     center: [100.4965505, 13.7351518],
     overviewZoom: 18.6,
@@ -4190,7 +4191,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 19,
+            "stallsAvailable": 107,
             "totalStalls": 107,
             "realAreaSqm": 158,
             "centroid": [
@@ -4282,7 +4283,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 18,
+            "stallsAvailable": 104,
             "totalStalls": 104,
             "realAreaSqm": 142,
             "centroid": [
@@ -4362,7 +4363,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 24,
+            "stallsAvailable": 104,
             "totalStalls": 104,
             "realAreaSqm": 142,
             "centroid": [
@@ -4446,7 +4447,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 9,
+            "stallsAvailable": 96,
             "totalStalls": 96,
             "realAreaSqm": 143,
             "centroid": [
@@ -4522,7 +4523,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 14,
+            "stallsAvailable": 94,
             "totalStalls": 94,
             "realAreaSqm": 128,
             "centroid": [
@@ -4614,7 +4615,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 26,
+            "stallsAvailable": 94,
             "totalStalls": 94,
             "realAreaSqm": 128,
             "centroid": [
@@ -4698,7 +4699,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "07",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#e11d48",
-            "stallsAvailable": 16,
+            "stallsAvailable": 49,
             "totalStalls": 49,
             "realAreaSqm": 165,
             "centroid": [
@@ -4775,7 +4776,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 26,
+            "stallsAvailable": 140,
             "totalStalls": 140,
             "realAreaSqm": 560,
             "centroid": [
@@ -4859,7 +4860,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 21,
+            "stallsAvailable": 98,
             "totalStalls": 98,
             "realAreaSqm": 3721,
             "centroid": [
@@ -4923,7 +4924,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 15,
+            "stallsAvailable": 74,
             "totalStalls": 74,
             "realAreaSqm": 293,
             "centroid": [
@@ -5079,7 +5080,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 21,
+            "stallsAvailable": 54,
             "totalStalls": 54,
             "realAreaSqm": 54,
             "centroid": [
@@ -5176,7 +5177,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 11,
+            "stallsAvailable": 36,
             "totalStalls": 36,
             "realAreaSqm": 144,
             "centroid": [
@@ -5260,7 +5261,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 2,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5332,7 +5333,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 2,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5408,7 +5409,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 3,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5480,7 +5481,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 2,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5548,7 +5549,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 3,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5624,7 +5625,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "07",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#e11d48",
-            "stallsAvailable": 2,
+            "stallsAvailable": 12,
             "totalStalls": 12,
             "realAreaSqm": 38,
             "centroid": [
@@ -5696,7 +5697,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "08",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#84cc16",
-            "stallsAvailable": 3,
+            "stallsAvailable": 10,
             "totalStalls": 10,
             "realAreaSqm": 28,
             "centroid": [
@@ -5756,7 +5757,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "09",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#d97706",
-            "stallsAvailable": 2,
+            "stallsAvailable": 10,
             "totalStalls": 10,
             "realAreaSqm": 28,
             "centroid": [
@@ -5828,7 +5829,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "10",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#6366f1",
-            "stallsAvailable": 0,
+            "stallsAvailable": 9,
             "totalStalls": 9,
             "realAreaSqm": 1879,
             "centroid": [
@@ -5909,7 +5910,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 144,
+            "stallsAvailable": 824,
             "totalStalls": 824,
             "realAreaSqm": 3296,
             "centroid": [
@@ -6053,7 +6054,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 200,
+            "stallsAvailable": 626,
             "totalStalls": 626,
             "realAreaSqm": 2634,
             "centroid": [
@@ -6169,7 +6170,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 224,
+            "stallsAvailable": 620,
             "totalStalls": 620,
             "realAreaSqm": 2480,
             "centroid": [
@@ -6297,7 +6298,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 100,
+            "stallsAvailable": 520,
             "totalStalls": 520,
             "realAreaSqm": 2080,
             "centroid": [
@@ -6421,7 +6422,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 32,
+            "stallsAvailable": 464,
             "totalStalls": 464,
             "realAreaSqm": 1856,
             "centroid": [
@@ -6529,7 +6530,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 36,
+            "stallsAvailable": 332,
             "totalStalls": 332,
             "realAreaSqm": 1328,
             "centroid": [
@@ -6625,7 +6626,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "07",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#e11d48",
-            "stallsAvailable": 91,
+            "stallsAvailable": 252,
             "totalStalls": 252,
             "realAreaSqm": 1008,
             "centroid": [
@@ -6741,7 +6742,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "08",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#84cc16",
-            "stallsAvailable": 54,
+            "stallsAvailable": 228,
             "totalStalls": 228,
             "realAreaSqm": 912,
             "centroid": [
@@ -6821,7 +6822,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "09",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#d97706",
-            "stallsAvailable": 62,
+            "stallsAvailable": 207,
             "totalStalls": 207,
             "realAreaSqm": 4142,
             "centroid": [
@@ -6905,7 +6906,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "10",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#6366f1",
-            "stallsAvailable": 31,
+            "stallsAvailable": 162,
             "totalStalls": 162,
             "realAreaSqm": 648,
             "centroid": [
@@ -7001,7 +7002,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "11",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#14b8a6",
-            "stallsAvailable": 25,
+            "stallsAvailable": 160,
             "totalStalls": 160,
             "realAreaSqm": 640,
             "centroid": [
@@ -7097,7 +7098,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "12",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f97316",
-            "stallsAvailable": 8,
+            "stallsAvailable": 40,
             "totalStalls": 40,
             "realAreaSqm": 304,
             "centroid": [
@@ -7189,7 +7190,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "13",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#a855f7",
-            "stallsAvailable": 5,
+            "stallsAvailable": 35,
             "totalStalls": 35,
             "realAreaSqm": 348,
             "centroid": [
@@ -7298,7 +7299,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",
-            "stallsAvailable": 16,
+            "stallsAvailable": 144,
             "totalStalls": 144,
             "realAreaSqm": 662,
             "centroid": [
@@ -7374,7 +7375,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "02",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#10b981",
-            "stallsAvailable": 18,
+            "stallsAvailable": 106,
             "totalStalls": 106,
             "realAreaSqm": 442,
             "centroid": [
@@ -7450,7 +7451,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "03",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#f59e0b",
-            "stallsAvailable": 32,
+            "stallsAvailable": 96,
             "totalStalls": 96,
             "realAreaSqm": 442,
             "centroid": [
@@ -7538,7 +7539,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "04",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#ec4899",
-            "stallsAvailable": 27,
+            "stallsAvailable": 94,
             "totalStalls": 94,
             "realAreaSqm": 432,
             "centroid": [
@@ -7634,7 +7635,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "05",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#8b5cf6",
-            "stallsAvailable": 12,
+            "stallsAvailable": 94,
             "totalStalls": 94,
             "realAreaSqm": 432,
             "centroid": [
@@ -7714,7 +7715,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
             "sectionNumber": "06",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#06b6d4",
-            "stallsAvailable": 14,
+            "stallsAvailable": 90,
             "totalStalls": 90,
             "realAreaSqm": 497,
             "centroid": [

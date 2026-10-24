@@ -158,7 +158,7 @@ const emit = defineEmits<{
 
 const { post } = useApi()
 const { user } = useAuth()
-const { showError } = useAppAlert()
+const { showError, showWarning } = useAppAlert()
 
 const submitting = ref(false)
 const isSuccess = ref(false)
@@ -183,8 +183,9 @@ const form = ref({
 watch(() => props.show, (newVal) => {
   if (newVal) {
     isSuccess.value = false
-    form.value.tenant_name = user.value?.full_name || 'คุณสมศักดิ์ ค้าขายดี'
-    form.value.tenant_email = user.value?.email || 'somsak@example.com'
+    const cleanedName = String(user.value?.full_name || 'คุณสมชาย ใจดี').replace(/\([^)]*\)/g, '').trim()
+    form.value.tenant_name = cleanedName || 'คุณสมชาย ใจดี'
+    form.value.tenant_email = user.value?.email || 'somchai@example.com'
     form.value.intended_business = props.stall?.category || props.stall?.category_name || ''
   }
 })
@@ -212,7 +213,11 @@ const handleSubmit = async () => {
     isSuccess.value = true
     emit('success')
   } catch (err: any) {
-    await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการส่งคำขอจอง', 'ส่งคำขอไม่สำเร็จ')
+    if (err?.status === 409 || err?.statusCode === 409 || err?.data?.code === 409) {
+      await showWarning(err?.data?.detail || 'คุณได้ทำการจองแผงนี้ไว้แล้ว ไม่สามารถจองซ้ำได้', 'ไม่สามารถจองแผงซ้ำได้')
+    } else {
+      await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการส่งคำขอจอง', 'ส่งคำขอไม่สำเร็จ')
+    }
   } finally {
     submitting.value = false
   }

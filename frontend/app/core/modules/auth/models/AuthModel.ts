@@ -5,6 +5,8 @@ export interface IUser {
 	role: string
 	email?: string
 	phone?: string
+	citizen_id?: string
+	id_card?: string
 }
 
 export interface IAuthResponse {

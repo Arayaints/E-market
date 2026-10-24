@@ -19,12 +19,12 @@
         <NuxtLink to="/" class="body-breadcrumb-link">หน้าหลัก</NuxtLink>
 
         <!-- Optional Market Parent (e.g. ตลาดธนบุรี (สนามหลวง 2)) -->
-        <template v-if="market">
+        <template v-if="resolvedMarketName">
           <span class="body-breadcrumb-sep">&gt;</span>
-          <NuxtLink v-if="current" :to="marketId ? `/stalls?market=${marketId}` : '/stalls'" class="body-breadcrumb-link">
-            {{ market }}
+          <NuxtLink v-if="current" :to="resolvedMarketId ? `/stalls?market=${resolvedMarketId}` : '/stalls'" class="body-breadcrumb-link">
+            {{ resolvedMarketName }}
           </NuxtLink>
-          <span v-else class="body-breadcrumb-current">{{ market }}</span>
+          <span v-else class="body-breadcrumb-current">{{ resolvedMarketName }}</span>
         </template>
 
         <!-- Optional Intermediate Items List -->
@@ -50,29 +50,68 @@
 </template>
 
 <script setup lang="ts">
+import { getMarketGisConfig } from '~/core/modules/stall/data/markets_registry'
+
 const props = defineProps<{
   current?: string
   market?: string
   marketId?: string | number
   items?: Array<{ label: string; to?: string }>
   backTo?: string
+  forceNavigation?: boolean
 }>()
 
-const router = useRouter()
+const route = useRoute()
+const { applyMarketOverride } = useMarketOverrides()
 
-const handleBack = () => {
-  if (process.client && window.history.state && window.history.state.back) {
-    if (window.history.state.back !== '/login') {
-      router.back()
+const resolvedMarketId = computed(() => {
+  const raw = props.marketId ?? route.query.market ?? (route.path.startsWith('/markets/') ? route.params.id : undefined)
+  return raw !== undefined && raw !== null && String(raw).trim() !== '' ? String(raw).trim() : undefined
+})
+
+const resolvedMarketName = computed(() => {
+  if (!props.market && !resolvedMarketId.value) return ''
+
+  if (resolvedMarketId.value) {
+    const cfg = getMarketGisConfig(resolvedMarketId.value)
+    const overridden = applyMarketOverride({ id: cfg.id, slug: cfg.slug, name: cfg.name })
+    const expectedName = overridden?.name || cfg.name
+    // If parent passed default 'ตลาดนัดจตุจักร' before async load finished for another market, use the resolved market name immediately
+    if (!props.market || (props.market === 'ตลาดนัดจตุจักร' && String(cfg.id) !== '1')) {
+      return expectedName
+    }
+  }
+
+  return props.market || ''
+})
+
+const handleBack = async () => {
+  if (import.meta.client && window.history.state && typeof window.history.state.back === 'string') {
+    const backUrl = window.history.state.back
+    const backPathOnly = backUrl.split('?')[0]?.split('#')[0] || ''
+    const isAuthPage = backPathOnly === '/login' || backPathOnly === '/auth/login'
+    const isSameFullUrl = backUrl === route.fullPath
+    const isRedirectLoop =
+      (route.path === '/stalls/manage' && backPathOnly === '/stalls/book') ||
+      (route.path === '/stalls/book' && backPathOnly === '/stalls/manage')
+
+    if (!isAuthPage && !isSameFullUrl && !isRedirectLoop) {
+      await navigateTo(backUrl)
       return
     }
   }
 
   if (props.backTo) {
-    router.push(props.backTo)
-  } else {
-    router.push('/')
+    await navigateTo(props.backTo)
+    return
   }
+
+  if (resolvedMarketId.value && route.path !== '/stalls') {
+    await navigateTo(`/stalls?market=${resolvedMarketId.value}`)
+    return
+  }
+
+  await navigateTo('/')
 }
 </script>
 

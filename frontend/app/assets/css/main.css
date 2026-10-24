@@ -33,11 +33,21 @@
   --accent-emerald: #10b981;
   --accent-indigo: #6366f1;
 
-  /* Typography */
+  /* Typography Colors */
   --text-main: #0f172a;
   --text-body: #334155;
   --text-muted: #64748b;
   --text-dim: #94a3b8;
+
+  /* Typography Scale Standard (Unified System-wide Font Hierarchy) */
+  --font-size-2xs: 0.75rem;    /* 12px: Minimum floor for micro labels/pill badges */
+  --font-size-xs: 0.8125rem;   /* 13px: Secondary metadata, timestamps, table th */
+  --font-size-sm: 0.875rem;    /* 14px: Standard compact text, table cells, form inputs */
+  --font-size-base: 0.9375rem; /* 15px: Standard body, main buttons */
+  --font-size-md: 1rem;        /* 16px: Card titles, emphasized numbers */
+  --font-size-lg: 1.125rem;    /* 18px: Section headers, modal titles */
+  --font-size-xl: 1.25rem;     /* 20px: Large section titles */
+  --font-size-2xl: 1.5rem;     /* 24px: Page titles */
 
   /* Status Colors */
   --status-avail-bg: #ecfdf5;
@@ -114,6 +124,16 @@ button, input, select, textarea {
   font-size: inherit;
   color: inherit;
 }
+
+/* Typography Utility Classes */
+.text-2xs  { font-size: var(--font-size-2xs) !important; }
+.text-xs   { font-size: var(--font-size-xs) !important; }
+.text-sm   { font-size: var(--font-size-sm) !important; }
+.text-base { font-size: var(--font-size-base) !important; }
+.text-md   { font-size: var(--font-size-md) !important; }
+.text-lg   { font-size: var(--font-size-lg) !important; }
+.text-xl   { font-size: var(--font-size-xl) !important; }
+.text-2xl  { font-size: var(--font-size-2xl) !important; }
 
 /* Slim Modern Scrollbars */
 ::-webkit-scrollbar {
@@ -708,16 +728,21 @@ button, input, select, textarea {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
-  border-radius: 12px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  box-sizing: border-box;
+  padding: 0 18px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.875rem;
   cursor: pointer;
   border: 1px solid transparent;
   transition: var(--transition);
   text-decoration: none;
   white-space: nowrap;
   outline: none;
+  line-height: 1;
 }
 
 .btn:active {
@@ -817,15 +842,23 @@ button, input, select, textarea {
 }
 
 .btn-sm {
-  padding: 6px 14px;
-  font-size: 0.82rem;
-  border-radius: 9px;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  border-radius: 7px;
+  gap: 6px;
 }
 
 .btn-lg {
-  padding: 14px 28px;
-  font-size: 1.05rem;
-  border-radius: 14px;
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
+  padding: 0 22px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  gap: 8px;
   font-weight: 700;
 }
 
@@ -1786,8 +1819,8 @@ button, input, select, textarea {
   }
 
   .bma-pill-badge {
-    font-size: 0.68rem;
-    padding: 2px 7px;
+    font-size: var(--font-size-xs, 0.78rem);
+    padding: 2px 8px;
   }
 
   .content-body {

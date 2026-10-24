@@ -1,7 +1,7 @@
 <template>
   <div class="projects-master-container" :class="{ 'is-preview-mode': previewMode }">
     <!-- Top Interactive Filter & Quick Search Bar -->
-    <Teleport to="#step1-map-toolbar">
+    <Teleport :to="canTeleportToolbar ? '#step1-map-toolbar' : 'body'" :disabled="!canTeleportToolbar">
     <div v-if="!previewMode" class="master-map-top-bar">
       <div class="master-map-tools-right">
         <!-- Search Input with Clear Button -->
@@ -50,7 +50,7 @@
             <div class="filter-field-group">
               <span class="filter-field-label">หมวดหมู่</span>
               <AppSelect
-                :model-value="categoryFilter || ''"
+                :model-value="draftCategoryFilter"
                 :options="categoryOptions"
                 placeholder="เลือกหมวดหมู่"
                 @update:model-value="handleCategoryChange"
@@ -78,9 +78,9 @@
             <div class="map-filter-panel-footer">
               <div class="mfp-result-summary">
                 <span class="mfp-result-label">ผลลัพธ์:</span>
-                <span class="mfp-result-val"><strong>{{ filteredProjectCount }}</strong> โครงการ</span>
+                <span class="mfp-result-val"><strong>{{ previewFilteredProjectCount }}</strong> โครงการ</span>
                 <span class="mfp-result-dot">·</span>
-                <span class="mfp-result-stalls"><strong>{{ filteredStallCount.toLocaleString() }}</strong> แผง</span>
+                <span class="mfp-result-stalls"><strong>{{ previewFilteredStallCount.toLocaleString() }}</strong> แผง</span>
               </div>
               <div class="mfp-action-grid">
                 <button
@@ -105,7 +105,7 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
-                  <span>ค้นหา ({{ filteredProjectCount }})</span>
+                  <span>ค้นหา ({{ previewFilteredProjectCount }})</span>
                 </button>
               </div>
             </div>
@@ -181,6 +181,33 @@
 
       <!-- Floating Map Top Controls: แผนที่ vs ดาวเทียม & ปุ่มปรับกึ่งกลาง (มุมซ้ายบน) -->
       <div class="map-floating-top-controls">
+        <div
+          v-if="marketFloors.length > 1 && !activeProject"
+          class="market-floor-switcher"
+          aria-label="เลือกระดับชั้นของตลาด"
+        >
+          <button
+            type="button"
+            class="market-floor-tab"
+            :class="{ active: selectedMarketFloorId === 'all' }"
+            title="แสดงโครงการจากทุกชั้น"
+            @click="selectMarketFloor('all')"
+          >
+            ทั้งหมด
+          </button>
+          <button
+            v-for="floor in marketFloors"
+            :key="floor.id"
+            type="button"
+            class="market-floor-tab"
+            :class="{ active: selectedMarketFloorId === floor.id }"
+            :title="`${getFloorDisplayLabel(floor)} · ${floor.projectCount} โครงการ · ${floor.stallCount.toLocaleString()} แผง`"
+            @click="selectMarketFloor(floor.id)"
+          >
+            {{ getFloorDisplayLabel(floor) }}
+          </button>
+        </div>
+
         <div class="map-floating-style-switcher">
           <button
             type="button"
@@ -235,7 +262,7 @@
               :class="{ active: currentFloorId === fl.id }"
               @click="switchFloor(fl.id)"
             >
-              {{ fl.shortLabel }}
+              {{ getFloorDisplayLabel(fl) }}
             </button>
           </div>
         </div>
@@ -303,12 +330,12 @@
                 @click="selectFloorFromDialog(floor.id)"
               >
                 <span class="fsc-pillar" :class="{ 'is-full': getFloorLayout(floorSelectorProject, floor.id).available === 0 && getFloorLayout(floorSelectorProject, floor.id).reserved === 0 }">
-                  <span class="fsc-pillar-level">{{ floor.shortLabel }}</span>
-                  <span class="fsc-pillar-badge">ชั้น {{ floor.level }}</span>
+                  <span class="fsc-pillar-level">{{ getFloorDisplayLabel(floor) }}</span>
+                  <span class="fsc-pillar-badge">ระดับ {{ floor.level }}</span>
                 </span>
                 <span class="fsc-floor-details">
                   <span class="fsc-floor-headline">
-                    <span class="fsc-floor-title-text">{{ floor.name }}</span>
+                    <span class="fsc-floor-title-text">{{ getFloorDisplayLabel(floor) }}</span>
                     <span v-if="getFloorLayout(floorSelectorProject, floor.id).available > 0" class="fsc-avail-chip">
                       <i class="fsc-chip-dot"></i>ว่าง {{ getFloorLayout(floorSelectorProject, floor.id).available }}
                     </span>
@@ -390,9 +417,9 @@
                 }"
                 @click="switchFloor(fl.id)"
               >
-                <span class="smp-seg-badge">{{ fl.shortLabel }}</span>
+                <span class="smp-seg-badge">{{ fl.level || fl.id }}</span>
                 <div class="smp-seg-info">
-                  <span class="smp-seg-name">{{ fl.shortLabel === '1F' ? 'ชั้น 1' : fl.shortLabel === '2F' ? 'ชั้น 2' : fl.shortLabel === '3F' ? 'ชั้น 3' : fl.name }}</span>
+                  <span class="smp-seg-name">{{ getFloorDisplayLabel(fl) }}</span>
                   <span v-if="getFloorAvailCount(fl.id) > 0" class="smp-seg-avail">ว่าง {{ getFloorAvailCount(fl.id) }}</span>
                   <span v-else-if="getFloorReservedCount(fl.id) > 0" class="smp-seg-avail is-queue">คิวสำรอง {{ getFloorReservedCount(fl.id) }}</span>
                   <span v-else class="smp-seg-avail is-full">เต็ม</span>
@@ -418,7 +445,7 @@
               class="sffb-switch-btn"
               @click="switchFloor(suggestedAvailableFloor.id)"
             >
-              <span>สลับไป {{ suggestedAvailableFloor.shortLabel }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
+              <span>สลับไป {{ getFloorDisplayLabel(suggestedAvailableFloor) }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
@@ -439,7 +466,7 @@
               class="sfqb-switch-btn"
               @click="switchFloor(suggestedAvailableFloor.id)"
             >
-              <span>หรือเลือกดูแผงว่างที่ {{ suggestedAvailableFloor.shortLabel }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
+              <span>หรือเลือกดูแผงว่างที่ {{ getFloorDisplayLabel(suggestedAvailableFloor) }} (ว่าง {{ getFloorAvailCount(suggestedAvailableFloor.id) }} แผง)</span>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
@@ -533,7 +560,7 @@
                   <polyline points="2 12 12 17 22 12"></polyline>
                 </svg>
                 <strong>คำอธิบายสีโครงการ</strong>
-                <span class="mflc-sub">ทั้งหมด {{ projects.length }} โครงการ</span>
+                <span class="mflc-sub">ทั้งหมด {{ overviewProjects.length }} โครงการ</span>
               </div>
               <button type="button" class="mflc-close-btn" @click="showColorLegend = false" title="ปิดหน้าต่าง">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -563,10 +590,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
-import { CHATUCHAK_PROJECTS, type ProjectZone, type ProjectFloor } from '../../data/chatuchak_real_polygons'
-import { getProjectStallLayout, getAllFloorLayoutsForProject, type MapStall } from '../../data/chatuchak_stall_layout'
+import type { ProjectZone, ProjectFloor } from '../../data/market_gis_types'
+import { getProjectStallLayout, getAllFloorLayoutsForProject, isOverviewBoundaryProject, type MapStall, type ProjectStallLayout } from '../../data/market_stall_layout'
 import { getMarketGisConfig, type MarketGisConfig } from '../../data/markets_registry'
 import { loadMarketGisJson } from '../../data/market_loader'
 
@@ -575,8 +602,12 @@ export type { ProjectZone, ProjectFloor }
 const props = withDefaults(defineProps<{
   containerId?: string
   marketId?: string | number
+  marketFull?: boolean
   selectedProjectId?: string
   selectedStallCodes?: string[]
+  selectedStallKeys?: string[]
+  myBookedStallCodes?: string[]
+  stallStatusOverrides?: Record<string, 'available' | 'reserved' | 'occupied'>
   onlyAvailable?: boolean
   categoryFilter?: string | null
   mapStyle?: 'standard' | 'dark' | 'satellite'
@@ -584,8 +615,12 @@ const props = withDefaults(defineProps<{
 }>(), {
   containerId: 'step1-projects-maplibre',
   marketId: '1',
+  marketFull: false,
   selectedProjectId: undefined,
   selectedStallCodes: () => [],
+  selectedStallKeys: () => [],
+  myBookedStallCodes: () => [],
+  stallStatusOverrides: () => ({}),
   onlyAvailable: false,
   categoryFilter: null,
   mapStyle: 'standard',
@@ -621,6 +656,13 @@ const setMapStyle = (mode: 'standard' | 'satellite') => {
 const searchQuery = ref('')
 const rentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
 const availabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
+// Inputs keep draft values. The map only reads the applied values after the
+// user presses “ค้นหา”, so changing a dropdown never shifts the map mid-task.
+const draftCategoryFilter = ref(props.categoryFilter || '')
+const appliedCategoryFilter = ref(props.categoryFilter || '')
+const appliedSearchQuery = ref('')
+const appliedRentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
+const appliedAvailabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
 const showAdvancedFilters = ref(false)
 const showColorLegend = ref(false)
 
@@ -629,6 +671,117 @@ const currentMarketCenter = computed<[number, number]>(() => currentMarket.value
 const currentMarketZoom = computed<number>(() => currentMarket.value.overviewZoom)
 const currentMarketBearing = computed<number>(() => currentMarket.value.bearing ?? DEFAULT_BEARING)
 const currentMarketPitch = computed<number>(() => currentMarket.value.pitch ?? DEFAULT_PITCH)
+const selectedMarketFloorId = ref('all')
+
+type MarketFloorOption = ProjectFloor & {
+  projectCount: number
+  stallCount: number
+}
+
+// Prefer floor tags attached to the surveyed stalls. Project metadata can be
+// broader than the actual GIS content (Min Buri originally declared both
+// floors on every project even when its stalls existed on only one floor).
+const getProjectActualFloorIds = (project: ProjectZone): string[] => {
+  const stallFloorIds = Array.from(new Set(
+    (project.stalls || [])
+      .map(stall => stall.floor ?? stall.floorLevel)
+      .filter(floor => floor !== undefined && floor !== null && String(floor).trim())
+      .map(floor => String(floor))
+  ))
+  if (stallFloorIds.length) return stallFloorIds
+  return (project.floors || []).map(floor => String(floor.id))
+}
+
+const marketFloors = computed<MarketFloorOption[]>(() => {
+  const floors = new Map<string, MarketFloorOption>()
+  currentMarket.value.projects.forEach(project => {
+    getProjectActualFloorIds(project).forEach(floorId => {
+      const metadata = project.floors?.find(floor => String(floor.id) === floorId)
+      const existing = floors.get(floorId)
+      const stallCount = (project.stalls || []).filter(stall => (
+        String(stall.floor ?? stall.floorLevel ?? floorId) === floorId
+      )).length
+      if (existing) {
+        existing.projectCount += 1
+        existing.stallCount += stallCount
+        return
+      }
+      const level = metadata?.level ?? (Number(floorId) || floors.size + 1)
+      const thaiLevelLabel = `ชั้น ${level}`
+      floors.set(floorId, {
+        id: floorId,
+        name: metadata?.name || thaiLevelLabel,
+        shortLabel: metadata?.name || (metadata?.shortLabel && !/^\d+F$/i.test(metadata.shortLabel) ? metadata.shortLabel : thaiLevelLabel),
+        level,
+        projectCount: 1,
+        stallCount
+      })
+    })
+  })
+  return Array.from(floors.values()).sort((a, b) => a.level - b.level)
+})
+
+const getFloorDisplayLabel = (floor?: MarketFloorOption | ProjectFloor | { name?: string; shortLabel?: string; level?: number; id?: string | number } | null | string): string => {
+  if (!floor) return ''
+  if (typeof floor === 'string') {
+    const trimmed = floor.trim()
+    if (trimmed === 'ชั้นล่าง') return 'ชั้น 1'
+    if (trimmed === 'ชั้นบน') return 'ชั้น 2'
+    if (/^(\d+)F$/i.test(trimmed)) return `ชั้น ${trimmed.replace(/F/i, '')}`
+    if (/^B(\d+)$/i.test(trimmed)) return `ชั้นใต้ดิน B${trimmed.replace(/B/i, '')}`
+    if (/^G$/i.test(trimmed) || /^GF$/i.test(trimmed)) return 'ชั้น G'
+    if (trimmed.startsWith('ชั้น')) return trimmed
+    if (/^\d+$/.test(trimmed)) return `ชั้น ${trimmed}`
+    return trimmed
+  }
+
+  // 1. If name is available, clean and use it
+  if (floor.name) {
+    const rawName = floor.name.trim()
+    if (rawName === 'ชั้นล่าง') return 'ชั้น 1'
+    if (rawName === 'ชั้นบน') return 'ชั้น 2'
+    if (rawName === 'ชั้นลอย') return rawName
+    const matchFloor = rawName.match(/^(ชั้น\s*\d+|ชั้นล่าง|ชั้นบน|ชั้นลอย|ชั้น\s*[A-Za-z0-9]+)/)
+    if (matchFloor) {
+      return matchFloor[1]
+    }
+    if (rawName.startsWith('ชั้น')) {
+      const firstPart = rawName.split(/[\(\/]/)[0]?.trim()
+      if (firstPart) return firstPart
+    }
+    if (/^(\d+)F$/i.test(rawName)) return `ชั้น ${rawName.replace(/F/i, '')}`
+    if (/^B(\d+)$/i.test(rawName)) return `ชั้นใต้ดิน B${rawName.replace(/B/i, '')}`
+    if (/^G$/i.test(rawName) || /^GF$/i.test(rawName)) return 'ชั้น G'
+    if (rawName) return rawName
+  }
+
+  // 2. Use level
+  if (typeof floor.level === 'number' && !isNaN(floor.level)) {
+    return `ชั้น ${floor.level}`
+  }
+
+  // 3. Fallback to shortLabel translated to Thai
+  if (floor.shortLabel) {
+    const sl = floor.shortLabel.trim()
+    if (sl === 'ชั้นล่าง') return 'ชั้น 1'
+    if (sl === 'ชั้นบน') return 'ชั้น 2'
+    if (/^(\d+)F$/i.test(sl)) return `ชั้น ${sl.replace(/F/i, '')}`
+    if (/^B(\d+)$/i.test(sl)) return `ชั้นใต้ดิน B${sl.replace(/B/i, '')}`
+    if (/^G$/i.test(sl) || /^GF$/i.test(sl)) return 'ชั้น G'
+    if (sl.startsWith('ชั้น')) return sl
+    if (/^\d+$/.test(sl)) return `ชั้น ${sl}`
+  }
+
+  // 4. Fallback to id
+  if (floor.id) {
+    const idStr = String(floor.id).trim()
+    if (/^\d+$/.test(idStr)) return `ชั้น ${idStr}`
+    if (idStr.startsWith('ชั้น')) return idStr
+    return `ชั้น ${idStr}`
+  }
+
+  return 'ชั้น 1'
+}
 
 type LngLat = [number, number]
 
@@ -658,16 +811,6 @@ const projectFootprintArea = (project: ProjectZone): number => {
   return Math.abs(twiceArea) / 2
 }
 
-const isOverviewBoundary = (candidate: ProjectZone, source: ProjectZone[]): boolean => {
-  const candidateArea = projectFootprintArea(candidate)
-  const containedProjects = source.filter(project => (
-    project.id !== candidate.id &&
-    candidateArea > projectFootprintArea(project) * 3 &&
-    pointInProject(project.centroid, candidate)
-  ))
-  return containedProjects.length >= 2
-}
-
 const syncMarketJson = async (idOrSlug?: string | number) => {
   const data = await loadMarketGisJson(idOrSlug)
   if (data) currentMarket.value = data
@@ -684,55 +827,144 @@ const categories = computed(() => {
   return Array.from(uniqueCats.entries()).map(([name, color]) => ({ name, color }))
 })
 
+// Apply the authoritative market-level state before any counter, color,
+// filter, tooltip or click handler consumes a stall layout.
+const applyMarketStatus = (layout: ProjectStallLayout): ProjectStallLayout => {
+  const stalls = layout.stalls.map(stall => ({
+    ...stall,
+    status: props.marketFull
+      ? 'occupied' as const
+      : (props.stallStatusOverrides[stall.code] || stall.status)
+  }))
+  const available = stalls.filter(stall => stall.status === 'available').length
+  const reserved = stalls.filter(stall => stall.status === 'reserved').length
+  return {
+    ...layout,
+    stalls,
+    available,
+    reserved,
+    occupied: stalls.length - available - reserved
+  }
+}
+
+const getEffectiveFloorLayoutsForProject = (project: ProjectZone): Map<string, ProjectStallLayout> => {
+  const effectiveLayouts = new Map<string, ProjectStallLayout>()
+  getAllFloorLayoutsForProject(project).forEach((layout, floorId) => {
+    effectiveLayouts.set(floorId, applyMarketStatus(layout))
+  })
+  return effectiveLayouts
+}
+
 // Sub-stall layouts generated for each project/zone in the active market
 const layouts = computed(() => {
-  return new Map(currentMarket.value.projects.map(p => [p.id, getProjectStallLayout(p)]))
+  return new Map(currentMarket.value.projects.map(p => [p.id, applyMarketStatus(getProjectStallLayout(p))]))
 })
 
 const projects = computed<ProjectZone[]>(() => {
   const sourceProjects = currentMarket.value.projects
-  return sourceProjects.filter(p => !isOverviewBoundary(p, sourceProjects)).map(p => {
+  return sourceProjects.filter(p => !isOverviewBoundaryProject(p, sourceProjects)).map(p => {
     const l = layouts.value.get(p.id)
     return { ...p, totalStalls: l ? l.total : p.totalStalls, stallsAvailable: l ? l.available : p.stallsAvailable }
   })
 })
 
-const matchesStallFilters = (stall: MapStall) => {
-  if (availabilityFilter.value !== 'all' && stall.status !== availabilityFilter.value) return false
-  if (rentFilter.value === 'under-2000' && stall.monthlyRent >= 2000) return false
-  if (rentFilter.value === '2000-3000' && (stall.monthlyRent < 2000 || stall.monthlyRent > 3000)) return false
-  if (rentFilter.value === 'over-3000' && stall.monthlyRent <= 3000) return false
+const overviewProjects = computed<ProjectZone[]>(() => {
+  if (marketFloors.value.length <= 1 || !selectedMarketFloorId.value || selectedMarketFloorId.value === 'all') return projects.value
+  return projects.value.filter(project => getProjectActualFloorIds(project).includes(selectedMarketFloorId.value))
+})
+
+const selectMarketFloor = (floorId: string) => {
+  if (selectedMarketFloorId.value === floorId) return
+  selectedMarketFloorId.value = floorId
+  hoveredProject.value = null
+  hoverPopup?.remove()
+  refreshSources()
+  map?.flyTo({
+    center: currentMarketCenter.value,
+    zoom: currentMarketZoom.value,
+    pitch: currentMarketPitch.value,
+    bearing: currentMarketBearing.value,
+    duration: 600
+  })
+}
+
+const matchesStallFiltersWith = (
+  stall: MapStall,
+  rent: typeof rentFilter.value,
+  availability: typeof availabilityFilter.value
+) => {
+  if (availability !== 'all' && stall.status !== availability) return false
+  if (rent === 'under-2000' && stall.monthlyRent >= 2000) return false
+  if (rent === '2000-3000' && (stall.monthlyRent < 2000 || stall.monthlyRent > 3000)) return false
+  if (rent === 'over-3000' && stall.monthlyRent <= 3000) return false
   return true
 }
 
-const projectHasMatchingStall = (project: ProjectZone) => {
-  return Array.from(getAllFloorLayoutsForProject(project).values())
-    .some(layout => layout.stalls.some(matchesStallFilters))
+const matchesStallFilters = (stall: MapStall) => matchesStallFiltersWith(
+  stall,
+  appliedRentFilter.value,
+  appliedAvailabilityFilter.value
+)
+
+const projectHasMatchingStallWith = (
+  project: ProjectZone,
+  rent: typeof rentFilter.value,
+  availability: typeof availabilityFilter.value
+) => {
+  return Array.from(getEffectiveFloorLayoutsForProject(project).values())
+    .some(layout => layout.stalls.some(stall => matchesStallFiltersWith(stall, rent, availability)))
 }
 
-const projectMatchesAllFilters = (project: ProjectZone) => {
-  const matchesCategory = !props.categoryFilter || project.category === props.categoryFilter
-  return matchesCategory && matchesSearch(project) && projectHasMatchingStall(project)
+const projectMatchesAllFiltersWith = (
+  project: ProjectZone,
+  category: string,
+  query: string,
+  rent: typeof rentFilter.value,
+  availability: typeof availabilityFilter.value
+) => {
+  const matchesCategory = !category || project.category === category
+  return matchesCategory && matchesSearchWith(project, query) && projectHasMatchingStallWith(project, rent, availability)
 }
 
-const filteredProjectCount = computed(() => projects.value.filter(projectMatchesAllFilters).length)
-const filteredStallCount = computed(() => projects.value.reduce((count, project) => {
-  if (!(!props.categoryFilter || project.category === props.categoryFilter) || !matchesSearch(project)) return count
-  return count + Array.from(getAllFloorLayoutsForProject(project).values())
+const projectMatchesAllFilters = (project: ProjectZone) => projectMatchesAllFiltersWith(
+  project,
+  appliedCategoryFilter.value,
+  appliedSearchQuery.value,
+  appliedRentFilter.value,
+  appliedAvailabilityFilter.value
+)
+
+const filteredProjectCount = computed(() => overviewProjects.value.filter(projectMatchesAllFilters).length)
+const filteredStallCount = computed(() => overviewProjects.value.reduce((count, project) => {
+  if (!projectMatchesAllFilters(project)) return count
+  return count + Array.from(getEffectiveFloorLayoutsForProject(project).values())
     .reduce((floorCount, layout) => floorCount + layout.stalls.filter(matchesStallFilters).length, 0)
 }, 0))
 
+const previewFilteredProjectCount = computed(() => overviewProjects.value.filter(project => projectMatchesAllFiltersWith(
+  project,
+  draftCategoryFilter.value,
+  searchQuery.value,
+  rentFilter.value,
+  availabilityFilter.value
+)).length)
+const previewFilteredStallCount = computed(() => overviewProjects.value.reduce((count, project) => {
+  if (!projectMatchesAllFiltersWith(project, draftCategoryFilter.value, searchQuery.value, rentFilter.value, availabilityFilter.value)) return count
+  return count + Array.from(getEffectiveFloorLayoutsForProject(project).values())
+    .reduce((floorCount, layout) => floorCount + layout.stalls.filter(stall => matchesStallFiltersWith(stall, rentFilter.value, availabilityFilter.value)).length, 0)
+}, 0))
+
 const hasActiveFilters = computed(() => Boolean(
-  props.categoryFilter || searchQuery.value.trim() || rentFilter.value !== 'all' || availabilityFilter.value !== 'all'
+  appliedCategoryFilter.value || appliedSearchQuery.value.trim() || appliedRentFilter.value !== 'all' || appliedAvailabilityFilter.value !== 'all'
 ))
-const advancedFilterCount = computed(() => [props.categoryFilter, rentFilter.value !== 'all', availabilityFilter.value !== 'all'].filter(Boolean).length)
+const advancedFilterCount = computed(() => [appliedCategoryFilter.value, appliedRentFilter.value !== 'all', appliedAvailabilityFilter.value !== 'all'].filter(Boolean).length)
 const hasAdvancedFilters = computed(() => advancedFilterCount.value > 0)
 
 // Category legend (read-only): สี → หมวดหมู่ → เลขโครงการ
 const categoryStats = computed(() => {
   return categories.value
     .map(cat => {
-      const projs = projects.value.filter(p => p.category === cat.name)
+      const projs = overviewProjects.value.filter(p => p.category === cat.name)
       return {
         ...cat,
         projectCount: projs.length,
@@ -743,7 +975,7 @@ const categoryStats = computed(() => {
 })
 
 const categoryOptions = computed<SelectOption[]>(() => [
-  { value: '', label: `ทุกหมวดหมู่ (${projects.value.length} โครงการ)` },
+  { value: '', label: `ทุกหมวดหมู่ (${overviewProjects.value.length} โครงการ)` },
   ...categoryStats.value.map(cat => ({
     value: cat.name,
     label: `${cat.name} (${cat.projectCount})`
@@ -764,12 +996,14 @@ const availabilityOptions: SelectOption[] = [
 ]
 
 const handleCategoryChange = (val: string | number) => {
-  emit('update:categoryFilter', val ? String(val) : null)
+  draftCategoryFilter.value = val ? String(val) : ''
 }
 
 // ---------------- Project drill-down state ----------------
 const hoveredProject = ref<ProjectZone | null>(null)
+const hoveredStallKey = ref<string | null>(null)
 const activeProjectId = ref<string | null>(null)
+const marketFloorBeforeProject = ref('all')
 const currentFloorId = ref<string>('1')
 const floorSelectorProject = ref<ProjectZone | null>(null)
 
@@ -812,18 +1046,18 @@ const currentFloorObject = computed<ProjectFloor | null>(() => {
 
 const activeLayout = computed(() => {
   if (!activeProjectId.value || !activeProject.value) return null
-  return getProjectStallLayout(activeProject.value, currentFloorId.value)
+  return applyMarketStatus(getProjectStallLayout(activeProject.value, currentFloorId.value))
 })
 
 const getFloorAvailCount = (floorId: string): number => {
   if (!activeProject.value) return 0
-  const layout = getProjectStallLayout(activeProject.value, floorId)
+  const layout = applyMarketStatus(getProjectStallLayout(activeProject.value, floorId))
   return layout.available
 }
 
 const getFloorReservedCount = (floorId: string): number => {
   if (!activeProject.value) return 0
-  const layout = getProjectStallLayout(activeProject.value, floorId)
+  const layout = applyMarketStatus(getProjectStallLayout(activeProject.value, floorId))
   return layout.reserved
 }
 
@@ -833,19 +1067,20 @@ const suggestedAvailableFloor = computed<ProjectFloor | null>(() => {
 })
 
 const getFloorLayout = (project: ProjectZone, floorId: string) => {
-  return getProjectStallLayout(project, floorId)
+  return applyMarketStatus(getProjectStallLayout(project, floorId))
 }
 
 const switchFloor = (floorId: string) => {
   if (currentFloorId.value === floorId) return
   currentFloorId.value = floorId
+  setHoveredStall(null)
   hoverPopup?.remove()
   refreshSources()
   renderSelectedStallPins()
 }
 
 const currentProjectInfo = computed<ProjectZone | null>(() => {
-  return activeProject.value || hoveredProject.value || projects.value[0] || null
+  return activeProject.value || hoveredProject.value || overviewProjects.value[0] || null
 })
 
 const currentProjectLayout = computed(() => (currentProjectInfo.value ? layouts.value.get(currentProjectInfo.value.id) || null : null))
@@ -869,18 +1104,30 @@ const filteredStalls = computed(() => {
   return list
 })
 
-const isStallSelected = (code: string) => {
-  return (props.selectedStallCodes || []).includes(code)
+const getStallSelectionKey = (stall: MapStall): string => stall.selectionId || stall.code
+const isStallSelected = (stall: MapStall): boolean => {
+  const selectedKeys = props.selectedStallKeys?.length ? props.selectedStallKeys : props.selectedStallCodes
+  return (selectedKeys || []).includes(getStallSelectionKey(stall))
+}
+
+const setHoveredStall = (stall: MapStall | null) => {
+  const nextKey = stall ? getStallSelectionKey(stall) : null
+  if (hoveredStallKey.value === nextKey) return
+  hoveredStallKey.value = nextKey
+  map?.getSource('project-stalls')?.setData(getStallsGeoJson())
 }
 
 const handleStallCardHover = (stall: MapStall) => {
   if (!map || !hoverPopup) return
-  map.getCanvas().style.cursor = stall.status === 'occupied' ? 'not-allowed' : 'pointer'
+  setHoveredStall(stall)
+  const isMyBooked = !props.previewMode && (props.myBookedStallCodes || []).includes(stall.code)
+  map.getCanvas().style.cursor = (stall.status === 'occupied' || isMyBooked) ? 'not-allowed' : 'pointer'
   showPopupForStall(stall)
 }
 
 const handleStallCardLeave = () => {
   if (!map) return
+  setHoveredStall(null)
   map.getCanvas().style.cursor = ''
   hoverPopup?.remove()
 }
@@ -901,6 +1148,7 @@ watch([stallSearchQuery, stallFilterTab], () => {
 let maplibregl: any = null
 let map: any = null
 let projectMarkers: any[] = []
+const projectMarkerElements = new Map<string, HTMLElement>()
 let hoverPopup: any = null
 
 // Interior label point (inside the polygon frame, not the vertex average)
@@ -1146,14 +1394,16 @@ const initMap = () => {
 
 // ---------------- GeoJSON builders ----------------
 const isProjectDimmed = (p: ProjectZone) => {
-  const matchesCategory = !props.categoryFilter || p.category === props.categoryFilter
-  return !(matchesCategory && matchesSearch(p))
+  // A project is only prominent when it has at least one stall that matches
+  // every active filter. Previously this considered only category/search, so
+  // filtering by status or rent left unrelated projects fully saturated.
+  return !projectMatchesAllFilters(p)
 }
 
 const getProjectsGeoJson = () => {
   return {
     type: 'FeatureCollection',
-    features: projects.value.map((p, index) => {
+    features: overviewProjects.value.map((p, index) => {
       const isActive = activeProjectId.value === p.id
       const isOtherWhileActive = Boolean(activeProjectId.value) && !isActive
 
@@ -1182,11 +1432,10 @@ const getProjectsGeoJson = () => {
 
 const getStallsGeoJson = () => {
   const layout = activeLayout.value
-  const selected = new Set(props.selectedStallCodes || [])
   return {
     type: 'FeatureCollection',
     features: (layout?.stalls || []).map((s, idx) => {
-      const isSelected = selected.has(s.code)
+      const isSelected = isStallSelected(s)
       return {
         type: 'Feature',
         id: idx + 1,
@@ -1198,6 +1447,7 @@ const getStallsGeoJson = () => {
           code: s.code,
           status: s.status,
           isSelected,
+          isHovered: hoveredStallKey.value === getStallSelectionKey(s),
           floor: s.floor,
           floorName: s.floorName,
           isDimmed: !matchesStallFilters(s)
@@ -1211,7 +1461,7 @@ const getStallsGeoJson = () => {
 const setupProjectLayers = () => {
   if (!map) return
 
-  ;['stalls-selected-stroke', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
+  ;['projects-hover-outline', 'projects-hover-casing', 'projects-active-outline', 'stalls-selected-stroke', 'stalls-hover-stroke', 'stalls-hover-casing', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id)
   })
   ;['projects-polygons', 'project-stalls'].forEach(id => {
@@ -1320,6 +1570,52 @@ const setupProjectLayers = () => {
     }
   })
 
+  // Keep the real status colour visible and identify the exact stall being
+  // inspected with a white halo and a blue focus outline.
+  map.addLayer({
+    id: 'stalls-hover-casing',
+    type: 'line',
+    source: 'project-stalls',
+    filter: ['boolean', ['get', 'isHovered'], false],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 2.4,
+        16, 3.2,
+        18, 4,
+        20, 5
+      ],
+      'line-opacity': 1
+    }
+  })
+
+  map.addLayer({
+    id: 'stalls-hover-stroke',
+    type: 'line',
+    source: 'project-stalls',
+    filter: ['boolean', ['get', 'isHovered'], false],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#2563eb',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 1.2,
+        16, 1.6,
+        18, 2.2,
+        20, 3
+      ],
+      'line-opacity': 1
+    }
+  })
+
   // เส้นขอบแผงที่ถูกเลือก (Selected Stall Stroke) - สีน้ำเงินสดเด่นชัด
   map.addLayer({
     id: 'stalls-selected-stroke',
@@ -1338,6 +1634,78 @@ const setupProjectLayers = () => {
         16, 3.2,
         18, 4.4,
         20, 5.8
+      ],
+      'line-opacity': 1
+    }
+  })
+
+  // Imported market stalls often touch the project boundary. Their white
+  // separators would otherwise paint over the blue outline and make it look
+  // broken. Redraw only the active project's outline above every stall layer.
+  map.addLayer({
+    id: 'projects-active-outline',
+    type: 'line',
+    source: 'projects-polygons',
+    filter: ['==', ['get', 'isActive'], true],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#2563eb',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 2.4,
+        16, 3.2,
+        18, 4,
+        20, 5
+      ],
+      'line-opacity': 1
+    }
+  })
+
+  // Project polygons live below the active project's stall layers. Draw the
+  // hovered project once more on top so overlapping zones still visibly react
+  // together with their number badge.
+  map.addLayer({
+    id: 'projects-hover-casing',
+    type: 'line',
+    source: 'projects-polygons',
+    filter: ['==', ['get', 'isHovered'], true],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 6,
+        16, 8,
+        18, 10,
+        20, 12
+      ],
+      'line-opacity': 1
+    }
+  })
+
+  map.addLayer({
+    id: 'projects-hover-outline',
+    type: 'line',
+    source: 'projects-polygons',
+    filter: ['==', ['get', 'isHovered'], true],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#2563eb',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 3,
+        16, 4,
+        18, 5.5,
+        20, 7
       ],
       'line-opacity': 1
     }
@@ -1373,13 +1741,6 @@ const ICONS = {
   arrow: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>',
   lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
   clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
-}
-
-// Calculate deterministic waiting queue count (e.g. 1 or 2 queues in line)
-const getStallQueueCount = (code: string): number => {
-  let hash = 0
-  for (let i = 0; i < code.length; i++) hash = ((hash << 5) - hash) + code.charCodeAt(i)
-  return (Math.abs(hash) % 3 === 0 ? 2 : 1)
 }
 
 const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
@@ -1462,33 +1823,38 @@ const getStallDisplayPhoto = (s: MapStall): string => {
 
 const showPopupForStall = (s: MapStall) => {
   const meta = statusMeta[s.status]
-  const selected = (props.selectedStallCodes || []).includes(s.code)
+  const selected = isStallSelected(s)
+  const isMyBooked = !props.previewMode && (props.myBookedStallCodes || []).includes(s.code)
   const isReserved = s.status === 'reserved'
-  const queueCount = isReserved ? getStallQueueCount(s.code) : 0
-  const nextQueue = queueCount + 1
   const photoUrl = getStallDisplayPhoto(s)
 
   const statusLabel = selected
     ? 'เลือกแล้ว'
-    : isReserved
-      ? (queueCount > 0 ? `ติดจอง ${queueCount} คิว` : 'ติดจอง')
-      : meta.label
+    : isMyBooked
+      ? 'คุณจองแผงนี้แล้ว'
+      : isReserved
+        ? 'ติดจอง'
+        : meta.label
 
   const accent = selected
     ? '#2563eb'
-    : s.status === 'available'
-      ? '#10b981'
-      : isReserved
-        ? '#f59e0b'
-        : '#cbd5e1'
+    : isMyBooked
+      ? '#dc2626'
+      : s.status === 'available'
+        ? '#10b981'
+        : isReserved
+          ? '#f59e0b'
+          : '#cbd5e1'
 
   const ctaText = s.status === 'occupied'
     ? 'แผงนี้มีผู้เช่าแล้ว ไม่สามารถเลือกได้'
-    : selected
-      ? 'คลิกอีกครั้งเพื่อยกเลิกการเลือก'
-      : isReserved
-        ? `คลิกเพื่อเข้าคิวสำรองแผงนี้ (คุณจะได้เป็นคิวที่ ${nextQueue})`
-        : 'คลิกเพื่อเลือกแผงนี้'
+    : isMyBooked
+      ? 'คุณมีรายการจอง/คิวสำรองในแผงนี้แล้ว ไม่สามารถจองซ้ำได้'
+      : selected
+        ? 'คลิกอีกครั้งเพื่อยกเลิกการเลือก'
+        : isReserved
+          ? 'คลิกเพื่อลงทะเบียนคิวสำรองแผงนี้'
+          : 'คลิกเพื่อเลือกแผงนี้'
 
   hoverPopup.setLngLat(s.center).setHTML(`
     <div class="mlp" style="--mlp-accent:${accent}">
@@ -1517,7 +1883,7 @@ const showPopupForStall = (s: MapStall) => {
               <strong>แผง ${s.code}</strong>
             </span>
           </div>
-          <span class="mlp-pill ${isReserved ? 'is-reserved' : ''}" style="background:${selected ? '#eff6ff' : meta.bg};color:${selected ? '#2563eb' : meta.fg}">
+          <span class="mlp-pill ${isReserved ? 'is-reserved' : ''}" style="background:${selected ? '#eff6ff' : isMyBooked ? '#fee2e2' : meta.bg};color:${selected ? '#2563eb' : isMyBooked ? '#dc2626' : meta.fg}">
             ${statusLabel}
           </span>
         </div>
@@ -1547,8 +1913,8 @@ const showPopupForStall = (s: MapStall) => {
           <div class="mlp-queue-box">
             <div class="mlp-queue-icon">${ICONS.clock}</div>
             <div class="mlp-queue-content">
-              <div class="mlp-queue-title">ติดจองอยู่ <b>${queueCount} คิว</b></div>
-              <div class="mlp-queue-desc">หากคุณจองแผงนี้ จะได้สิทธิ์เป็น <b>คิวสำรองที่ ${nextQueue}</b></div>
+              <div class="mlp-queue-title">แผงนี้อยู่ระหว่างการจอง</div>
+              <div class="mlp-queue-desc">คุณสามารถลงทะเบียนคิวสำรองได้ หากผู้จองหลักสละสิทธิ์</div>
             </div>
           </div>
         ` : ''}
@@ -1572,7 +1938,7 @@ const renderSelectedStallPins = () => {
   if (props.previewMode && bookedProject.value && activeProjectId.value !== bookedProjectId.value) {
     // หากอยู่ใน Step 3 แต่กำลังคลิกดูโครงการอื่น ให้ปักหมุด Beacon นำทางบนโครงการที่มีแผงที่จองไว้
     const bLayout = layouts.value.get(bookedProjectId.value || '')
-    const bookedStallsList = (bLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
+    const bookedStallsList = (bLayout?.stalls || []).filter(isStallSelected)
     const pinLocation: [number, number] = bookedStallsList.length > 0
       ? bookedStallsList[0].center
       : bookedProject.value.center
@@ -1603,8 +1969,8 @@ const focusBookedStalls = () => {
   if (!targetProject) return
   if (targetProject.floors && targetProject.floors.length > 0 && props.selectedStallCodes?.length) {
     for (const fl of targetProject.floors) {
-      const flLayout = getProjectStallLayout(targetProject, fl.id)
-      if (flLayout.stalls.some(s => props.selectedStallCodes.includes(s.code))) {
+      const flLayout = applyMarketStatus(getProjectStallLayout(targetProject, fl.id))
+      if (flLayout.stalls.some(isStallSelected)) {
         currentFloorId.value = fl.id
         break
       }
@@ -1619,7 +1985,7 @@ const recenterMapView = () => {
   if (activeProject.value) {
     const p = activeProject.value
     const pLayout = layouts.value.get(p.id) || activeLayout.value
-    const selectedStallsList = (pLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
+    const selectedStallsList = (pLayout?.stalls || []).filter(isStallSelected)
     const stallBounds = props.previewMode && selectedStallsList.length > 0 ? getStallsBounds(selectedStallsList) : null
 
     map.fitBounds(stallBounds || getProjectBounds(p), {
@@ -1665,8 +2031,16 @@ const selectFloorFromDialog = (floorId: string) => {
 const enterProject = (p: ProjectZone, directToFloor?: string) => {
   floorSelectorProject.value = null
   hoverPopup?.remove()
+  if (!activeProjectId.value) marketFloorBeforeProject.value = selectedMarketFloorId.value
+  const projectFloorIds = getProjectActualFloorIds(p)
+  if (marketFloors.value.length > 1 && !projectFloorIds.includes(selectedMarketFloorId.value)) {
+    selectedMarketFloorId.value = directToFloor && projectFloorIds.includes(directToFloor)
+      ? directToFloor
+      : (projectFloorIds[0] || marketFloors.value[0]?.id || '')
+  }
   activeProjectId.value = p.id
   hoveredProject.value = null
+  hoveredStallKey.value = null
 
   if (directToFloor) {
     currentFloorId.value = directToFloor
@@ -1680,7 +2054,7 @@ const enterProject = (p: ProjectZone, directToFloor?: string) => {
   setBuildingsOpacity(BUILDINGS_OPACITY_DRILL)
 
   const pLayout = layouts.value.get(p.id) || activeLayout.value
-  const selectedStallsList = (pLayout?.stalls || []).filter(s => (props.selectedStallCodes || []).includes(s.code))
+  const selectedStallsList = (pLayout?.stalls || []).filter(isStallSelected)
   const stallBounds = props.previewMode && selectedStallsList.length > 0 ? getStallsBounds(selectedStallsList) : null
 
   map?.fitBounds(stallBounds || getProjectBounds(p), {
@@ -1700,7 +2074,9 @@ const exitProject = () => {
   floorSelectorProject.value = null
   hoverPopup?.remove()
   activeProjectId.value = null
+  hoveredStallKey.value = null
   currentFloorId.value = '1'
+  selectedMarketFloorId.value = marketFloorBeforeProject.value
   refreshSources()
   setBuildingsOpacity(BUILDINGS_OPACITY)
   map?.flyTo({
@@ -1722,7 +2098,7 @@ const findStall = (code: string): MapStall | null => {
   if (inCurrent) return inCurrent
   if (activeProject.value.floors && activeProject.value.floors.length > 1) {
     for (const fl of activeProject.value.floors) {
-      const flLayout = getProjectStallLayout(activeProject.value, fl.id)
+      const flLayout = applyMarketStatus(getProjectStallLayout(activeProject.value, fl.id))
       const found = flLayout.stalls.find(s => s.code === code)
       if (found) return found
     }
@@ -1746,6 +2122,9 @@ const getStallFromFeature = (feature: any): MapStall | null => {
 }
 
 const setHoveredProject = (project: ProjectZone | null) => {
+  projectMarkerElements.forEach((element, projectId) => {
+    element.classList.toggle('is-project-hovered', projectId === project?.id)
+  })
   if (hoveredProject.value?.id === project?.id) return
   hoveredProject.value = project
   // Update just the project source so the polygon outline follows the cursor.
@@ -1778,10 +2157,14 @@ const bindMapEvents = () => {
     if (stallHit.length) {
       setHoveredProject(null)
       const s = getStallFromFeature(stallHit[0])
-      map.getCanvas().style.cursor = s && s.status !== 'occupied' ? 'pointer' : 'not-allowed'
+      setHoveredStall(s)
+      const isMyBooked = Boolean(s && !props.previewMode && (props.myBookedStallCodes || []).includes(s.code))
+      map.getCanvas().style.cursor = s && s.status !== 'occupied' && !isMyBooked ? 'pointer' : 'not-allowed'
       if (s) showPopupForStall(s)
       return
     }
+
+    setHoveredStall(null)
 
     const projHit = map.getLayer('projects-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['projects-fill'] })
@@ -1800,6 +2183,7 @@ const bindMapEvents = () => {
 
   map.on('mouseout', () => {
     setHoveredProject(null)
+    setHoveredStall(null)
     hoverPopup?.remove()
   })
 
@@ -1836,32 +2220,110 @@ const renderZoneLabels = () => {
   if (!map || !maplibregl) return
   projectMarkers.forEach(m => m.remove())
   projectMarkers = []
+  projectMarkerElements.clear()
 
   const zoom = map.getZoom()
-  const visibleProjects = projects.value.filter(p => p.id !== activeProjectId.value && !isProjectDimmed(p))
+  const visibleProjects = overviewProjects.value.filter(p => p.id !== activeProjectId.value && !isProjectDimmed(p))
   const useCompactLabels = zoom < 18.2
 
   // At broad zoom, use only small project numbers. They preserve the map context
   // while making it explicit that each coloured frame is a selectable project.
   if (zoom < 15.5) return
 
-  visibleProjects.forEach((p) => {
+  const labelPoints = visibleProjects.map(project => ({
+    project,
+    point: map.project(projectToLngLat(project))
+  }))
+  const placedBoxes: Array<{ left: number; right: number; top: number; bottom: number }> = []
+  const compactOffsets: Array<[number, number]> = [
+    [0, 0], [0, -28], [28, 0], [0, 28], [-28, 0],
+    [28, -28], [28, 28], [-28, 28], [-28, -28],
+    [0, -56], [56, 0], [0, 56], [-56, 0],
+    [56, -28], [56, 28], [-56, 28], [-56, -28]
+  ]
+  const boxesOverlap = (
+    a: { left: number; right: number; top: number; bottom: number },
+    b: { left: number; right: number; top: number; bottom: number }
+  ) => !(a.right + 4 < b.left || a.left > b.right + 4 || a.bottom + 4 < b.top || a.top > b.bottom + 4)
+
+  labelPoints.forEach(({ project: p, point }, index) => {
+    const showFloorContext = marketFloors.value.length > 1 && selectedMarketFloorId.value === 'all'
+    const projectFloorLabel = getProjectActualFloorIds(p)
+      .map(floorId => {
+        const fl = marketFloors.value.find(floor => floor.id === floorId)
+        return getFloorDisplayLabel(fl || floorId)
+      })
+      .join('/')
+    const floorContextWidth = showFloorContext ? projectFloorLabel.length * 7 + 14 : 0
+    const fullWidth = 78 + String(p.sectionNumber).length * 7 + floorContextWidth
+    const hasNearbyLabel = labelPoints.some(({ point: otherPoint }, otherIndex) => (
+      otherIndex !== index &&
+      Math.abs(point.x - otherPoint.x) < fullWidth + 12 &&
+      Math.abs(point.y - otherPoint.y) < 34
+    ))
+    const isCompact = useCompactLabels || hasNearbyLabel
+    const labelWidth = isCompact
+      ? Math.max(22, String(p.sectionNumber).length * 7 + 10 + floorContextWidth)
+      : fullWidth
+    const labelHeight = isCompact ? 22 : 28
+    const offsets = isCompact ? compactOffsets : [[0, 0] as [number, number]]
+    let markerOffset: [number, number] | null = null
+
+    for (const offset of offsets) {
+      const centerX = point.x + offset[0]
+      const centerY = point.y + offset[1]
+      const box = {
+        left: centerX - labelWidth / 2,
+        right: centerX + labelWidth / 2,
+        top: centerY - labelHeight / 2,
+        bottom: centerY + labelHeight / 2
+      }
+      if (!placedBoxes.some(placed => boxesOverlap(box, placed))) {
+        placedBoxes.push(box)
+        markerOffset = offset
+        break
+      }
+    }
+
+    // Extremely dense clusters can exhaust every safe offset. In that case,
+    // skip the duplicate badge instead of drawing unreadable text on top.
+    if (!markerOffset) return
 
     const el = document.createElement('div')
     el.className = 'maplibre-zone-number-badge'
-    if (useCompactLabels) el.classList.add('is-compact')
+    if (isCompact) el.classList.add('is-compact')
+    if (showFloorContext) el.classList.add('has-floor-context')
+    if (hoveredProject.value?.id === p.id) el.classList.add('is-project-hovered')
+    el.title = p.name
+    projectMarkerElements.set(p.id, el)
 
     el.innerHTML = `
       <div class="zone-badge-inner">
-        <span class="badge-num">${useCompactLabels ? p.sectionNumber : `โครงการที่ ${p.sectionNumber}`}</span>
+        <span class="badge-num">${isCompact ? p.sectionNumber : `โครงการที่ ${p.sectionNumber}`}</span>
+        ${showFloorContext ? `<span class="badge-floor">${projectFloorLabel}</span>` : ''}
       </div>
     `
     el.addEventListener('click', (ev) => {
       ev.stopPropagation()
       openProject(p)
     })
+    el.addEventListener('mouseenter', () => {
+      setHoveredProject(p)
+      map.getCanvas().style.cursor = 'pointer'
+      const projectPoint = map.project(projectToLngLat(p))
+      const popupPoint = map.unproject([
+        projectPoint.x + markerOffset[0],
+        projectPoint.y + markerOffset[1]
+      ])
+      showPopupForProject(p, [popupPoint.lng, popupPoint.lat])
+    })
+    el.addEventListener('mouseleave', () => {
+      if (hoveredProject.value?.id === p.id) setHoveredProject(null)
+      map.getCanvas().style.cursor = ''
+      hoverPopup?.remove()
+    })
 
-    const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+    const marker = new maplibregl.Marker({ element: el, anchor: 'center', offset: markerOffset })
       .setLngLat(projectToLngLat(p))
       .addTo(map)
 
@@ -1869,8 +2331,8 @@ const renderZoneLabels = () => {
   })
 }
 
-const matchesSearch = (p: ProjectZone): boolean => {
-  const query = searchQuery.value.trim().toLowerCase()
+const matchesSearchWith = (p: ProjectZone, value: string): boolean => {
+  const query = value.trim().toLowerCase()
   if (!query) return true
   if (p.name.toLowerCase().includes(query)) return true
   if (p.category.toLowerCase().includes(query)) return true
@@ -1880,18 +2342,20 @@ const matchesSearch = (p: ProjectZone): boolean => {
   return false
 }
 
+const matchesSearch = (p: ProjectZone): boolean => matchesSearchWith(p, appliedSearchQuery.value)
+
 const handleSearchInput = () => {
+  appliedSearchQuery.value = searchQuery.value
   refreshSources()
   if (searchQuery.value.trim() && map && !activeProjectId.value) {
-    const found = projects.value.find(p => matchesSearch(p))
-    if (found) {
-      map.flyTo({ center: projectToLngLat(found), zoom: 17.5, duration: 800 })
-    }
+    const found = overviewProjects.value.find(projectMatchesAllFilters)
+    if (found) map.flyTo({ center: projectToLngLat(found), zoom: 17.5, duration: 800 })
   }
 }
 
 const clearSearch = () => {
   searchQuery.value = ''
+  appliedSearchQuery.value = ''
   refreshSources()
   if (map && !activeProjectId.value) {
     map.flyTo({ center: currentMarketCenter.value, zoom: currentMarketZoom.value, duration: 800 })
@@ -1902,26 +2366,37 @@ const clearAllFilters = () => {
   searchQuery.value = ''
   rentFilter.value = 'all'
   availabilityFilter.value = 'all'
+  draftCategoryFilter.value = ''
+  appliedSearchQuery.value = ''
+  appliedRentFilter.value = 'all'
+  appliedAvailabilityFilter.value = 'all'
+  appliedCategoryFilter.value = ''
   emit('update:categoryFilter', null)
   refreshSources()
 }
 
 const applyFilters = () => {
+  appliedSearchQuery.value = searchQuery.value
+  appliedRentFilter.value = rentFilter.value
+  appliedAvailabilityFilter.value = availabilityFilter.value
+  appliedCategoryFilter.value = draftCategoryFilter.value
+  emit('update:categoryFilter', draftCategoryFilter.value || null)
+  emit('update:onlyAvailable', availabilityFilter.value === 'available')
   showAdvancedFilters.value = false
   refreshSources()
+  if (appliedSearchQuery.value.trim() && map && !activeProjectId.value) {
+    const found = overviewProjects.value.find(projectMatchesAllFilters)
+    if (found) map.flyTo({ center: projectToLngLat(found), zoom: 17.5, duration: 800 })
+  }
 }
 
 const toggleCategoryFilter = (catName: string) => {
-  if (props.categoryFilter === catName || !catName) {
-    emit('update:categoryFilter', null)
-  } else {
-    emit('update:categoryFilter', catName)
-  }
+  draftCategoryFilter.value = draftCategoryFilter.value === catName || !catName ? '' : catName
 }
 
 const handleCategorySelect = (e: Event) => {
   const target = e.target as HTMLSelectElement
-  emit('update:categoryFilter', target.value || null)
+  draftCategoryFilter.value = target.value || ''
 }
 
 // Watchers for reactive updates
@@ -1932,23 +2407,34 @@ watch(() => props.mapStyle, (newStyle) => {
   }
 })
 
-watch(() => [props.categoryFilter, rentFilter.value, availabilityFilter.value], () => refreshSources())
-
-watch(availabilityFilter, (status) => {
-  // Keep the parent state compatible with the existing map/stall UI.
-  emit('update:onlyAvailable', status === 'available')
+watch(() => props.categoryFilter, (category) => {
+  const value = category || ''
+  draftCategoryFilter.value = value
+  appliedCategoryFilter.value = value
+  refreshSources()
 })
 
 watch(() => props.onlyAvailable, (onlyAvailable) => {
-  // The quick checkbox beside the Step 1 heading controls the default view.
-  if (onlyAvailable) availabilityFilter.value = 'available'
-  else if (availabilityFilter.value === 'available') availabilityFilter.value = 'all'
+  // A quick filter set by the parent is an explicit action, so apply it now.
+  if (onlyAvailable) {
+    availabilityFilter.value = 'available'
+    appliedAvailabilityFilter.value = 'available'
+  } else if (availabilityFilter.value === 'available' || appliedAvailabilityFilter.value === 'available') {
+    availabilityFilter.value = 'all'
+    appliedAvailabilityFilter.value = 'all'
+  }
+  refreshSources()
 })
 
-watch(() => props.selectedStallCodes, () => {
+watch(() => [props.selectedStallCodes, props.selectedStallKeys], () => {
   map?.getSource('project-stalls')?.setData(getStallsGeoJson())
   renderSelectedStallPins()
 }, { deep: true })
+
+watch(() => props.marketFull, () => {
+  refreshSources()
+  renderSelectedStallPins()
+})
 
 // Parent may switch project externally (e.g. deep-link); follow it if different
 watch(() => props.selectedProjectId, (newId) => {
@@ -1961,8 +2447,15 @@ watch(() => props.selectedProjectId, (newId) => {
 watch(() => props.marketId, async (newMarketId) => {
   activeProjectId.value = null
   hoveredProject.value = null
+  hoveredStallKey.value = null
   currentFloorId.value = '1'
   await syncMarketJson(newMarketId)
+  const selectedProject = props.selectedProjectId
+    ? projects.value.find(project => project.id === props.selectedProjectId)
+    : null
+  const preferredFloorId = selectedProject ? getProjectActualFloorIds(selectedProject)[0] : null
+  selectedMarketFloorId.value = preferredFloorId || (marketFloors.value.length > 1 ? 'all' : (marketFloors.value[0]?.id || ''))
+  marketFloorBeforeProject.value = marketFloors.value.length > 1 ? 'all' : selectedMarketFloorId.value
   if (map) {
     refreshSources()
     renderSelectedStallPins()
@@ -1982,30 +2475,49 @@ const resize = () => {
 
 defineExpose({ enterProject, exitProject, resize })
 
+const canTeleportToolbar = ref(false)
+let isUnmounted = false
+
 const handleWindowResize = () => {
   map?.resize()
 }
 
 onMounted(async () => {
+  isUnmounted = false
   if (process.client) {
+    canTeleportToolbar.value = Boolean(document.getElementById('step1-map-toolbar'))
     window.addEventListener('resize', handleWindowResize)
     const ml = await import('maplibre-gl')
+    if (isUnmounted) return
     maplibregl = ml.default || ml
     initMap()
   }
 })
 
-onUnmounted(() => {
+const cleanupMapResources = () => {
+  isUnmounted = true
+  canTeleportToolbar.value = false
   if (process.client) {
     window.removeEventListener('resize', handleWindowResize)
   }
-  selectedStallMarkers.forEach(m => m.remove())
+  try {
+    hoverPopup?.remove()
+  } catch {}
+  selectedStallMarkers.forEach((m) => {
+    try { m.remove() } catch {}
+  })
   selectedStallMarkers = []
   if (map) {
-    map.remove()
+    const mapInstance = map
     map = null
+    try {
+      mapInstance.remove()
+    } catch {}
   }
-})
+}
+
+onBeforeUnmount(cleanupMapResources)
+onUnmounted(cleanupMapResources)
 </script>
 
 <style scoped>
@@ -2431,6 +2943,7 @@ onUnmounted(() => {
 .clear-search-btn:hover {
   color: #475569;
 }
+
 
 /* MapLibre Canvas Container */
 .maplibre-overview-wrapper {
@@ -3915,7 +4428,9 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 58px;
+  min-width: 66px;
+  width: auto;
+  padding: 0 6px;
   height: 58px;
   border-radius: 12px;
   background: #f1f5f9;
@@ -3925,10 +4440,11 @@ onUnmounted(() => {
 }
 
 .fsc-pillar-level {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #1e293b;
-  line-height: 1;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .fsc-pillar-badge {
@@ -4428,6 +4944,18 @@ onUnmounted(() => {
     top: 10px;
     right: 10px;
     gap: 6px;
+    max-width: calc(100% - 20px);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .market-floor-switcher-label {
+    display: none;
+  }
+
+  .market-floor-tab {
+    padding: 5px 9px;
+    font-size: 0.76rem;
   }
 
   .map-floating-style-switcher .map-mode-tab {
@@ -4482,6 +5010,14 @@ onUnmounted(() => {
   color: #ffffff;
 }
 
+.zone-badge-inner .badge-floor {
+  padding-left: 5px;
+  border-left: 1px solid rgba(255, 255, 255, 0.42);
+  color: #bfdbfe;
+  font-size: 0.82em;
+  font-weight: 800;
+}
+
 .zone-badge-inner .badge-sep {
   opacity: 0.55;
   font-size: 9px;
@@ -4494,14 +5030,16 @@ onUnmounted(() => {
   color: #93c5fd;
 }
 
-.maplibre-zone-number-badge:hover {
+.maplibre-zone-number-badge:hover,
+.maplibre-zone-number-badge.is-project-hovered {
   background: #2563eb;
   border-color: #ffffff;
   transform: scale(1.15);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.maplibre-zone-number-badge:hover .badge-area {
+.maplibre-zone-number-badge:hover .badge-area,
+.maplibre-zone-number-badge.is-project-hovered .badge-area {
   color: #ffffff;
 }
 
@@ -4527,6 +5065,18 @@ onUnmounted(() => {
   padding: 0 4px;
   border-radius: 50%;
   font-size: 9px;
+}
+
+.maplibre-zone-number-badge.is-compact.has-floor-context {
+  width: auto;
+  min-width: 38px;
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+.maplibre-zone-number-badge.is-project-hovered .badge-floor,
+.maplibre-zone-number-badge:hover .badge-floor {
+  color: #ffffff;
 }
 
 /* Custom Popup Content (hover cards) */
@@ -4824,6 +5374,57 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.market-floor-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(191, 219, 254, 0.95);
+  border-radius: 9999px;
+  background: rgba(239, 246, 255, 0.96);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.14);
+}
+
+.market-floor-switcher-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px 0 7px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.market-floor-switcher-label svg {
+  color: #2563eb;
+}
+
+.market-floor-tab {
+  border: none;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.market-floor-tab:hover {
+  color: #1d4ed8;
+}
+
+.market-floor-tab.active {
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
 }
 
 .map-floating-style-switcher {

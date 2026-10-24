@@ -15,7 +15,7 @@ export interface IAuthState {
 export const useAuthStore = defineStore("auth", {
 	state: (): IAuthState => {
 		let token: string | null = null
-		let storedRole = "tenant"
+		let storedRole = ""
 		let user: IUser | null = null
 
 		if (typeof window !== "undefined") {
@@ -23,7 +23,8 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.getItem("token") ||
 				localStorage.getItem("access_token") ||
 				localStorage.getItem("emarket_jwt_token")
-			storedRole = normalizeRole(localStorage.getItem("user_role"))
+			const storedRoleValue = localStorage.getItem("user_role")
+			storedRole = storedRoleValue ? normalizeRole(storedRoleValue) : ""
 			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
 			if (rawUser) {
 				try {
@@ -62,7 +63,8 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.getItem("token") ||
 				localStorage.getItem("access_token") ||
 				localStorage.getItem("emarket_jwt_token")
-			this.role = normalizeRole(localStorage.getItem("user_role"))
+			const storedRole = localStorage.getItem("user_role")
+			this.role = storedRole ? normalizeRole(storedRole) : ""
 
 			const rawUser = localStorage.getItem("user_info") || localStorage.getItem("emarket_user")
 			if (rawUser) {
@@ -78,6 +80,9 @@ export const useAuthStore = defineStore("auth", {
 					full_name: this.role === "tenant" ? "คุณสมศักดิ์ ค้าขายดี (ผู้เช่า)" : "ผู้ดูแลระบบ (Admin)",
 					role: this.role,
 				}
+			} else {
+				// Never retain the previous account in memory after its token was removed.
+				this.currentUser = null
 			}
 		},
 
@@ -140,7 +145,7 @@ export const useAuthStore = defineStore("auth", {
 				if (res.status && res.data) {
 					const data = res.data
 					this.setToken(data.access_token, data.refresh_token)
-					const userRole = normalizeRole(data.role || data.user?.role || (credentials.username === "tenant" ? "tenant" : "admin"))
+					const userRole = normalizeRole(data.role || data.user?.role || (credentials.username.startsWith("tenant") ? "tenant" : credentials.username === "staff" ? "staff" : "admin"))
 					this.role = userRole
 					this.setUser(data.user || {
 						id: credentials.username === "tenant" ? 3 : 1,
@@ -160,6 +165,7 @@ export const useAuthStore = defineStore("auth", {
 			this.accessToken = null
 			this.refreshToken = null
 			this.currentUser = null
+			this.role = ""
 			if (typeof window !== "undefined") {
 				localStorage.removeItem("token")
 				localStorage.removeItem("access_token")

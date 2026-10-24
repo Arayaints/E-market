@@ -1,15 +1,16 @@
 // ================================================================
-// Sub-Stall Layout Engine for Chatuchak Project Polygons
+// Shared Sub-Stall Layout Engine for Market Project Polygons
 // - แปลง polygon (lng/lat) เป็นระบบพิกัดเมตรภายใน (local metric plane)
 // - หมุนให้แนวขอบที่ยาวที่สุดเป็นแนวนอน แล้ววางแผงย่อยแบบ "แผงหันหลังชนกัน 2 แถว + ทางเดิน"
 // - เก็บเฉพาะแผงที่อยู่ภายในกรอบโครงการทั้งหมด (มีระยะร่นจากขอบ)
 // ================================================================
 
-import type { ProjectZone, ProjectFloor } from './chatuchak_real_polygons'
+import type { ProjectZone, ProjectFloor } from './market_gis_types'
 
 export type StallStatus = 'available' | 'reserved' | 'occupied'
 
 export interface MapStall {
+  selectionId?: string
   code: string
   projectId: string
   zone: string
@@ -39,6 +40,17 @@ export interface ProjectStallLayout {
   occupied: number
   floorId: string
   floorName: string
+}
+
+export interface MarketStallSummary {
+  total: number
+  available: number
+  reserved: number
+  occupied: number
+  minRent?: number
+  maxRent?: number
+  minAreaSqm?: number
+  maxAreaSqm?: number
 }
 
 // Stall module dimensions (meters)
@@ -80,6 +92,72 @@ const pointInPolygon = ([x, y]: Pt, poly: Pt[]): boolean => {
   return inside
 }
 
+const projectFootprintArea = (project: ProjectZone): number => {
+  const ring = project.coordinates
+  let twiceArea = 0
+  for (let i = 0; i < ring.length - 1; i++) {
+    const current = ring[i]
+    const next = ring[i + 1]
+    if (!current || !next) continue
+    twiceArea += current[0] * next[1] - next[0] * current[1]
+  }
+  return Math.abs(twiceArea) / 2
+}
+
+export const isOverviewBoundaryProject = (candidate: ProjectZone, source: ProjectZone[]): boolean => {
+  const candidateArea = projectFootprintArea(candidate)
+  const containedProjects = source.filter(project => (
+    project.id !== candidate.id &&
+    candidateArea > projectFootprintArea(project) * 3 &&
+    pointInPolygon(project.centroid, candidate.coordinates)
+  ))
+  return containedProjects.length >= 2
+}
+
+const closePolygonRing = (coordinates: Pt[]): Pt[] => {
+  if (coordinates.length === 0) return []
+  const ring = coordinates.map(([lng, lat]) => [lng, lat] as Pt)
+  const first = ring[0]!
+  const last = ring[ring.length - 1]!
+  if (first[0] !== last[0] || first[1] !== last[1]) ring.push([first[0], first[1]])
+  return ring
+}
+
+const getPolygonCenter = (closedRing: Pt[]): Pt => {
+  const ring = closedRing.length > 1 ? closedRing.slice(0, -1) : closedRing
+  if (!ring.length) return [0, 0]
+
+  const mean: Pt = [
+    ring.reduce((sum, point) => sum + point[0], 0) / ring.length,
+    ring.reduce((sum, point) => sum + point[1], 0) / ring.length
+  ]
+  if (pointInPolygon(mean, closedRing)) return mean
+
+  const xs = ring.map(point => point[0])
+  const ys = ring.map(point => point[1])
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+  const bboxCenter: Pt = [(minX + maxX) / 2, (minY + maxY) / 2]
+  if (pointInPolygon(bboxCenter, closedRing)) return bboxCenter
+
+  // Concave survey polygons can have both centroids outside the footprint.
+  // A small deterministic grid finds a safe popup anchor inside the stall.
+  for (let row = 1; row < 10; row++) {
+    for (let col = 1; col < 10; col++) {
+      const candidate: Pt = [minX + ((maxX - minX) * col) / 10, minY + ((maxY - minY) * row) / 10]
+      if (pointInPolygon(candidate, closedRing)) return candidate
+    }
+  }
+
+  return ring[0]!
+}
+
+const normalizeStallStatus = (status: unknown): StallStatus => (
+  status === 'available' || status === 'reserved' || status === 'occupied' ? status : 'available'
+)
+
 const distToSegment = ([px, py]: Pt, [ax, ay]: Pt, [bx, by]: Pt): number => {
   const dx = bx - ax
   const dy = by - ay
@@ -111,16 +189,6 @@ const rowLabel = (i: number): string => {
   return s
 }
 
-// Deterministic pseudo-random [0,1) from a string (stable stall status across reloads)
-const hash01 = (str: string): number => {
-  let h = 2166136261
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return ((h >>> 0) % 10000) / 10000
-}
-
 // Interior label point (approximate pole of inaccessibility) so badges sit INSIDE the frame
 const findLabelPoint = (poly: Pt[]): Pt => {
   const xs = poly.map(p => p[0])
@@ -150,7 +218,7 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
   // Determine floor info
   const floorList: ProjectFloor[] = project.floors && project.floors.length > 0
     ? project.floors
-    : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+    : [{ id: '1', name: 'ชั้น 1', shortLabel: 'ชั้น 1', level: 1 }]
   
   const currentFloor: ProjectFloor = floorList.find(f => f.id === floorId) || floorList[0]!
   const effectiveFloorId = currentFloor.id
@@ -189,15 +257,6 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
     return corners.every(c => pointInPolygon(c, rotated) && distToBoundary(c, rotated) >= EDGE_SETBACK * 0.5)
   }
 
-  const original = project.totalStalls > 0 ? project.stallsAvailable / project.totalStalls : 0
-  let availRatio = project.stallsAvailable === 0 ? 0 : Math.max(0.12, Math.min(0.45, original))
-  let reservedRatio = project.stallsAvailable === 0 ? 0 : 0.06
-
-  if (currentFloor.isFull) {
-    availRatio = 0
-    reservedRatio = 0
-  }
-
   const stalls: MapStall[] = []
   const bandH = STALL_D * 2 + AISLE
   let rowIdx = 0
@@ -233,10 +292,9 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
         const floorTag = hasMultipleFloors ? `${currentFloor.shortLabel}-` : ''
         const code = `${project.sectionNumber}-${floorTag}${letter}${String(idx + 1).padStart(2, '0')}`
         const isCorner = idx === 0 || idx === rowCells.length - 1
-        const u = hash01(`${project.id}:${effectiveFloorId}:${code}`)
-        let status: StallStatus = 'occupied'
-        if (u < availRatio) status = 'available'
-        else if (u < availRatio + reservedRatio) status = 'reserved'
+        // Generated fallback stalls start empty. Authoritative lock/occupancy
+        // state is applied later from the staff-managed data source.
+        const status: StallStatus = 'available'
 
         // แผงเรียงชิดติดกันเป็นบล็อกสถาปัตยกรรม (Seamless Architectural Island)
         const ringLocal: Pt[] = [
@@ -255,6 +313,7 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
         const entryFee = Math.round((baseEntry * levelMultiplier) / 1000) * 1000
 
         stalls.push({
+          selectionId: `${project.id}:${effectiveFloorId}:${code}`,
           code,
           projectId: project.id,
           zone: `${project.name} (${currentFloor.name})`,
@@ -300,11 +359,22 @@ const layoutCache = new Map<string, ProjectStallLayout>()
 
 export const getProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
   const effectiveFloorId = floorId || project.floors?.[0]?.id || '1'
-  const cacheKey = `${project.id}:${effectiveFloorId}`
+  const cacheKey = `${project.id}:${effectiveFloorId}:${project.centroid.join(',')}:${project.totalStalls}`
 
   // If the project carries its own pre-surveyed real stalls (e.g. from official GIS shapefile)
   if (project.stalls && project.stalls.length > 0) {
-    const matchingStalls = (project.stalls as MapStall[]).filter(s => !s.floor || s.floor === effectiveFloorId)
+    const matchingStalls = (project.stalls as MapStall[])
+      .filter(s => !s.floor || s.floor === effectiveFloorId)
+      .map((stall, index) => {
+        const coordinates = closePolygonRing(stall.coordinates)
+        return {
+          ...stall,
+          coordinates,
+          center: getPolygonCenter(coordinates),
+          status: normalizeStallStatus(stall.status),
+          selectionId: stall.selectionId || `${project.id}:${effectiveFloorId}:${index}`
+        }
+      })
     const available = matchingStalls.filter(s => s.status === 'available').length
     const reserved = matchingStalls.filter(s => s.status === 'reserved').length
     const currentFloor = project.floors?.find(f => f.id === effectiveFloorId)
@@ -332,9 +402,55 @@ export const getAllFloorLayoutsForProject = (project: ProjectZone): Map<string, 
   const map = new Map<string, ProjectStallLayout>()
   const floors = project.floors && project.floors.length > 0
     ? project.floors
-    : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+    : [{ id: '1', name: 'ชั้น 1', shortLabel: 'ชั้น 1', level: 1 }]
   floors.forEach(f => {
     map.set(f.id, getProjectStallLayout(project, f.id))
   })
   return map
+}
+
+export const getMarketStallSummary = (
+  projects: ProjectZone[],
+  statusOverrides: Record<string, StallStatus> = {},
+  marketFull = false
+): MarketStallSummary => {
+  const summary: MarketStallSummary = { total: 0, available: 0, reserved: 0, occupied: 0 }
+  const visibleProjects = projects.filter(project => !isOverviewBoundaryProject(project, projects))
+  let minRent = Infinity
+  let maxRent = 0
+  let minArea = Infinity
+  let maxArea = 0
+
+  visibleProjects.forEach(project => {
+    getAllFloorLayoutsForProject(project).forEach(layout => {
+      layout.stalls.forEach(stall => {
+        const status: StallStatus = marketFull
+          ? 'occupied'
+          : (statusOverrides[stall.code] || stall.status)
+        summary.total += 1
+        summary[status] += 1
+        const rent = Number(stall.monthlyRent) || 0
+        if (rent > 0) {
+          if (rent < minRent) minRent = rent
+          if (rent > maxRent) maxRent = rent
+        }
+        const area = Number(stall.size) || 0
+        if (area >= 1) {
+          if (area < minArea) minArea = area
+          if (area > maxArea) maxArea = area
+        }
+      })
+    })
+  })
+
+  if (Number.isFinite(minRent) && maxRent > 0) {
+    summary.minRent = minRent
+    summary.maxRent = maxRent
+  }
+  if (Number.isFinite(minArea) && maxArea > 0) {
+    summary.minAreaSqm = Number(minArea.toFixed(1))
+    summary.maxAreaSqm = Number(maxArea.toFixed(1))
+  }
+
+  return summary
 }

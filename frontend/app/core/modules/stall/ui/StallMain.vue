@@ -23,11 +23,17 @@
         </nav>
       </div>
 
-      <!-- 1. Header Card: ชื่อตลาด + ข้อมูลสำคัญ + แท็กหมวดหมู่ + Showcase กทม. -->
+      <!-- 1. Header Card: Real Market Photo Backdrop + Modern Glassmorphic Hero -->
       <section class="md-card md-header-card">
-        <!-- Background Ambient Glow & Light Mesh -->
-        <div class="md-header-bg-glow" aria-hidden="true"></div>
-        <div class="md-header-mesh" aria-hidden="true"></div>
+        <!-- Real Market Photo Background Layer with Cinematic Frosting -->
+        <div class="md-header-bg-frame" aria-hidden="true">
+          <img :src="marketHeroImage" :alt="currentMarket.name" class="md-header-bg-img" />
+          <div class="md-header-overlay-gradient"></div>
+          <div class="md-header-overlay-mesh"></div>
+          <div class="md-header-ambient-glow"></div>
+          <div class="md-header-light-beam"></div>
+          <div class="md-header-grid-pattern"></div>
+        </div>
 
         <div class="md-header-left">
           <!-- Official Subtitle / Eyebrow Pill -->
@@ -42,6 +48,10 @@
           <div class="md-title-wrap">
             <h1 class="md-title">{{ currentMarket.name }}</h1>
           </div>
+
+          <p class="md-hero-summary">
+            {{ currentMarket.description || 'พื้นที่ค้าขายคุณภาพภายใต้การดูแลของกรุงเทพมหานคร พร้อมผังแผงดิจิทัลที่ช่วยให้เลือกทำเลได้อย่างมั่นใจ' }}
+          </p>
 
           <!-- Meta Information Row: วัน, เวลา, พิกัด -->
           <div class="md-meta-row">
@@ -80,80 +90,55 @@
             </div>
           </div>
 
-          <!-- Feature & Category Tags (Soft pills with semantic icons) -->
-          <ul v-if="marketHighlights.length" class="md-tags" aria-label="จุดเด่นของตลาด">
-            <li v-for="(tag, i) in marketHighlights" :key="i" class="md-tag">
-              <!-- Utensils / อาหาร -->
-              <svg v-if="tag.icon === 'utensils'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path><path d="M15 2v10"></path><line x1="15" y1="15" x2="15" y2="22"></line><line x1="8" y1="2" x2="8" y2="22"></line><path d="M8 2c2 0 3 2 3 5s-1 5-3 5"></path></svg>
-              <!-- Leaf / ผักผลไม้ -->
-              <svg v-else-if="tag.icon === 'leaf'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
-              <!-- Train / รถไฟฟ้า -->
-              <svg v-else-if="tag.icon === 'train'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"></rect><line x1="4" y1="11" x2="20" y2="11"></line><line x1="12" y1="3" x2="12" y2="11"></line><line x1="8" y1="21" x2="10" y2="17"></line><line x1="16" y1="21" x2="14" y2="17"></line></svg>
-              <!-- Car / ที่จอดรถ -->
-              <svg v-else-if="tag.icon === 'car'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"></path><line x1="3" y1="12" x2="21" y2="12"></line><circle cx="7.5" cy="17" r="2"></circle><circle cx="16.5" cy="17" r="2"></circle></svg>
-              <!-- Anchor / ท่าเรือ -->
-              <svg v-else-if="tag.icon === 'anchor'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>
-              <!-- Bus / รถเมล์ -->
-              <svg v-else-if="tag.icon === 'bus'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="2"></rect><line x1="4" y1="10" x2="20" y2="10"></line><line x1="7" y1="21" x2="7" y2="18"></line><line x1="17" y1="21" x2="17" y2="18"></line><circle cx="8" cy="14" r="0.5"></circle><circle cx="16" cy="14" r="0.5"></circle></svg>
-              <!-- Shopping Bag -->
-              <svg v-else-if="tag.icon === 'shopping-bag'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-              <!-- Clock / 24 ชม -->
-              <svg v-else-if="tag.icon === 'clock'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <!-- Default Tag -->
-              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <span class="md-tag-label">{{ tag.label }}</span>
-            </li>
-          </ul>
         </div>
 
-        <!-- Right Side: Quick Stall Status & Booking Action Card -->
+        <!-- Right Side: Lightweight booking action -->
         <div class="md-header-right">
           <div class="md-booking-quick-card">
-            <!-- Status Badge Header -->
-            <div class="md-bqc-status-row">
-              <span class="md-bqc-badge" :class="availNow > 0 ? 'badge-available' : 'badge-full'">
-                <span class="md-bqc-dot" :class="{ 'pulsing': availNow > 0 }"></span>
-                <span>{{ availNow > 0 ? 'เปิดรับจองแผง' : 'แผงเต็มชั่วคราว' }}</span>
-              </span>
-              <span class="md-bqc-tag">ตลาด กทม.</span>
-            </div>
-
-            <!-- Stalls Availability Metric -->
-            <div class="md-bqc-metric-block">
-              <div class="md-bqc-metric-header">
-                <span class="md-bqc-label">แผงว่างพร้อมจอง</span>
-                <span class="md-bqc-count">
-                  <strong>{{ availNow }}</strong>
-                  <span class="md-bqc-total">/ {{ totalStalls }} แผง</span>
+            <div class="md-bqc-simple-summary">
+              <div class="md-bqc-status-row">
+                <span class="md-bqc-badge" :class="availNow > 0 ? 'is-available' : 'is-full'">
+                  <span class="md-bqc-dot" :class="{ 'pulsing': availNow > 0 }"></span>
+                  <span>{{ availNow > 0 ? 'เปิดรับจองออนไลน์' : 'ยังไม่มีแผงว่าง' }}</span>
                 </span>
               </div>
-              <div class="md-bqc-progress-track">
-                <div
-                  class="md-bqc-progress-fill"
-                  :class="`tone-${availLevel}`"
-                  :style="{ width: availBarWidth }"
-                ></div>
-              </div>
+              <span
+                class="md-bqc-summary-count"
+                :class="[
+                  availNow > 0 ? 'color-available' : 'color-full',
+                  { 'is-three-digits': availNow >= 100 && availNow < 1000, 'is-four-plus-digits': availNow >= 1000 }
+                ]"
+              >
+                <strong>{{ availNow }}</strong>
+                <small>แผง</small>
+              </span>
+              <span class="md-bqc-summary-copy">
+                <span class="md-bqc-copy-title">
+                  <span>{{ availNow > 0 ? 'แผงว่าง' : 'แผงเต็มแล้ว' }}</span>
+                  <strong :class="availNow > 0 ? 'is-ready' : 'is-unavailable'">
+                    {{ availNow > 0 ? 'พร้อมจองทันที' : 'ปิดรับจองชั่วคราว' }}
+                  </strong>
+                </span>
+                <small>{{ availNow > 0 ? 'จากทั้งหมด' : 'รวมทั้งหมด' }} <strong>{{ totalStalls.toLocaleString() }}</strong> แผง</small>
+              </span>
             </div>
 
-            <!-- Price & Action Button -->
-            <div class="md-bqc-footer">
-              <div class="md-bqc-price-box">
-                <span class="md-bqc-price-label">ค่าเช่าเริ่มต้น</span>
-                <span class="md-bqc-price-value">฿{{ Number(currentMarket.starting_price_monthly || 1800).toLocaleString() }}<small>/ด.</small></span>
-              </div>
-              <NuxtLink
-                :to="bookLink"
-                class="md-bqc-btn"
-                :class="availNow > 0 ? 'btn-book-active' : 'btn-book-full'"
-              >
-                <span>{{ isOfficer ? 'จัดการแผงเช่า' : (availNow > 0 ? 'จองแผงเช่า' : 'ดูผังแผง') }}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </NuxtLink>
-            </div>
+            <!-- Full-Width High-Affordance CTA Button -->
+            <NuxtLink
+              id="md-bqc-primary-cta"
+              :to="bookLink"
+              class="md-bqc-action-btn"
+              :class="availNow > 0 ? 'btn-active' : 'btn-full'"
+            >
+              <span class="md-bqc-btn-label">
+                {{ isOfficer ? 'จัดการแผงเช่า GIS' : (availNow > 0 ? 'จองแผงเช่าออนไลน์' : 'ดูผังแผงค้า') }}
+              </span>
+              <svg class="md-bqc-btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </NuxtLink>
+
           </div>
         </div>
       </section>
@@ -188,11 +173,6 @@
             <span>คลิกเพื่อดูรูปผังตลาดขนาดเต็ม</span>
           </span>
         </div>
-
-        <NuxtLink id="md-btn-enter-floorplan" :to="bookLink" class="md-btn-primary md-btn-lg" :class="{ 'md-btn-full': availNow <= 0 }">
-          <span>{{ isOfficer ? 'เข้าสู่การจัดการผังแผง GIS' : (availNow <= 0 ? 'เข้าชมผังแผงดิจิทัล (ตลาดเต็มแล้ว)' : 'เข้าสู่ผังแผงดิจิทัลเพื่อเลือกแผงค้า') }}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-        </NuxtLink>
       </section>
 
       <!-- 3. Main Grid: Stats + Detail (ซ้าย) / Photos + Video (ขวา) -->
@@ -216,7 +196,7 @@
               </div>
               <div class="md-stat-body">
                 <div class="md-stat-label">ขนาดพื้นที่</div>
-                <div class="md-stat-value">{{ currentMarket.min_area_sqm || 4 }} - {{ currentMarket.max_area_sqm || 25 }} <span class="md-stat-unit">ตร.ม.</span></div>
+                <div class="md-stat-value">{{ areaRange }} <span class="md-stat-unit">ตร.ม.</span></div>
               </div>
             </div>
 
@@ -421,13 +401,6 @@
                 <span>คลิกหรือเลื่อนดูผังโซนและทางเข้า-ออกต่างๆ</span>
               </span>
               <div class="md-lightbox-actions">
-                <button
-                  type="button"
-                  class="btn btn-outline btn-sm"
-                  @click="isFloorplanLightboxOpen = false"
-                >
-                  ปิด
-                </button>
                 <NuxtLink
                   :to="bookLink"
                   class="btn btn-primary btn-sm"
@@ -449,31 +422,66 @@
 </template>
 
 <script setup lang="ts">
+import { loadMarketGisJson } from '../data/market_loader'
+import { getMarketStallSummary, type MarketStallSummary, type StallStatus } from '../data/market_stall_layout'
+import { getMarketGisConfig } from '../data/markets_registry'
+
 const route = useRoute()
 const { get } = useApi()
 const { role } = useAuth()
 const { applyMarketOverride } = useMarketOverrides()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 
-const currentMarket = ref<any>({
-  id: 1,
-  slug: 'chatuchak',
-  name: 'ตลาดนัดจตุจักร',
-  name_en: 'Chatuchak Weekend Market',
-  district: 'เขตจตุจักร',
-  address: '587/10 ถ.กำแพงเพชร 2 แขวงจตุจักร เขตจตุจักร กรุงเทพมหานคร 10900',
-  operating_hours: 'เสาร์ - อาทิตย์ 09:00 - 18:00 น.',
-  tags: ['ตลาดนัดสุดสัปดาห์', 'BTS หมอชิต / MRT สวนจตุจักร', 'มีที่จอดรถ 800+ คัน', 'แฟชั่นและเสื้อผ้า'],
-  lat: 13.7998,
-  lng: 100.5501
-})
+const buildInitialMarket = (queryVal?: any) => {
+  const cfg = getMarketGisConfig(String(queryVal || '1'))
+  return applyMarketOverride({
+    id: cfg.id,
+    slug: cfg.slug,
+    name: cfg.name,
+    name_en: cfg.name,
+    image_url: '',
+    district: cfg.district,
+    address: `${cfg.name} ${cfg.district} กรุงเทพมหานคร`,
+    operating_hours: 'ทุกวัน 05:00 - 19:00 น.',
+    description: cfg.description,
+    tags: [],
+    lat: cfg.center[1],
+    lng: cfg.center[0]
+  })
+}
 
-const availableCount = ref(54)
+const currentMarket = ref<any>(buildInitialMarket(route.query.market))
+
+const gisStallSummary = ref<MarketStallSummary | null>(null)
+const marketFullFromApi = ref(false)
 const isFloorplanLightboxOpen = ref(false)
 const currentMapMode = ref<'street' | 'satellite'>('street')
 let maplibregl: any = null
 let map: any = null
 let marker: any = null
+
+const marketHeroImage = computed(() => {
+  if (currentMarket.value?.image_url) return currentMarket.value.image_url
+  const slug = currentMarket.value?.slug
+  if (slug) {
+    const slugMap: Record<string, string> = {
+      'chatuchak': '/images/markets/chatuchak.jpg',
+      'pracha-niwet-1': '/images/markets/pracha_niwet.jpg',
+      'min-buri': '/images/markets/min_buri.jpg',
+      'singhanat': '/images/markets/singhanat.jpg',
+      'thewarat': '/images/markets/thewarat.jpg',
+      'thonburi-sanamluang-2': '/images/markets/thonburi.jpg',
+      'bang-kapi': '/images/markets/bang_kapi.jpg',
+      'bang-khae-phirom': '/images/markets/bang_khae.jpg',
+      'nong-chok': '/images/markets/nong_chok.jpg',
+      'rat-burana': '/images/markets/rat_burana.jpg',
+      'ratchadaphisek': '/images/markets/ratchada.jpg',
+      'wongwian-lek': '/images/markets/wongwian_lek.jpg'
+    }
+    if (slugMap[slug]) return slugMap[slug]
+  }
+  return '/images/market_hall_front.jpg'
+})
 
 const streetStyle: any = {
   version: 8,
@@ -609,9 +617,16 @@ const operatingTime = computed(() => {
 })
 
 const priceRange = computed(() => {
-  const min = Number(currentMarket.value.starting_price_monthly || 1800)
-  const max = Number(currentMarket.value.max_price_monthly || Math.round((min * 2.5) / 100) * 100)
-  return `${min.toLocaleString()} - ${max.toLocaleString()}`
+  const min = Number(gisStallSummary.value?.minRent || currentMarket.value.starting_price_monthly || 1800)
+  const max = Number(gisStallSummary.value?.maxRent || currentMarket.value.max_price_monthly || min)
+  return min === max ? `${min.toLocaleString()}` : `${min.toLocaleString()} - ${max.toLocaleString()}`
+})
+
+const areaRange = computed(() => {
+  const min = Number(gisStallSummary.value?.minAreaSqm || currentMarket.value.min_area_sqm || 4)
+  const max = Number(gisStallSummary.value?.maxAreaSqm || currentMarket.value.max_area_sqm || min)
+  const fmt = (val: number) => Number(val.toFixed(1)).toLocaleString()
+  return Math.abs(min - max) < 0.05 ? fmt(min) : `${fmt(min)} - ${fmt(max)}`
 })
 
 // ดึงจำนวนที่จอดรถจาก tag เช่น "มีที่จอดรถ 800+ คัน"
@@ -628,22 +643,11 @@ const travelOptions = computed<string[]>(() => currentMarket.value.travel_option
   ? currentMarket.value.travel_options
   : ['รถโดยสารประจำทาง', 'รถรับจ้างสาธารณะ', 'รถยนต์ส่วนบุคคล', 'รถไฟฟ้า BTS / MRT'])
 
-// แท็กจุดเด่นของตลาด: ตัด emoji และกรองแท็กสถานะ (เช่น "ติดจองเต็ม") ออก
-const getTagIcon = (label: string) => {
-  if (/BTS|MRT|ARL|รถไฟฟ้า|รถไฟ/i.test(label)) return 'train'
-  if (/จอดรถ/.test(label)) return 'car'
-  if (/ท่าเรือ|เรือ/.test(label)) return 'anchor'
-  if (/รถเมล์|ขสมก|สาย\s?\d/.test(label)) return 'bus'
-  if (/24\s?ชม|กลางคืน|ทุกวัน|เปิด/.test(label)) return 'clock'
-  if (/อาหาร|ปรุงสำเร็จ|ของกิน|สตรีทฟู้ด|เครื่องดื่ม|ร้านอาหาร|ของอร่อย/.test(label)) return 'utensils'
-  if (/ผัก|ผลไม้|สด|เกษตร|เนื้อสัตว์|อาหารทะเล|ของสด/.test(label)) return 'leaf'
-  if (/เสื้อผ้า|แฟชั่น|ของใช้|วินเทจ|ต้นไม้/.test(label)) return 'shopping-bag'
-  return 'tag'
-}
-
 // แผงว่าง: ใช้เกณฑ์สีเดียวกับการ์ดตลาดหน้าแรก (ok ≥50%, mid 20-49%, low 1-19%, full)
-const availNow = computed<number>(() => Number(currentMarket.value.available_stalls ?? availableCount.value) || 0)
-const totalStalls = computed<number>(() => Math.max(Number(currentMarket.value.total_stalls) || 180, availNow.value))
+const availNow = computed<number>(() => gisStallSummary.value?.available
+  ?? (Number(currentMarket.value.available_stalls) || 0))
+const totalStalls = computed<number>(() => gisStallSummary.value?.total
+  ?? Math.max(Number(currentMarket.value.total_stalls) || 180, availNow.value))
 const availLevel = computed(() => {
   if (availNow.value <= 0) return 'full'
   const pct = (availNow.value / totalStalls.value) * 100
@@ -656,60 +660,90 @@ const availBarWidth = computed(() => {
   return `${Math.max(2, Math.round((availNow.value / totalStalls.value) * 100))}%`
 })
 
-const marketHighlights = computed(() => {
-  const tags: string[] = currentMarket.value.tags || []
-  return tags
-    .map((t) => String(t)
-      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}]/gu, '')
-      .trim())
-    .filter((t) => t && !/ติดจองเต็ม|เต็มแล้ว|ปิดรับ/.test(t))
-    .map((label) => ({ label, icon: getTagIcon(label) }))
-})
-
-onMounted(async () => {
-  // If market query parameter is provided, load its details from /api/v1/markets
-  const marketQuery = route.query.market
-  if (marketQuery) {
-    try {
-      const markets = await get('/markets')
-      const found = markets.find((m: any) => String(m.id) === String(marketQuery) || m.slug === marketQuery)
-      if (found) {
-        currentMarket.value = applyMarketOverride(found)
-      }
-    } catch (e) {
-      console.warn('Could not fetch market details:', e)
+const loadMarketDetailData = async (marketQueryRaw?: any) => {
+  const marketQuery = marketQueryRaw ?? route.query.market ?? '1'
+  currentMarket.value = buildInitialMarket(marketQuery)
+  try {
+    const response = await get('/markets')
+    const markets = Array.isArray(response) ? response : (response?.data || [])
+    const lookup = String(marketQuery || currentMarket.value.id || '1')
+    const found = markets.find((m: any) => String(m.id) === lookup || m.slug === lookup)
+    if (found) {
+      const hasAvailableCount = found.available_stalls !== undefined && found.available_stalls !== null
+      marketFullFromApi.value = found.status === 'full'
+        || (hasAvailableCount && Number(found.available_stalls) === 0)
+      currentMarket.value = applyMarketOverride(found)
     }
+  } catch (e) {
+    console.warn('Could not fetch market details:', e)
   }
 
-  // Load actual available count from backend
+  let backendStalls: any[] = []
   try {
-    const stalls = await get('/stalls')
-    if (stalls && stalls.length) {
-      const avail = stalls.filter((s: any) => s.status === 'available').length
-      if (avail > 0) availableCount.value = avail
-    }
+    const marketParam = String(marketQuery || currentMarket.value.slug || currentMarket.value.id || '1')
+    const response = await get(`/stalls?market=${encodeURIComponent(marketParam)}`)
+    backendStalls = Array.isArray(response) ? response : (response?.data || [])
   } catch (err) {
     console.error('Error fetching stalls:', err)
   }
+
+  try {
+    const gisMarket = await loadMarketGisJson(
+      String(marketQuery || currentMarket.value.slug || currentMarket.value.id || '1')
+    )
+    const statusOverrides: Record<string, StallStatus> = {}
+    backendStalls.forEach((stall: any) => {
+      const ident = String(stall.ident || stall.stall_ident || stall.stall_number || '').trim()
+      if (!ident || !stall.status) return
+      statusOverrides[ident] = stall.status === 'available' || stall.status === 'reserved' || stall.status === 'occupied'
+        ? stall.status
+        : 'occupied'
+    })
+    gisStallSummary.value = getMarketStallSummary(gisMarket.projects, statusOverrides, marketFullFromApi.value)
+  } catch (error) {
+    console.warn('Could not calculate GIS stall summary:', error)
+  }
+
+  if (map) {
+    try { map.remove() } catch {}
+    map = null
+  }
+  if (maplibregl) {
+    initMap()
+  }
+}
+
+onMounted(async () => {
+  await loadMarketDetailData(route.query.market)
 
   // Initialize MapLibre GL
   if (process.client) {
     (window as any).$navigateToMarket = (marketId: number | string, action: 'book' | 'stalls') => {
       if (action === 'book') {
-        navigateTo(`/stalls/book?market=${marketId}`)
+        navigateTo(isOfficer.value ? `/stalls/manage?market=${marketId}` : `/stalls/book?market=${marketId}`)
       } else {
         navigateTo(`/stalls?market=${marketId}`)
       }
     }
-    maplibregl = await import('maplibre-gl')
-    initMap()
+    const ml = await import('maplibre-gl')
+    maplibregl = ml.default || ml
+    if (!map) {
+      initMap()
+    }
   }
+})
+
+watch(() => route.query.market, (newMarket) => {
+  void loadMarketDetailData(newMarket)
 })
 
 onBeforeUnmount(() => {
   if (map) {
-    map.remove()
+    const mapInstance = map
     map = null
+    try {
+      mapInstance.remove()
+    } catch {}
   }
 })
 </script>
@@ -780,69 +814,133 @@ onBeforeUnmount(() => {
   margin-bottom: 14px;
 }
 
-/* ---------- Header Card (Premium Modern BMA Design) ---------- */
+/* ---------- Header Card (Cinematic Real-Market Photo Backdrop + Luxury Glassmorphism) ---------- */
 .md-header-card {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   justify-content: space-between;
   align-items: center;
-  gap: 32px;
-  padding: 30px 36px;
-  background: linear-gradient(135deg, #ffffff 0%, #fbfdff 50%, #f0f7ff 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.02);
+  column-gap: clamp(52px, 7vw, 112px);
+  padding: 30px 56px;
+  background: #0f172a;
+  border: 1px solid #eef2f6;
+  border-radius: 16px;
+  box-shadow: 0 26px 70px -24px rgba(15, 23, 42, 0.24), 0 10px 28px -20px rgba(37, 99, 235, 0.28);
+  overflow: hidden;
+  min-height: 310px;
+  isolation: isolate;
+}
+
+/* Background photo layer */
+.md-header-bg-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   overflow: hidden;
 }
 
-.md-header-bg-glow {
-  position: absolute;
-  top: -60px;
-  right: -50px;
-  width: 340px;
-  height: 340px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(219, 234, 254, 0.65) 0%, rgba(239, 246, 255, 0.2) 50%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+.md-header-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  transform: scale(1.01);
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+  filter: brightness(0.92) saturate(1.18) contrast(1.04);
 }
 
-.md-header-mesh {
+.md-header-card:hover .md-header-bg-img {
+  transform: scale(1.04);
+}
+
+/* Multi-layered Frosted Glass Gradient Overlay */
+.md-header-overlay-gradient {
   position: absolute;
-  bottom: -40px;
-  left: -40px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 242, 254, 0.45) 0%, transparent 70%);
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(248, 251, 255, 0.99) 0%,
+    rgba(248, 251, 255, 0.97) 42%,
+    rgba(239, 246, 255, 0.91) 68%,
+    rgba(239, 246, 255, 0.82) 100%
+  );
+  backdrop-filter: blur(1px);
   pointer-events: none;
+}
+
+.md-header-overlay-mesh {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 12%, rgba(147, 197, 253, 0.34) 0%, transparent 42%),
+              radial-gradient(circle at 72% 115%, rgba(37, 99, 235, 0.2) 0%, transparent 42%),
+              linear-gradient(180deg, transparent 58%, rgba(255, 255, 255, 0.68) 100%);
+  pointer-events: none;
+}
+
+.md-header-ambient-glow {
+  position: absolute;
+  top: -80px;
+  right: 15%;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.md-header-light-beam {
+  position: absolute;
   z-index: 0;
+  top: -35%;
+  left: 44%;
+  width: 18%;
+  height: 180%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: rotate(13deg);
+  pointer-events: none;
+}
+
+.md-header-grid-pattern {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  opacity: 0.18;
+  background-image: linear-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(37, 99, 235, 0.12) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(90deg, #000 0%, transparent 58%);
+  pointer-events: none;
 }
 
 .md-header-left {
-  flex: 1;
   min-width: 0;
   position: relative;
   z-index: 1;
+  max-width: 700px;
 }
 
-
 .md-header-eyebrow {
-  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .md-eyebrow-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 11px;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #2563eb;
+  background: rgba(239, 246, 255, 0.95);
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
   font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
 }
 
 .md-eyebrow-pill svg {
@@ -853,7 +951,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .md-title {
@@ -863,6 +961,20 @@ onBeforeUnmount(() => {
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.md-hero-summary {
+  max-width: 680px;
+  margin: 0 0 20px;
+  color: #475569;
+  font-size: 0.94rem;
+  font-weight: 500;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .md-title-accent,
@@ -880,8 +992,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 8px 16px;
+  gap: 24px;
+  padding: 16px 28px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -942,52 +1054,8 @@ onBeforeUnmount(() => {
 .md-meta-divider {
   width: 1px;
   height: 24px;
+  margin: 0 2px;
   background: #e2e8f0;
-}
-
-/* Feature & Category Tags - Modern Harmonious Soft Pills */
-.md-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.md-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-  font-size: 0.82rem;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.04);
-  transition: all 0.2s ease;
-  cursor: default;
-  user-select: none;
-}
-
-.md-tag:hover {
-  transform: translateY(-1px);
-  border-color: #93c5fd;
-  background: #dbeafe;
-  color: #1d4ed8;
-  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.12);
-}
-
-.md-tag svg {
-  flex-shrink: 0;
-  color: #2563eb;
-  transition: color 0.2s ease;
-}
-
-.md-tag:hover svg {
-  color: #1d4ed8;
 }
 
 .md-btn-primary {
@@ -1024,119 +1092,286 @@ onBeforeUnmount(() => {
   justify-content: center;
   position: relative;
   z-index: 1;
+  padding: 0;
 }
 
 .md-booking-quick-card {
-  width: 270px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px 18px;
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  width: 320px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  transition: all 0.25s ease;
-}
-
-.md-header-card:hover .md-booking-quick-card {
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 25px -4px rgba(37, 99, 235, 0.1), 0 2px 6px rgba(15, 23, 42, 0.04);
+  gap: 14px;
 }
 
 .md-bqc-status-row {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 0 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.58);
 }
 
 .md-bqc-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  letter-spacing: 0.01em;
 }
 
-.md-bqc-badge.badge-available {
-  background: #dcfce7;
-  color: #15803d;
+.md-bqc-badge.is-available {
+  color: #059669;
 }
 
-.md-bqc-badge.badge-full {
-  background: #fee2e2;
+.md-bqc-badge.is-full {
   color: #dc2626;
 }
 
 .md-bqc-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: currentColor;
 }
 
 .md-bqc-dot.pulsing {
-  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   animation: bqc-pulse 2s infinite;
+}
+
+.md-bqc-simple-summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 18px;
+  min-height: 0;
+  padding: 16px 18px 18px 21px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(239, 246, 255, 0.72));
+  box-shadow: 0 18px 40px -30px rgba(15, 23, 42, 0.66), 0 12px 28px -25px rgba(37, 99, 235, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px) saturate(1.14);
+  box-sizing: border-box;
+  transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+.md-bqc-simple-summary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(147, 197, 253, 0.92);
+  box-shadow: 0 24px 50px -28px rgba(15, 23, 42, 0.66), 0 18px 36px -24px rgba(37, 99, 235, 0.72), inset 0 1px 0 #ffffff;
+}
+
+.md-bqc-summary-copy {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 0 2px 17px;
+}
+
+.md-bqc-summary-copy::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.24), rgba(16, 185, 129, 0.68));
+}
+
+.md-bqc-copy-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 5px;
+  row-gap: 0;
+  color: #1e293b;
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.md-bqc-copy-title strong {
+  font: inherit;
+  font-weight: 800;
+}
+
+.md-bqc-copy-title strong.is-ready {
+  color: #059669;
+}
+
+.md-bqc-copy-title strong.is-unavailable {
+  color: #dc2626;
+}
+
+.md-bqc-summary-copy small {
+  color: #718096;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.md-bqc-summary-copy small strong {
+  color: #475569;
+  font: inherit;
+  font-weight: 800;
+}
+
+.md-bqc-summary-count {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  gap: 4px;
+  overflow: visible;
+}
+
+.md-bqc-summary-count strong {
+  display: inline-block;
+  font-size: 4.35rem;
+  font-weight: 850;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  padding-inline: 0.06em;
+  margin-inline: -0.06em 0;
+  font-variant-numeric: tabular-nums;
+  color: #2563eb;
+  background: linear-gradient(145deg, #1d4ed8 10%, #3b82f6 55%, #4f46e5 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+.md-bqc-summary-count.is-three-digits strong {
+  font-size: 3rem;
+  letter-spacing: -0.04em;
+}
+
+.md-bqc-summary-count.is-four-plus-digits strong {
+  font-size: 2.25rem;
+  letter-spacing: -0.03em;
+}
+
+.md-bqc-summary-count small {
+  margin: 0 0 8px 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.md-bqc-summary-count.color-full {
+  color: #94a3b8;
+}
+
+.md-bqc-summary-count.color-full strong {
+  color: #94a3b8;
+  background: none;
+  -webkit-text-fill-color: #94a3b8;
 }
 
 @keyframes bqc-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
 }
 
 .md-bqc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 8px;
+  color: #1e40af;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 3px 8px;
   border-radius: 6px;
 }
 
-.md-bqc-metric-block {
+.md-bqc-tag svg {
+  color: #2563eb;
+}
+
+/* Inner Showcase Panel */
+.md-bqc-showcase-panel {
+  background: linear-gradient(145deg, rgba(248, 250, 252, 0.98), rgba(239, 246, 255, 0.78));
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  padding: 17px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 9px;
 }
 
 .md-bqc-metric-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  font-size: 0.8rem;
 }
 
-.md-bqc-label {
+.md-bqc-metric-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.md-bqc-count strong {
-  font-size: 1.05rem;
-  font-weight: 700;
+.md-bqc-metric-title svg {
+  color: #3b82f6;
+}
+
+.md-bqc-count-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.md-bqc-count {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.md-bqc-count.color-available {
   color: #0f172a;
 }
 
-.md-bqc-total {
+.md-bqc-count.color-full {
   color: #94a3b8;
+}
+
+.md-bqc-total {
   font-size: 0.76rem;
-  margin-left: 2px;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .md-bqc-progress-track {
   width: 100%;
-  height: 6px;
-  background: #f1f5f9;
+  height: 8px;
+  background: #e2e8f0;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1148,87 +1383,236 @@ onBeforeUnmount(() => {
 }
 
 .md-bqc-progress-fill.tone-ok {
-  background: #10b981;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
 }
 
 .md-bqc-progress-fill.tone-mid {
-  background: #2563eb;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
 }
 
 .md-bqc-progress-fill.tone-low {
-  background: #f59e0b;
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
 }
 
 .md-bqc-progress-fill.tone-full {
   background: #94a3b8;
 }
 
-.md-bqc-footer {
+.md-bqc-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.md-bqc-urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 1px 7px;
+  border-radius: 4px;
+}
+
+.md-bqc-urgency-badge svg {
+  color: #d97706;
+}
+
+.md-bqc-ratio-text,
+.md-bqc-full-text {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.md-bqc-panel-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 2px 0;
+}
+
+.md-bqc-price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
-  gap: 12px;
+  gap: 8px;
 }
 
 .md-bqc-price-box {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 
 .md-bqc-price-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #64748b;
-}
-
-.md-bqc-price-value {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.01em;
-}
-
-.md-bqc-price-value small {
-  font-size: 0.72rem;
   font-weight: 500;
+}
+
+.md-bqc-price-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.md-bqc-price-amount strong {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.md-bqc-price-amount small {
+  font-size: 0.72rem;
+  font-weight: 600;
   color: #64748b;
 }
 
-.md-bqc-btn {
+.md-bqc-trust-seal {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  gap: 4px;
+  font-size: 0.7rem;
   font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  padding: 2.5px 8px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.md-bqc-btn.btn-book-active {
-  background: #2563eb;
+.md-bqc-trust-seal svg {
+  color: #16a34a;
+}
+
+/* Full-Width Action Button */
+.md-bqc-action-btn {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  align-items: center;
+  width: 100%;
+  height: 46px;
+  padding: 0 10px 0 15px;
+  border-radius: 14px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.md-bqc-action-btn::before {
+  content: '';
+  position: absolute;
+  top: -45%;
+  left: -34%;
+  width: 22%;
+  height: 190%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  transform: rotate(18deg);
+  animation: bqc-button-sheen 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.md-bqc-action-btn.btn-active {
+  background: linear-gradient(105deg, #2563eb 0%, #1d4ed8 58%, #4338ca 100%);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 14px 26px -12px rgba(37, 99, 235, 0.76), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
-.md-bqc-btn.btn-book-active:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+.md-bqc-action-btn.btn-active:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
 }
 
-.md-bqc-btn.btn-book-full {
+.md-bqc-action-btn.btn-active:hover .md-bqc-btn-arrow {
+  transform: translateX(4px);
+}
+
+.md-bqc-action-btn.btn-active:active {
+  transform: scale(0.985);
+}
+
+.md-bqc-action-btn.btn-full {
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #cbd5e1;
 }
 
-.md-bqc-btn.btn-book-full:hover {
+.md-bqc-action-btn.btn-full:hover {
   background: #e2e8f0;
+  color: #0f172a;
+}
+
+.md-bqc-btn-label {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  text-align: left;
+  padding: 0 14px;
+  letter-spacing: 0.01em;
+}
+
+.md-bqc-btn-arrow {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  transition: transform 0.2s ease;
+}
+
+@keyframes bqc-button-sheen {
+  0%, 58% {
+    left: -34%;
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  86%, 100% {
+    left: 116%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-bqc-dot.pulsing,
+  .md-bqc-action-btn::before {
+    animation: none;
+  }
+}
+
+.md-bqc-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.md-bqc-hint svg {
+  color: #3b82f6;
+  flex-shrink: 0;
 }
 
 /* ---------- Floorplan ---------- */
@@ -1693,7 +2077,45 @@ onBeforeUnmount(() => {
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .md-header-card {
+    column-gap: 36px;
+    padding: 30px;
+  }
+
+  .md-title {
+    font-size: clamp(1.9rem, 3vw, 2.15rem);
+  }
+
+  .md-booking-quick-card {
+    width: 310px;
+  }
+
+  .md-meta-item {
+    padding-right: 10px;
+  }
+}
+
 @media (max-width: 960px) {
+  .md-header-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+  }
+
+  .md-header-left {
+    max-width: none;
+  }
+
+  .md-header-right {
+    width: 100%;
+  }
+
+  .md-booking-quick-card {
+    width: min(100%, 320px);
+  }
+
   .md-main-grid {
     flex-direction: column;
   }
@@ -1708,10 +2130,19 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .md-header-card {
-    flex-direction: column;
     align-items: flex-start;
-    padding: 22px;
-    gap: 20px;
+    padding: 24px 20px;
+    gap: 22px;
+    min-height: 0;
+    border-radius: 16px;
+  }
+  .md-header-overlay-gradient {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.94) 60%,
+      rgba(255, 255, 255, 0.88) 100%
+    );
   }
   .md-header-right {
     width: 100%;
@@ -1721,6 +2152,24 @@ onBeforeUnmount(() => {
     width: 100%;
     max-width: 320px;
     margin: 0 auto;
+    padding: 0;
+  }
+  .md-bqc-simple-summary {
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .md-bqc-summary-count {
+    width: auto;
+    height: auto;
+  }
+  .md-bqc-summary-count strong {
+    font-size: 4rem;
+  }
+  .md-bqc-summary-count.is-three-digits strong {
+    font-size: 2.9rem;
+  }
+  .md-bqc-summary-count.is-four-plus-digits strong {
+    font-size: 2.15rem;
   }
   .md-meta-row {
     flex-direction: column;
@@ -1729,11 +2178,18 @@ onBeforeUnmount(() => {
     width: 100%;
     padding: 12px 14px;
   }
+  .md-meta-item {
+    width: auto;
+  }
   .md-meta-divider {
     display: none;
   }
   .md-title {
     font-size: 1.65rem;
+  }
+  .md-hero-summary {
+    font-size: 0.84rem;
+    line-height: 1.6;
   }
   .md-stats-grid {
     grid-template-columns: 1fr;

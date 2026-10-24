@@ -6,8 +6,8 @@ export type BookingStatus =
 	| "pending_decision"     // รอยืนยันความสนใจ (นับถอยหลัง 3 วัน)
 	| "interested"           // สนใจเช่า - รอยื่นคำร้อง (นับถอยหลัง 7 วัน)
 	| "lease_applied"        // ยื่นคำร้องแล้ว (ถือแผงจนกว่าคำร้อง/สัญญาจบ)
-	| "rejected"             // ไม่อนุมัติ
-	| "not_interested"       // ไม่สนใจ
+	| "rejected"             // ยกเลิก
+	| "not_interested"       // ไม่สนใจ (สละสิทธิ์)
 	| "cancelled"            // ยกเลิก / หมดเวลา
 
 export interface IBookingAuditLog {
@@ -26,6 +26,7 @@ export interface IBooking {
 	stall_monthly_rate?: number
 	stall_category?: string
 	stall_zone_name?: string
+	project_name?: string
 	market_name: string
 	market_district?: string
 	meeting_point?: string
@@ -58,6 +59,7 @@ export interface IBooking {
 export interface ICreateBookingPayload {
 	stall_id?: number
 	stall_number?: string
+	project_name?: string
 	market_name?: string
 	tenant_name: string
 	tenant_phone: string

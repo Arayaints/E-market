@@ -48,6 +48,21 @@
       <!-- Form State -->
       <form v-else @submit.prevent="handleSubmit">
         <div class="modal-body">
+          <!-- Stall Selector when Appointment Card contains multiple stalls -->
+          <div
+            v-if="selectableSubBookings.length > 1"
+            style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;"
+          >
+            <label class="form-label" style="color: #1e40af; font-weight: 700; margin-bottom: 6px; display: block;">
+              เลือกแผงค้าในนัดหมายนี้ที่ต้องการยื่นคำร้องขอเช่า *
+            </label>
+            <AppSelect
+              v-model="selectedSubBookingId"
+              :options="subBookingSelectOptions"
+              placeholder="เลือกแผงค้าที่ต้องการยื่นคำร้อง"
+            />
+          </div>
+
           <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
             1. ข้อมูลผู้ยื่นคำร้อง (Applicant Details)
           </h4>
@@ -104,23 +119,22 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="app_period">ระยะเวลาขอเช่า (เดือน)</label>
-              <select id="app_period" v-model.number="form.requested_period_months" class="form-select">
-                <option :value="3">3 เดือน (ทดลองขาย)</option>
-                <option :value="6">6 เดือน</option>
-                <option :value="12">1 ปี (มาตรฐาน)</option>
-                <option :value="24">2 ปี</option>
-              </select>
+              <label class="form-label">ระยะเวลาขอเช่า (เดือน)</label>
+              <AppSelect
+                v-model="form.requested_period_months"
+                :options="periodOptions"
+                placeholder="เลือกระยะเวลาขอเช่า"
+              />
             </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="$emit('close')">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary" :disabled="submitting">
+          <AppButton type="button" variant="secondary" size="md" @click="$emit('close')">ยกเลิก</AppButton>
+          <AppButton type="submit" variant="primary" size="md" :loading="submitting" :disabled="submitting">
             <span v-if="submitting">กำลังส่งคำร้อง...</span>
-            <span v-else>ยื่นคำร้องขอเช่าแผง</span>
-          </button>
+            <span v-else>ยื่นคำร้องขอเช่าแผง {{ targetStallNumber }}</span>
+          </AppButton>
         </div>
       </form>
     </div>
@@ -145,13 +159,47 @@ const { showError } = useAppAlert()
 const submitting = ref(false)
 const isSuccess = ref(false)
 const successAppNumber = ref('')
+const selectedSubBookingId = ref<number | string>('')
+
+const periodOptions = [
+  { value: 3, label: '3 เดือน (ทดลองขาย)' },
+  { value: 6, label: '6 เดือน' },
+  { value: 12, label: '1 ปี (มาตรฐาน)' },
+  { value: 24, label: '2 ปี' }
+]
+
+const selectableSubBookings = computed(() => {
+  const subs = props.booking?.sub_bookings
+  if (Array.isArray(subs) && subs.length > 1) {
+    return subs.filter((s: any) => s.status === 'interested')
+  }
+  return []
+})
+
+const subBookingSelectOptions = computed(() => {
+  return selectableSubBookings.value.map((s: any) => ({
+    value: s.id,
+    label: `แผง ${s.stall_number}${s.stall_zone_name ? ` (${s.stall_zone_name})` : ''}${s.stall_monthly_rate ? ` — ฿${Number(s.stall_monthly_rate).toLocaleString()}/เดือน` : ''}`
+  }))
+})
+
+const activeBookingRecord = computed(() => {
+  if (selectableSubBookings.value.length > 1 && selectedSubBookingId.value) {
+    const found = selectableSubBookings.value.find((s: any) => String(s.id) === String(selectedSubBookingId.value))
+    if (found) return found
+  }
+  if (selectableSubBookings.value.length === 1) {
+    return selectableSubBookings.value[0]
+  }
+  return props.booking
+})
 
 const targetStallNumber = computed(() => {
-  return props.booking?.stall_number || props.stall?.stall_number || ''
+  return activeBookingRecord.value?.stall_number || props.stall?.stall_number || ''
 })
 
 const targetStallId = computed(() => {
-  return props.booking?.stall_id || props.stall?.id || 1
+  return activeBookingRecord.value?.stall_id || activeBookingRecord.value?.stall_number || props.stall?.id || 1
 })
 
 const form = ref({
@@ -170,13 +218,19 @@ const form = ref({
 watch(() => props.show, (newVal) => {
   if (newVal) {
     isSuccess.value = false
-    if (props.booking) {
-      form.value.applicant_name = props.booking.tenant_name || ''
-      form.value.applicant_phone = props.booking.tenant_phone || ''
-      form.value.applicant_email = props.booking.tenant_email || ''
-      form.value.applicant_id_card = props.booking.tenant_id_card || ''
-      form.value.product_type = props.booking.intended_business || ''
-      form.value.shop_name = props.booking.intended_business || ''
+    if (selectableSubBookings.value.length > 0) {
+      selectedSubBookingId.value = selectableSubBookings.value[0].id
+    } else {
+      selectedSubBookingId.value = props.booking?.id || ''
+    }
+    const base = activeBookingRecord.value || props.booking
+    if (base) {
+      form.value.applicant_name = base.tenant_name || ''
+      form.value.applicant_phone = base.tenant_phone || ''
+      form.value.applicant_email = base.tenant_email || ''
+      form.value.applicant_id_card = base.tenant_id_card || ''
+      form.value.product_type = base.intended_business || ''
+      form.value.shop_name = base.intended_business || ''
     }
   }
 })
@@ -184,11 +238,12 @@ watch(() => props.show, (newVal) => {
 const handleSubmit = async () => {
   submitting.value = true
   try {
+    const targetRecord = activeBookingRecord.value || props.booking
     const res = await post('/applications', {
       stall_id: targetStallId.value,
       stall_number: targetStallNumber.value,
-      market_name: props.booking?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
-      booking_id: props.booking?.id || null,
+      market_name: targetRecord?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
+      booking_id: targetRecord?.id || null,
       applicant_name: form.value.applicant_name,
       applicant_id_card: form.value.applicant_id_card,
       applicant_phone: form.value.applicant_phone,
@@ -197,7 +252,7 @@ const handleSubmit = async () => {
       shop_name: form.value.shop_name,
       product_type: form.value.product_type,
       requested_start_date: form.value.requested_start_date,
-      requested_period_months: form.value.requested_period_months,
+      requested_period_months: Number(form.value.requested_period_months) || 12,
       proposed_rent_type: form.value.proposed_rent_type
     })
 

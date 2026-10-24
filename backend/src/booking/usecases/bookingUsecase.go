@@ -41,8 +41,21 @@ func toBookingResponse(b *models.Booking) responses.BookingResponse {
 	}
 }
 
-func (u *useCase) GetBookings(filter requests.BookingFilter) ([]responses.BookingResponse, error) {
-	bookings, err := u.repo.FindAll(filter)
+func canManageBookings(role string) bool {
+	return role == "admin" || role == "staff"
+}
+
+func (u *useCase) GetBookings(filter requests.BookingFilter, actorID int, actorRole string) ([]responses.BookingResponse, error) {
+	if actorID <= 0 {
+		return nil, responses.NewAppErr(http.StatusUnauthorized, "กรุณาเข้าสู่ระบบก่อนดูรายการจอง")
+	}
+
+	var ownerID *int
+	if !canManageBookings(actorRole) {
+		ownerID = &actorID
+	}
+
+	bookings, err := u.repo.FindAll(filter, ownerID)
 	if err != nil {
 		logs.Error(err)
 		return nil, responses.NewInternalServerError()
@@ -55,7 +68,11 @@ func (u *useCase) GetBookings(filter requests.BookingFilter) ([]responses.Bookin
 	return res, nil
 }
 
-func (u *useCase) GetBookingByID(id int) (*responses.BookingResponse, error) {
+func (u *useCase) GetBookingByID(id int, actorID int, actorRole string) (*responses.BookingResponse, error) {
+	if actorID <= 0 {
+		return nil, responses.NewAppErr(http.StatusUnauthorized, "กรุณาเข้าสู่ระบบก่อนดูรายละเอียดการจอง")
+	}
+
 	booking, err := u.repo.FindByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -64,11 +81,21 @@ func (u *useCase) GetBookingByID(id int) (*responses.BookingResponse, error) {
 		logs.Error(err)
 		return nil, responses.NewInternalServerError()
 	}
+	if !canManageBookings(actorRole) && (booking.CreatedBy == nil || *booking.CreatedBy != actorID) {
+		return nil, responses.NewAppErr(http.StatusForbidden, "คุณไม่มีสิทธิ์ดูรายละเอียดการจองนี้")
+	}
 	res := toBookingResponse(booking)
 	return &res, nil
 }
 
 func (u *useCase) CreateBooking(userID int, req requests.CreateBookingRequest) (*responses.BookingResponse, error) {
+	if userID <= 0 {
+		return nil, responses.NewAppErr(http.StatusUnauthorized, "กรุณาเข้าสู่ระบบก่อนจองแผง")
+	}
+	if existing, err := u.repo.FindActiveDuplicate(req.StallIdent, userID, req.ApplicantName, req.ApplicantPhone); err == nil && existing != nil {
+		return nil, responses.NewAppErr(http.StatusConflict, fmt.Sprintf("คุณได้ทำการจองแผง %s ไว้แล้ว (รหัส %s) ไม่สามารถจองซ้ำได้", req.StallIdent, existing.BookingNo))
+	}
+
 	queueCount, _ := u.repo.CountActiveQueue(req.StallIdent)
 	queueNum := int(queueCount) + 1
 

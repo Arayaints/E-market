@@ -47,7 +47,7 @@ func (h *Handler) GetBookings(c *gin.Context) {
 	var filter requests.BookingFilter
 	_ = c.ShouldBindQuery(&filter)
 
-	res, err := h.useCase.GetBookings(filter)
+	res, err := h.useCase.GetBookings(filter, middlewares.GetUserID(c), middlewares.GetUserRole(c))
 	if err != nil {
 		respondError(c, err)
 		return
@@ -70,7 +70,7 @@ func (h *Handler) GetBookingByID(c *gin.Context) {
 		return
 	}
 
-	res, err := h.useCase.GetBookingByID(id)
+	res, err := h.useCase.GetBookingByID(id, middlewares.GetUserID(c), middlewares.GetUserRole(c))
 	if err != nil {
 		respondError(c, err)
 		return
@@ -89,6 +89,10 @@ func (h *Handler) GetBookingByID(c *gin.Context) {
 // @Router /bookings [post]
 func (h *Handler) CreateBooking(c *gin.Context) {
 	userID := middlewares.GetUserID(c)
+	if middlewares.GetUserRole(c) != "tenant" {
+		respondError(c, responses.NewAppErr(http.StatusForbidden, "เฉพาะบัญชีผู้เช่าเท่านั้นที่สร้างรายการจองได้"))
+		return
+	}
 	var req requests.CreateBookingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		respondError(c, err)

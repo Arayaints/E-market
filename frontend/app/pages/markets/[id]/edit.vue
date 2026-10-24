@@ -11,7 +11,7 @@ definePageMeta({
     const authStore = useAuthStore()
     authStore.hydrate()
     if (import.meta.client && !['admin', 'staff'].includes(authStore.role)) {
-      return navigateTo({ path: '/stalls', query: { market: to.params.id } })
+      return navigateTo({ path: '/stalls', query: { market: to.params.id } }, { replace: true })
     }
   }
 })

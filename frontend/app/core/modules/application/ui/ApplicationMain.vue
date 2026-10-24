@@ -261,8 +261,11 @@
 </template>
 
 <script setup lang="ts">
+import { useNotifications } from '~/composables/useNotifications'
+
 const { get, post } = useApi()
 const { showAlert, showConfirm, showSuccess, showError } = useAppAlert()
+const { fetchNotifications } = useNotifications()
 
 const loading = ref(true)
 const applications = ref<any[]>([])
@@ -275,6 +278,7 @@ const loadApplications = async () => {
   loading.value = true
   try {
     applications.value = await get('/applications')
+    await fetchNotifications()
   } catch (err) {
     console.error('Failed to load applications:', err)
   } finally {

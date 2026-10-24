@@ -16,9 +16,9 @@
       "id": "rat-01",
       "name": "โครงการ 01 (อาคารตลาดราษฎร์บูรณะ)",
       "sectionNumber": "01",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#2563eb",
-      "stallsAvailable": 0,
+      "category": "อาหารสด เนื้อสัตว์ ผักสด และอาหารทะเล",
+      "color": "#0284c7",
+      "stallsAvailable": 1,
       "totalStalls": 1,
       "realAreaSqm": 1284,
       "centroid": [
@@ -57,10 +57,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-01-001",
+          "code": "RBU-01-001",
           "projectId": "rat-01",
           "zone": "อาคารตลาดราษฎร์บูรณะ (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 1284.12,
           "widthM": 2.0,

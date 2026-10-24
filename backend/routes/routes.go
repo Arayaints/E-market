@@ -95,13 +95,15 @@ func SetupRouter() *gin.Engine {
 		}
 
 		// Booking Routes
-		bookingGroup := api.Group("/bookings")
+		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT())
 		{
 			bookingGroup.GET("", bookingHandler.GetBookings)
+			// This endpoint returns only masked queue data, so a signed-in tenant can
+			// determine their real queue position without exposing another tenant's PII.
 			bookingGroup.GET("/waiting-queue/:ident", stallHandler.GetWaitingQueue)
 			bookingGroup.GET("/:id", bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
-			bookingGroup.PATCH("/:id/status", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdateBookingStatus)
+			bookingGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdateBookingStatus)
 		}
 
 		// Application Routes

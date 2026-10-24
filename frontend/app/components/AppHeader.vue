@@ -26,26 +26,22 @@
       </NuxtLink>
     </div>
 
-    <div class="navbar-right">
-      <!-- Notification Bell -->
-      <button class="notification-bell-btn" title="การแจ้งเตือนและการนัดหมาย">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span class="notification-badge-dot"></span>
-      </button>
-
+    <div class="navbar-right" ref="headerRightRef">
+      <!-- Notification Bell & Dropdown Central Component -->
+      <AppNotificationDropdown
+        ref="notifDropdownRef"
+        @open="showDropdown = false"
+      />
 
       <!-- User Profile Badge -->
-      <div class="user-profile-badge" @click="toggleMenu" style="position: relative; cursor: pointer;">
+      <div class="user-profile-badge" @click.stop="toggleMenu" style="position: relative; cursor: pointer;">
         <div class="user-avatar-circle" :style="user?.role === 'tenant' ? 'border: 2px solid #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);' : 'border: 2px solid #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);'">
           <img :src="user?.role === 'tenant' ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80'" alt="Avatar" />
         </div>
         <div class="user-info-text">
           <span class="user-name-text">{{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}</span>
           <span class="user-role-text" :style="user?.role === 'tenant' ? 'color: #059669; font-weight: 700;' : 'color: #2563eb; font-weight: 700;'">
-            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'ผู้ดูแลระบบ (Admin)' }}
+            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'เจ้าหน้าที่ดูแลตลาด (Admin)' }}
           </span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="user-dropdown-arrow" :class="{ open: showDropdown }">
@@ -53,9 +49,9 @@
         </svg>
 
         <!-- Dropdown Menu -->
-        <div v-if="showDropdown" class="profile-dropdown-card">
+        <div v-if="showDropdown" class="profile-dropdown-card" @click.stop>
           <div class="dropdown-header">
-            <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">บัญชีผู้ใช้งาน</div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">บัญชีผู้ใช้งาน</div>
             <div style="font-weight: 700; font-size: 0.88rem; color: #0f172a; margin-top: 2px;">
               {{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}
             </div>
@@ -87,24 +83,36 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   title?: string
   subtitle?: string
 }>()
 
-const { user, logout, switchRole: authSwitchRole } = useAuth()
+const { user, logout } = useAuth()
 const { isExpanded, toggle: toggleSidebar } = useSidebar()
+
 const showDropdown = ref(false)
+const headerRightRef = ref<HTMLElement | null>(null)
+const notifDropdownRef = ref<{ closeNotifications: () => void } | null>(null)
 
 const toggleMenu = () => {
+  notifDropdownRef.value?.closeNotifications()
   showDropdown.value = !showDropdown.value
 }
 
-const switchRole = (newRole: 'tenant' | 'admin') => {
-  if (authSwitchRole) {
-    authSwitchRole(newRole)
+const handleClickOutside = (e: MouseEvent) => {
+  if (headerRightRef.value && !headerRightRef.value.contains(e.target as Node)) {
+    showDropdown.value = false
   }
 }
+
+onMounted(() => {
+  window.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleClickOutside)
+})
 
 const { showConfirm } = useAppAlert()
 
@@ -177,13 +185,6 @@ const handleLogout = async () => {
   .bma-pill-badge { display: none; }
 }
 
-.navbar-subtitle-text {
-  font-size: 0.86rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-
 .user-dropdown-arrow {
   color: #94a3b8;
   margin-left: 2px;
@@ -198,7 +199,7 @@ const handleLogout = async () => {
   position: absolute;
   top: 115%;
   right: 0;
-  min-width: 220px;
+  min-width: 230px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -228,6 +229,7 @@ const handleLogout = async () => {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
+  text-decoration: none;
 }
 
 .dropdown-item:hover {
@@ -242,11 +244,5 @@ const handleLogout = async () => {
 .dropdown-item.logout-action:hover {
   background: #fff1f2;
   color: #dc2626;
-}
-
-@media (max-width: 860px) {
-  .navbar-subtitle-text {
-    display: none;
-  }
 }
 </style>

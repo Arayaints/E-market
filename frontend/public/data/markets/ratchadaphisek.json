@@ -16,9 +16,9 @@
       "id": "rat-01",
       "name": "โครงการ 01 (M)",
       "sectionNumber": "01",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#2563eb",
-      "stallsAvailable": 11,
+      "category": "อาหารปรุงสำเร็จ สตรีทฟู้ด และเครื่องดื่ม",
+      "color": "#ea580c",
+      "stallsAvailable": 36,
       "totalStalls": 36,
       "realAreaSqm": 144,
       "centroid": [
@@ -97,10 +97,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-01-009",
+          "code": "RDP-01-009",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -141,10 +141,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-008",
+          "code": "RDP-01-008",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -185,10 +185,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-007",
+          "code": "RDP-01-007",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -233,7 +233,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-018",
+          "code": "RDP-01-018",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -281,7 +281,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-017",
+          "code": "RDP-01-017",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -325,10 +325,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-016",
+          "code": "RDP-01-016",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -369,7 +369,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-015",
+          "code": "RDP-01-015",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -413,10 +413,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-014",
+          "code": "RDP-01-014",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -457,10 +457,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-013",
+          "code": "RDP-01-013",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -505,10 +505,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-019",
+          "code": "RDP-01-019",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -557,10 +557,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-020",
+          "code": "RDP-01-020",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -601,10 +601,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-021",
+          "code": "RDP-01-021",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -645,10 +645,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-022",
+          "code": "RDP-01-022",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -689,7 +689,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-023",
+          "code": "RDP-01-023",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -733,7 +733,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-024",
+          "code": "RDP-01-024",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -785,10 +785,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-012",
+          "code": "RDP-01-012",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -833,7 +833,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-011",
+          "code": "RDP-01-011",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -877,7 +877,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-010",
+          "code": "RDP-01-010",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -921,10 +921,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-025",
+          "code": "RDP-01-025",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -973,10 +973,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-026",
+          "code": "RDP-01-026",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1017,10 +1017,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-027",
+          "code": "RDP-01-027",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1061,7 +1061,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-028",
+          "code": "RDP-01-028",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -1105,10 +1105,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-029",
+          "code": "RDP-01-029",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1149,10 +1149,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-030",
+          "code": "RDP-01-030",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1205,10 +1205,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-006",
+          "code": "RDP-01-006",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1253,10 +1253,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-005",
+          "code": "RDP-01-005",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1297,7 +1297,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-004",
+          "code": "RDP-01-004",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -1341,7 +1341,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-003",
+          "code": "RDP-01-003",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -1385,10 +1385,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-002",
+          "code": "RDP-01-002",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1429,10 +1429,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-001",
+          "code": "RDP-01-001",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1477,7 +1477,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-031",
+          "code": "RDP-01-031",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
           "status": "available",
@@ -1529,10 +1529,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-032",
+          "code": "RDP-01-032",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1573,10 +1573,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-033",
+          "code": "RDP-01-033",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1617,10 +1617,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-034",
+          "code": "RDP-01-034",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1661,10 +1661,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-035",
+          "code": "RDP-01-035",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1705,10 +1705,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-01-036",
+          "code": "RDP-01-036",
           "projectId": "rat-01",
           "zone": "M (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -1766,9 +1766,9 @@
       "id": "rat-02",
       "name": "โครงการ 02 (B)",
       "sectionNumber": "02",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#10b981",
-      "stallsAvailable": 2,
+      "category": "ขนมไทยโบราณ เบเกอรี่ และของหวาน",
+      "color": "#f59e0b",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -1835,7 +1835,7 @@
       ],
       "stalls": [
         {
-          "code": "RAT-02-012",
+          "code": "RDP-02-012",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
           "status": "available",
@@ -1883,7 +1883,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-001",
+          "code": "RDP-02-001",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
           "status": "available",
@@ -1931,10 +1931,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-003",
+          "code": "RDP-02-003",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -1987,10 +1987,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-002",
+          "code": "RDP-02-002",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -2031,10 +2031,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-004",
+          "code": "RDP-02-004",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2079,10 +2079,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-005",
+          "code": "RDP-02-005",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2123,10 +2123,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-006",
+          "code": "RDP-02-006",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2167,10 +2167,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-007",
+          "code": "RDP-02-007",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "reserved",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2211,10 +2211,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-008",
+          "code": "RDP-02-008",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2255,10 +2255,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-009",
+          "code": "RDP-02-009",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2303,10 +2303,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-010",
+          "code": "RDP-02-010",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "reserved",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.4,
           "widthM": 2.0,
@@ -2359,10 +2359,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-02-011",
+          "code": "RDP-02-011",
           "projectId": "rat-02",
           "zone": "B (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -2408,9 +2408,9 @@
       "id": "rat-03",
       "name": "โครงการ 03 (D)",
       "sectionNumber": "03",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#f59e0b",
-      "stallsAvailable": 2,
+      "category": "อาหารสด เนื้อสัตว์ ผักสด และอาหารทะเล",
+      "color": "#0284c7",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -2481,10 +2481,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-03-012",
+          "code": "RDP-03-012",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -2529,10 +2529,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-001",
+          "code": "RDP-03-001",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -2577,10 +2577,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-003",
+          "code": "RDP-03-003",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -2633,10 +2633,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-002",
+          "code": "RDP-03-002",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -2677,7 +2677,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-010",
+          "code": "RDP-03-010",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
           "status": "available",
@@ -2733,7 +2733,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-011",
+          "code": "RDP-03-011",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
           "status": "available",
@@ -2777,10 +2777,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-004",
+          "code": "RDP-03-004",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2825,10 +2825,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-005",
+          "code": "RDP-03-005",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2869,10 +2869,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-006",
+          "code": "RDP-03-006",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2913,10 +2913,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-007",
+          "code": "RDP-03-007",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -2957,10 +2957,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-008",
+          "code": "RDP-03-008",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "reserved",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3001,10 +3001,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-03-009",
+          "code": "RDP-03-009",
           "projectId": "rat-03",
           "zone": "D (ชั้น 1)",
-          "status": "reserved",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3054,9 +3054,9 @@
       "id": "rat-04",
       "name": "โครงการ 04 (F)",
       "sectionNumber": "04",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#ec4899",
-      "stallsAvailable": 3,
+      "category": "เสื้อผ้าแฟชั่น เครื่องแต่งกาย และเครื่องประดับ",
+      "color": "#ab77c8",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -3123,7 +3123,7 @@
       ],
       "stalls": [
         {
-          "code": "RAT-04-012",
+          "code": "RDP-04-012",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
           "status": "available",
@@ -3171,10 +3171,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-001",
+          "code": "RDP-04-001",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -3219,10 +3219,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-010",
+          "code": "RDP-04-010",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.4,
           "widthM": 2.0,
@@ -3279,7 +3279,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-011",
+          "code": "RDP-04-011",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
           "status": "available",
@@ -3323,10 +3323,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-004",
+          "code": "RDP-04-004",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3371,10 +3371,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-005",
+          "code": "RDP-04-005",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3415,10 +3415,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-006",
+          "code": "RDP-04-006",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3459,10 +3459,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-007",
+          "code": "RDP-04-007",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3503,10 +3503,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-008",
+          "code": "RDP-04-008",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -3547,7 +3547,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-009",
+          "code": "RDP-04-009",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
           "status": "available",
@@ -3595,10 +3595,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-003",
+          "code": "RDP-04-003",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -3651,10 +3651,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-04-002",
+          "code": "RDP-04-002",
           "projectId": "rat-04",
           "zone": "F (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -3700,9 +3700,9 @@
       "id": "rat-05",
       "name": "โครงการ 05 (E)",
       "sectionNumber": "05",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#8b5cf6",
-      "stallsAvailable": 2,
+      "category": "อาหารปรุงสำเร็จ สตรีทฟู้ด และเครื่องดื่ม",
+      "color": "#ea580c",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -3765,7 +3765,7 @@
       ],
       "stalls": [
         {
-          "code": "RAT-05-012",
+          "code": "RDP-05-012",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
           "status": "available",
@@ -3813,10 +3813,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-001",
+          "code": "RDP-05-001",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -3861,10 +3861,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-010",
+          "code": "RDP-05-010",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.39,
           "widthM": 2.0,
@@ -3917,10 +3917,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-011",
+          "code": "RDP-05-011",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -3961,10 +3961,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-009",
+          "code": "RDP-05-009",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4013,7 +4013,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-008",
+          "code": "RDP-05-008",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
           "status": "available",
@@ -4057,10 +4057,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-007",
+          "code": "RDP-05-007",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4101,10 +4101,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-006",
+          "code": "RDP-05-006",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4145,10 +4145,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-005",
+          "code": "RDP-05-005",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4189,10 +4189,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-004",
+          "code": "RDP-05-004",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4245,10 +4245,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-003",
+          "code": "RDP-05-003",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -4301,10 +4301,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-05-002",
+          "code": "RDP-05-002",
           "projectId": "rat-05",
           "zone": "E (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -4350,9 +4350,9 @@
       "id": "rat-06",
       "name": "โครงการ 06 (C)",
       "sectionNumber": "06",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#06b6d4",
-      "stallsAvailable": 3,
+      "category": "ขนมไทยโบราณ เบเกอรี่ และของหวาน",
+      "color": "#f59e0b",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -4423,10 +4423,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-06-012",
+          "code": "RDP-06-012",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -4475,10 +4475,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-001",
+          "code": "RDP-06-001",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -4523,7 +4523,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-009",
+          "code": "RDP-06-009",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
           "status": "available",
@@ -4579,7 +4579,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-008",
+          "code": "RDP-06-008",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
           "status": "available",
@@ -4623,7 +4623,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-007",
+          "code": "RDP-06-007",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
           "status": "available",
@@ -4667,10 +4667,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-006",
+          "code": "RDP-06-006",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4711,10 +4711,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-005",
+          "code": "RDP-06-005",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4755,10 +4755,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-004",
+          "code": "RDP-06-004",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -4807,10 +4807,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-010",
+          "code": "RDP-06-010",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.39,
           "widthM": 2.0,
@@ -4863,10 +4863,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-011",
+          "code": "RDP-06-011",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -4907,10 +4907,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-003",
+          "code": "RDP-06-003",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.35,
           "widthM": 2.0,
@@ -4963,10 +4963,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-06-002",
+          "code": "RDP-06-002",
           "projectId": "rat-06",
           "zone": "C (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5012,9 +5012,9 @@
       "id": "rat-07",
       "name": "โครงการ 07 (A)",
       "sectionNumber": "07",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#e11d48",
-      "stallsAvailable": 2,
+      "category": "อาหารสด เนื้อสัตว์ ผักสด และอาหารทะเล",
+      "color": "#0284c7",
+      "stallsAvailable": 12,
       "totalStalls": 12,
       "realAreaSqm": 38,
       "centroid": [
@@ -5081,10 +5081,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-07-012",
+          "code": "RDP-07-012",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5133,10 +5133,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-001",
+          "code": "RDP-07-001",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "reserved",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5181,10 +5181,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-009",
+          "code": "RDP-07-009",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -5237,10 +5237,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-008",
+          "code": "RDP-07-008",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -5281,7 +5281,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-007",
+          "code": "RDP-07-007",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
           "status": "available",
@@ -5325,10 +5325,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-006",
+          "code": "RDP-07-006",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -5369,10 +5369,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-005",
+          "code": "RDP-07-005",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -5413,10 +5413,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-004",
+          "code": "RDP-07-004",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 4.0,
           "widthM": 2.0,
@@ -5469,10 +5469,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-003",
+          "code": "RDP-07-003",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -5525,7 +5525,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-010",
+          "code": "RDP-07-010",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
           "status": "available",
@@ -5581,10 +5581,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-011",
+          "code": "RDP-07-011",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5625,10 +5625,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-07-002",
+          "code": "RDP-07-002",
           "projectId": "rat-07",
           "zone": "A (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5674,9 +5674,9 @@
       "id": "rat-08",
       "name": "โครงการ 08 (G)",
       "sectionNumber": "08",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#84cc16",
-      "stallsAvailable": 3,
+      "category": "เสื้อผ้าแฟชั่น เครื่องแต่งกาย และเครื่องประดับ",
+      "color": "#ab77c8",
+      "stallsAvailable": 10,
       "totalStalls": 10,
       "realAreaSqm": 28,
       "centroid": [
@@ -5731,10 +5731,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-08-001",
+          "code": "RDP-08-001",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -5783,7 +5783,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-010",
+          "code": "RDP-08-010",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
           "status": "available",
@@ -5831,10 +5831,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-007",
+          "code": "RDP-08-007",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -5883,10 +5883,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-006",
+          "code": "RDP-08-006",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -5931,7 +5931,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-005",
+          "code": "RDP-08-005",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
           "status": "available",
@@ -5983,10 +5983,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-004",
+          "code": "RDP-08-004",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -6031,10 +6031,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-008",
+          "code": "RDP-08-008",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.53,
           "widthM": 2.0,
@@ -6083,10 +6083,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-009",
+          "code": "RDP-08-009",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -6127,7 +6127,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-003",
+          "code": "RDP-08-003",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
           "status": "available",
@@ -6179,10 +6179,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-08-002",
+          "code": "RDP-08-002",
           "projectId": "rat-08",
           "zone": "G (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -6228,9 +6228,9 @@
       "id": "rat-09",
       "name": "โครงการ 09 (H)",
       "sectionNumber": "09",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#d97706",
-      "stallsAvailable": 2,
+      "category": "ของใช้ในครัวเรือน สินค้าชุมชน และ OTOP",
+      "color": "#6366f1",
+      "stallsAvailable": 10,
       "totalStalls": 10,
       "realAreaSqm": 28,
       "centroid": [
@@ -6297,10 +6297,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-09-001",
+          "code": "RDP-09-001",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -6345,10 +6345,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-010",
+          "code": "RDP-09-010",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -6393,7 +6393,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-009",
+          "code": "RDP-09-009",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
           "status": "available",
@@ -6437,10 +6437,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-007",
+          "code": "RDP-09-007",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -6493,10 +6493,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-006",
+          "code": "RDP-09-006",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -6541,10 +6541,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-005",
+          "code": "RDP-09-005",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 3.45,
           "widthM": 2.0,
@@ -6593,7 +6593,7 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-004",
+          "code": "RDP-09-004",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
           "status": "available",
@@ -6641,10 +6641,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-008",
+          "code": "RDP-09-008",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.36,
           "widthM": 2.0,
@@ -6697,10 +6697,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-003",
+          "code": "RDP-09-003",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.39,
           "widthM": 2.0,
@@ -6753,10 +6753,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-09-002",
+          "code": "RDP-09-002",
           "projectId": "rat-09",
           "zone": "H (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 2.25,
           "widthM": 2.0,
@@ -6802,9 +6802,9 @@
       "id": "rat-10",
       "name": "โครงการ 10 (โซนหลัก)",
       "sectionNumber": "10",
-      "category": "สินค้าทั่วไป อาหาร และบริการ",
-      "color": "#6366f1",
-      "stallsAvailable": 0,
+      "category": "อาหารปรุงสำเร็จ สตรีทฟู้ด และเครื่องดื่ม",
+      "color": "#ea580c",
+      "stallsAvailable": 9,
       "totalStalls": 9,
       "realAreaSqm": 1879,
       "centroid": [
@@ -6867,10 +6867,10 @@
       ],
       "stalls": [
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 24.86,
           "widthM": 2.0,
@@ -6911,10 +6911,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D02",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 8.1,
           "widthM": 2.0,
@@ -6955,10 +6955,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-002",
+          "code": "RDP-10-002",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "แผงค้ามาตรฐาน",
           "size": 8.8,
           "widthM": 2.0,
@@ -6999,10 +6999,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D03",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 106.33,
           "widthM": 2.0,
@@ -7043,10 +7043,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D04",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 115.66,
           "widthM": 2.0,
@@ -7087,10 +7087,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D05",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 95.87,
           "widthM": 2.0,
@@ -7131,10 +7131,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D06",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 81.3,
           "widthM": 2.0,
@@ -7175,10 +7175,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D07",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 1335.39,
           "widthM": 2.0,
@@ -7219,10 +7219,10 @@
           "floorLevel": 1
         },
         {
-          "code": "RAT-10-001",
+          "code": "RDP-10-001-D08",
           "projectId": "rat-10",
           "zone": "โซนหลัก (ชั้น 1)",
-          "status": "occupied",
+          "status": "available",
           "areaType": "ร้านค้า/อาคารพาณิชย์",
           "size": 102.23,
           "widthM": 2.0,

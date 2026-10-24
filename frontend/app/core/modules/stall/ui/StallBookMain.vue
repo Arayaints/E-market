@@ -37,21 +37,13 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <div style="min-width: 250px;">
-            <AppSelect
-              :modelValue="currentMarketId"
-              :options="allMarketOptions"
-              placeholder="สลับเลือกตลาด กทม."
-              @update:modelValue="handleMarketSelect"
-            />
-          </div>
           <NuxtLink to="/" class="btn btn-sm btn-outline" style="border-color: #cbd5e1; color: #1e40af; background: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
             </svg>
-            <span>ดูแผนที่รวม กทม.</span>
+            <span>เลือกจองตลาดอื่น</span>
           </NuxtLink>
         </div>
       </div>
@@ -99,8 +91,12 @@
           <MarketProjectsOverviewMap
             ref="overviewMapRef"
             :marketId="currentMarketId"
+            :marketFull="isMarketFull"
             :selectedProjectId="selectedProject?.id"
             :selectedStallCodes="selectedStalls.map(s => s.code)"
+            :selectedStallKeys="selectedStalls.map(stallSelectionKey)"
+            :myBookedStallCodes="Object.keys(myActiveBookingsByStall)"
+            :stallStatusOverrides="stallStatusOverrides"
             v-model:onlyAvailable="onlyAvailable"
             :categoryFilter="selectedCategoryFilter"
             v-model:mapStyle="mapStyle"
@@ -138,8 +134,8 @@
                 <!-- 1. Drawer Header (Pinned at Top) -->
                 <div style="padding: 14px 16px 10px; border-bottom: 1px solid #f1f5f9; background: #ffffff; flex-shrink: 0;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <strong style="font-size: 0.95rem; color: #0f172a; font-weight: 700;">แผงที่เลือก ({{ selectedStalls.length }})</strong>
-                    <button class="btn-icon-square" style="width: 26px; height: 26px;" @click="clearAllSelectedStalls" title="ล้างการเลือกทั้งหมด" aria-label="ล้าง">
+                    <strong style="font-size: 0.95rem; color: #0f172a; font-weight: 700;">แผงค้าที่เลือก</strong>
+                    <button class="btn-icon-square" style="width: 26px; height: 26px;" @click="clearAllSelectedStalls" title="ยกเลิกการเลือก" aria-label="ล้าง">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                   </div>
@@ -162,7 +158,7 @@
                 >
                   <!-- Per-stall cards: แยกกล่องทีละแผง โดยแต่ละแผงใช้ UI รูปภาพบน + กล่อง 3 คอลัมน์ด้านล่าง -->
                   <div class="sel-stall-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div v-for="s in selectedStalls" :key="s.code" class="sel-stall-card">
+                    <div v-for="s in selectedStalls" :key="stallSelectionKey(s)" class="sel-stall-card">
                       <div class="ssc-head">
                         <div class="ssc-title">
                           <div class="ssc-title-main">
@@ -173,7 +169,7 @@
                           </div>
                           <span v-if="s.floorName" class="ssc-floor-name" :title="s.floorName">{{ s.floorName }}</span>
                         </div>
-                        <button type="button" class="ssc-remove" @click.stop="removeStall(s.code)" title="นำแผงนี้ออก" aria-label="ลบแผง">
+                        <button type="button" class="ssc-remove" @click.stop="removeStall(s)" title="นำแผงนี้ออก" aria-label="ลบแผง">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                       </div>
@@ -215,21 +211,24 @@
                   </div>
 
                   <!-- Waiting List Queue Status (Clean & Minimal) -->
-                  <div v-if="currentSelectionStatus === 'reserved'">
+                  <div v-if="currentSelectionStatus === 'reserved' && currentWaitingInfo">
                     <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px;">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <span style="font-size: 0.78rem; font-weight: 800; color: #92400e;">
-                          คิวของคุณ
+                          เมื่อลงทะเบียน คุณจะได้
                         </span>
                         <span class="badge" style="background: #d97706; color: #ffffff; font-weight: 800; font-size: 0.74rem; padding: 2px 8px;">
-                          คิวที่ {{ currentWaitingInfo?.next_queue_number || 1 }}
+                          คิวสำรองที่ {{ currentWaitingInfo.next_queue_number }}
                         </span>
                       </div>
                       <div style="font-size: 0.75rem; color: #78350f; display: flex; justify-content: space-between; border-top: 1px dashed #fcd34d; padding-top: 6px; margin-top: 4px;">
-                        <span>ผู้จองเดิม:</span>
-                        <strong>{{ currentWaitingInfo?.current_booker?.masked_name || 'คุณ รัต***' }} (เหลือ {{ currentWaitingInfo?.current_booker?.days_left_estimate || 2 }} วัน)</strong>
+                        <span>ผู้ถือสิทธิ์ปัจจุบัน:</span>
+                        <strong>{{ currentWaitingInfo.current_booker?.masked_name || 'ผู้จองหลัก' }}</strong>
                       </div>
                     </div>
+                  </div>
+                  <div v-else-if="currentSelectionStatus === 'reserved'" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px; font-size: 0.75rem; color: #92400e;">
+                    กำลังตรวจสอบลำดับคิวจริงของแผงนี้
                   </div>
                 </div>
 
@@ -357,7 +356,7 @@
                   </h3>
                   <p style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin-bottom: 0;">
                     <span v-if="pendingConflictingStall?.status === 'reserved'">
-                      คุณกำลังคลิกเลือก <strong>แผง {{ pendingConflictingStall?.code }} (สถานะ: ติดจอง — คิวสำรองลำดับที่ {{ stallWaitingQueueCache[pendingConflictingStall?.code]?.next_queue_number || 2 }})</strong> ต่อจาก <strong>{{ stallWaitingQueueCache[pendingConflictingStall?.code]?.current_booker?.masked_name || 'คุณ รัต*** มี***' }}</strong> แต่รายการที่คุณเลือกไว้ก่อนหน้าเป็น <strong>กลุ่มแผงว่าง</strong>
+                      คุณกำลังคลิกเลือก <strong>แผง {{ pendingConflictingStall?.code }} (สถานะ: ติดจอง<span v-if="stallWaitingQueueCache[pendingConflictingStall?.code]"> — คิวสำรองลำดับที่ {{ stallWaitingQueueCache[pendingConflictingStall?.code]?.next_queue_number }}</span>)</strong><span v-if="stallWaitingQueueCache[pendingConflictingStall?.code]?.current_booker"> ต่อจาก <strong>{{ stallWaitingQueueCache[pendingConflictingStall?.code]?.current_booker?.masked_name }}</strong></span> แต่รายการที่คุณเลือกไว้ก่อนหน้าเป็น <strong>กลุ่มแผงว่าง</strong>
                     </span>
                     <span v-else>
                       คุณกำลังคลิกเลือก <strong>แผง {{ pendingConflictingStall?.code }} (สถานะ: ว่าง)</strong> แต่รายการที่คุณเลือกไว้ก่อนหน้าเป็น <strong>กลุ่มแผงติดจอง (Waiting List)</strong>
@@ -432,14 +431,15 @@
           <div style="display: flex; align-items: center; gap: 10px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #d97706; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <div>
-              <strong>คำขอนี้เป็นการลงทะเบียนรับสิทธิ์คิวสำรอง (Waiting List คิวที่ {{ currentWaitingInfo?.next_queue_number || 2 }})</strong>
+              <strong>คำขอนี้เป็นการลงทะเบียนรับสิทธิ์คิวสำรอง<span v-if="currentWaitingInfo"> (คิวสำรองที่ {{ currentWaitingInfo.next_queue_number }})</span></strong>
               <div style="font-size: 0.78rem; color: #b45309; margin-top: 2px;">
-                ต่อจากผู้จองสิทธิ์ก่อนหน้า: <strong>{{ currentWaitingInfo?.current_booker?.masked_name || 'คุณ รัต*** มี***' }}</strong> (ปิดข้อมูลบางส่วนตามหลัก PDPA)
+                <template v-if="currentWaitingInfo?.current_booker">ต่อจากผู้จองสิทธิ์ก่อนหน้า: <strong>{{ currentWaitingInfo.current_booker.masked_name }}</strong> (ปิดข้อมูลบางส่วนตามหลัก PDPA)</template>
+                <template v-else>กำลังตรวจสอบข้อมูลคิวจากระบบ</template>
               </div>
             </div>
           </div>
           <span class="badge" style="background: #d97706; color: #ffffff; padding: 5px 12px; font-weight: 700; border-radius: 20px;">
-            คิวที่ {{ currentWaitingInfo?.next_queue_number || 2 }}
+            {{ currentWaitingInfo ? `คิวสำรองที่ ${currentWaitingInfo.next_queue_number}` : 'กำลังตรวจสอบคิว' }}
           </span>
         </div>
 
@@ -633,6 +633,7 @@
                     'is-full-date': d.isAllFull,
                     'is-closed-date': d.isClosed
                   }"
+                  :title="bookingForm.visitDate === d.date ? 'คลิกอีกครั้งเพื่อยกเลิกวันที่เลือก' : `คลิกเพื่อเลือกวันที่ ${d.dayName} ${d.dayNum} ${d.monthShort}`"
                   @click="selectVisitDate(d)"
                 >
                   <div class="date-card-header">
@@ -725,26 +726,35 @@
                   :key="s.time"
                   class="time-slot-card"
                   :class="{
-                    selected: bookingForm.visitSlot === s.time && !s.isFull,
-                    'is-full-slot': s.isFull
+                    selected: bookingForm.visitSlot === s.time && !s.isFull && !s.hasTenantConflict,
+                    'is-full-slot': s.isFull || s.hasTenantConflict
                   }"
-                  :title="s.isFull ? `${s.time} เต็มแล้ว ห้ามเลือก` : `คลิกเพื่อเลือกรอบ ${s.time}`"
+                  :title="bookingForm.visitSlot === s.time ? `คลิกอีกครั้งเพื่อยกเลิกรอบ ${s.time}` : (s.enabled === false ? `${s.time} งดให้บริการรอบเวลานี้` : (s.hasTenantConflict ? `${s.time} คุณมีนัดหมายอื่นในเวลานี้แล้ว` : (s.isFull ? `${s.time} เต็มแล้ว (${s.bookedCount || s.capacity}/${s.capacity} คิว) ห้ามเลือก` : `คลิกเพื่อเลือกรอบ ${s.time}`)))"
                   @click="selectTimeSlot(s)"
                 >
                   <div class="slot-card-top">
-                    <span class="slot-card-icon" :style="{ color: s.isFull ? '#94a3b8' : 'var(--primary)' }">
+                    <span class="slot-card-icon" :style="{ color: (s.isFull || s.hasTenantConflict) ? '#94a3b8' : 'var(--primary)' }">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
                     </span>
-                    <strong class="slot-card-time" :style="{ color: s.isFull ? '#64748b' : '#0f172a' }">{{ s.time }}</strong>
-                    <span v-if="s.isFull" style="margin-left: auto; font-size: 0.72rem; color: #dc2626; font-weight: 700; background: #fee2e2; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                    <strong class="slot-card-time" :style="{ color: (s.isFull || s.hasTenantConflict) ? '#64748b' : '#0f172a' }">{{ s.time }}</strong>
+                    <span v-if="s.enabled === false" style="margin-left: auto; font-size: 0.75rem; color: #64748b; font-weight: 700; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                      งดรอบนี้
+                    </span>
+                    <span v-else-if="s.hasTenantConflict" style="margin-left: auto; font-size: 0.75rem; color: #d97706; font-weight: 700; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                      มีนัดหมายอื่นแล้ว
+                    </span>
+                    <span v-else-if="s.isFull" style="margin-left: auto; font-size: 0.75rem; color: #dc2626; font-weight: 700; background: #fee2e2; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                       </svg>
                       เต็มแล้ว
+                    </span>
+                    <span v-else-if="(s.bookedCount || 0) > 0" style="margin-left: auto; font-size: 0.75rem; color: #2563eb; font-weight: 600; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                      จองแล้ว {{ s.bookedCount }}/{{ s.capacity }} คิว
                     </span>
                   </div>
                   <div class="slot-card-capacity" :class="s.capacityClass">
@@ -795,8 +805,11 @@
           <MarketProjectsOverviewMap
             containerId="step3-confirmation-maplibre"
             :marketId="currentMarketId"
+            :marketFull="isMarketFull"
             :selectedProjectId="selectedProject?.id"
             :selectedStallCodes="selectedStalls.map(s => s.code)"
+            :selectedStallKeys="selectedStalls.map(stallSelectionKey)"
+            :stallStatusOverrides="stallStatusOverrides"
             v-model:mapStyle="mapStyle"
             :previewMode="true"
           />
@@ -821,7 +834,7 @@
           <!-- Stalls Cards Loop (แยกการ์ดแต่ละแผงพร้อมรูปภาพในตัวตามรูป) -->
           <div
             v-for="(stallItem, idx) in selectedStalls"
-            :key="stallItem.code"
+            :key="stallSelectionKey(stallItem)"
             style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px 24px; margin-bottom: 20px;"
           >
             <!-- Sub-card Header -->
@@ -839,7 +852,7 @@
                 v-else
                 style="background: #fffbeb; color: #d97706; font-weight: 600; font-size: 0.82rem; padding: 4px 14px; border-radius: 20px;"
               >
-                ติดจอง {{ stallWaitingQueueCache[stallItem.code]?.queue_count || 1 }} คิว
+                ติดจอง
               </span>
             </div>
 
@@ -919,7 +932,9 @@
               <div style="display: flex; align-items: center; gap: 8px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #d97706; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 <span>
-                  <strong>สถานะคิวสำรอง:</strong> คุณจะได้รับสิทธิ์ <strong>คิวที่ {{ stallWaitingQueueCache[stallItem.code]?.next_queue_number || 2 }}</strong> (ต่อจาก: <strong>{{ stallWaitingQueueCache[stallItem.code]?.current_booker?.masked_name || 'คุณ รัต*** มี***' }}</strong>)
+                  <strong>สถานะคิวสำรอง:</strong>
+                  <template v-if="stallWaitingQueueCache[stallItem.code]"> คุณจะได้รับสิทธิ์ <strong>คิวสำรองที่ {{ stallWaitingQueueCache[stallItem.code].next_queue_number }}</strong><span v-if="stallWaitingQueueCache[stallItem.code].current_booker"> (ต่อจาก: <strong>{{ stallWaitingQueueCache[stallItem.code].current_booker?.masked_name }}</strong>)</span></template>
+                  <template v-else> กำลังตรวจสอบลำดับคิวจริง</template>
                 </span>
               </div>
               <span style="font-size: 0.72rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-weight: 700; padding: 3px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
@@ -1085,7 +1100,7 @@
       <!-- ============================================================ -->
       <!-- SUCCESS MODAL: VIP DIGITAL BOOKING PASS (WOW FEATURE 5)      -->
       <!-- ============================================================ -->
-      <div v-if="showSuccessModal" class="modal-overlay" @click.self="showSuccessModal = false">
+      <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
         <canvas ref="confettiCanvas" class="confetti-canvas-overlay"></canvas>
         <div class="modal-content vip-booking-pass-card" style="max-width: 560px; padding: 0; text-align: center; position: relative; overflow: hidden; border-radius: 20px; border: 1px solid #bfdbfe; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);">
           <!-- Top Metallic Gradient Banner -->
@@ -1093,7 +1108,7 @@
             <button
               class="btn-icon-square"
               style="position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; background: rgba(255,255,255,0.2); border: none; color: #ffffff; backdrop-filter: blur(4px);"
-              @click="showSuccessModal = false"
+              @click="closeSuccessModal"
               aria-label="ปิด"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1148,12 +1163,6 @@
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px; text-align: left; margin-bottom: 20px;">
               <!-- Left: Specs -->
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #fffbeb; padding: 6px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
-                  <span style="color: #92400e; font-weight: 600;">สถานะคำขอ:</span>
-                  <span class="badge" style="background: #fef3c7; color: #d97706; font-size: 0.82rem; font-weight: 700; border-radius: 6px; padding: 3px 10px; border: 1px solid #fde68a;">
-                    รอเจ้าหน้าที่อนุมัติ
-                  </span>
-                </div>
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: #64748b;">ตลาด:</span>
                   <strong style="color: #0f172a;">{{ currentMarketName }}</strong>
@@ -1161,13 +1170,14 @@
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: #64748b;">หมายเลขแผง:</span>
                   <strong style="color: #2563eb; font-size: 1rem;">
-                    แผง {{ selectedStalls.length > 0 ? selectedStalls.map(s => s.code).join(', ') : (selectedStall?.code || '20A') }}
-                    <span v-if="selectedStalls.length > 1" style="font-size: 0.8rem; font-weight: 600; color: #64748b;">({{ selectedStalls.length }} แผง)</span>
+                    แผง {{ passDisplayStalls.length > 0 ? passDisplayStalls.map(s => s.code).join(', ') : (selectedStall?.code || '20A') }}
+                    <span v-if="passDisplayStalls.length > 1" style="font-size: 0.8rem; font-weight: 600; color: #64748b;">({{ passDisplayStalls.length }} แผง)</span>
                   </strong>
                 </div>
-                <div v-if="currentSelectionStatus === 'reserved'" style="display: flex; justify-content: space-between; background: #fffbeb; padding: 6px 10px; border-radius: 6px; border: 1px solid #fde68a;">
+                <div v-if="passDisplayStalls[0]?.status === 'reserved' || currentSelectionStatus === 'reserved'" style="display: flex; justify-content: space-between; background: #fffbeb; padding: 6px 10px; border-radius: 6px; border: 1px solid #fde68a;">
                   <span style="color: #92400e; font-weight: 600;">สถานะคิวสำรอง:</span>
-                  <strong style="color: #d97706;">คิวที่ {{ currentWaitingInfo?.next_queue_number || 2 }} (ต่อจาก {{ currentWaitingInfo?.current_booker?.masked_name || 'คุณ รัต*** มี***' }})</strong>
+                  <strong v-if="currentWaitingInfo" style="color: #d97706;">คิวสำรองที่ {{ currentWaitingInfo.next_queue_number }}<span v-if="currentWaitingInfo.current_booker"> (ต่อจาก {{ currentWaitingInfo.current_booker.masked_name }})</span></strong>
+                  <strong v-else style="color: #d97706;">กำลังตรวจสอบลำดับคิว</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: #64748b;">วันนัดหมาย:</span>
@@ -1332,14 +1342,20 @@
 
 <script setup lang="ts">
 import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
-import { getBookingVisitDates, type AvailableDateSlot as ScheduleAvailableDateSlot } from '../composables/useMarketVisitSchedule'
+import {
+  getBookingVisitDates,
+  setCachedScheduleBookings,
+  type AvailableDateSlot as ScheduleAvailableDateSlot
+} from '../composables/useMarketVisitSchedule'
 import { BMA_MARKETS_MASTER, getMarketGisConfig } from '../data/markets_registry'
+import { useNotifications } from '~/composables/useNotifications'
 
 const route = useRoute()
 const router = useRouter()
 const { get, post } = useApi()
 const { user } = useAuth()
 const { showAlert, showWarning, showError, showSuccess, showConfirm } = useAppAlert()
+const { fetchNotifications } = useNotifications()
 
 const overviewMapRef = ref<any>(null)
 
@@ -1352,8 +1368,17 @@ const businessOptions = [
   { value: 'ของใช้เบ็ดเตล็ด', label: 'ของใช้เบ็ดเตล็ด' }
 ]
 
-const currentMarketName = ref('ตลาดนัดจตุจักร')
-const currentMarketDistrict = ref('เขตจตุจักร')
+const { applyMarketOverride } = useMarketOverrides()
+const initialMarketConfig = getMarketGisConfig(String(route.query.market || '1'))
+const initialOverriddenMarket = applyMarketOverride({
+  id: initialMarketConfig.id,
+  slug: initialMarketConfig.slug,
+  name: initialMarketConfig.name,
+  district: initialMarketConfig.district
+})
+
+const currentMarketName = ref(initialOverriddenMarket.name || initialMarketConfig.name)
+const currentMarketDistrict = ref(initialOverriddenMarket.district || initialMarketConfig.district)
 const isMarketFull = ref(false)
 const currentMarket = ref<any>(null)
 
@@ -1373,6 +1398,7 @@ const handleMarketSelect = (val: string | number) => {
     }
   })
   selectedProject.value = null
+  bookedProject.value = null
   selectedStalls.value = []
 }
 
@@ -1387,9 +1413,16 @@ const selectedProject = ref<{
   stallsAvailable: number
   totalStalls: number
 } | null>(null)
+const bookedProject = ref<{
+  id: string
+  name: string
+  category?: string
+  color?: string
+  stallsAvailable?: number
+  totalStalls?: number
+} | null>(null)
 const isSelectedProjectFull = computed(() => selectedProject.value?.stallsAvailable === 0)
 
-const bookingMode = ref<'available' | 'queue'>('available')
 // Step 1 starts with all stalls displayed by default
 const onlyAvailable = ref(false)
 const showTrafficHeatmap = ref(false)
@@ -1456,7 +1489,18 @@ interface TimeSlotItem {
   capacityClass: string
   note: string
   isFull: boolean
+  enabled?: boolean
+  capacity?: number
+  bookedCount?: number
+  bookedStalls?: string[]
   remainingQueues: number
+  hasTenantConflict?: boolean
+  tenantConflictInfo?: {
+    bookingNumber: string
+    marketName: string
+    projectName: string
+    stallNumbers: string[]
+  } | null
 }
 
 interface AvailableDateSlot {
@@ -1472,19 +1516,82 @@ interface AvailableDateSlot {
   description?: string
   isAllFull?: boolean
   isClosed?: boolean
+  totalCapacity?: number
+  totalBooked?: number
+  totalRemainingQueues?: number
   slots: TimeSlotItem[]
 }
 
 const currentMarketId = computed(() => String(route.query.market || '1'))
+const allMarketBookings = ref<any[]>([])
+
+const normalizePersonName = (val: any): string =>
+  String(val || '')
+    .replace(/^(คุณ|นาย|นางสาว|นาง|น\.ส\.)\s*/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+
+const normalizeDigitsOnly = (val: any): string => String(val || '').replace(/\D/g, '')
+
+const formErrors = ref({
+  business: '',
+  visitDate: '',
+  visitSlot: ''
+})
+
+// เริ่มต้น: ข้อมูลโปรไฟล์ผู้เช่าดึงมาแสดงอัตโนมัติ (ห้ามว่าง) ส่วนฟิลด์ที่ต้องกรอก/เลือกเองให้เป็นค่าว่างทั้งหมด
+const bookingForm = ref({
+  firstName: 'สมชาย',
+  lastName: 'ใจดี',
+  idCard: '1-1004-98721-34-5',
+  phone: '087-567-4497',
+  email: 'somchai.jai@thaigov.or.th',
+  business: '',
+  notes: '',
+  visitDate: '',
+  visitSlot: ''
+})
+
+const isBookingOwnedByCurrentTenant = (b: any): boolean => {
+  if (!b || ['rejected', 'not_interested', 'cancelled', 'no_show'].includes(b.status)) return false
+  const bName = normalizePersonName(b.tenant_name || b.applicant_name)
+  const bPhone = normalizeDigitsOnly(b.tenant_phone || b.applicant_phone)
+  const bIdCard = normalizeDigitsOnly(b.tenant_id_card || b.citizen_id)
+
+  const formFullName = normalizePersonName(`${bookingForm.value?.firstName || ''} ${bookingForm.value?.lastName || ''}`)
+  const userFullName = normalizePersonName((user.value as any)?.full_name)
+  const candidateNames = new Set([formFullName, userFullName, 'สมชาย ใจดี'].filter(Boolean))
+
+  const formPhone = normalizeDigitsOnly(bookingForm.value?.phone)
+  const userPhone = normalizeDigitsOnly((user.value as any)?.phone || (user.value as any)?.phone_number)
+  const candidatePhones = new Set([formPhone, userPhone, '0812345678'].filter(p => p.length >= 9))
+
+  const formIdCard = normalizeDigitsOnly(bookingForm.value?.idCard)
+  const userIdCard = normalizeDigitsOnly((user.value as any)?.citizen_id || (user.value as any)?.id_card)
+  const candidateIdCards = new Set([formIdCard, userIdCard, '1100400234567'].filter(id => id.length === 13))
+
+  if (bName && candidateNames.has(bName)) return true
+  if (bPhone.length >= 9 && candidatePhones.has(bPhone)) return true
+  if (bIdCard.length === 13 && candidateIdCards.has(bIdCard)) return true
+  return false
+}
 
 const loadAvailableDatesFromSchedule = (): AvailableDateSlot[] => {
-  return getBookingVisitDates(currentMarketId.value, 14)
+  return getBookingVisitDates(
+    currentMarketId.value,
+    14,
+    allMarketBookings.value,
+    currentMarketName.value,
+    isBookingOwnedByCurrentTenant
+  )
 }
 
 const availableDates = ref<AvailableDateSlot[]>(loadAvailableDatesFromSchedule())
 
-// Auto-sync whenever marketId changes
-watch(currentMarketId, () => {
+// Auto-sync whenever marketId or marketName changes
+watch([currentMarketId, currentMarketName], () => {
   availableDates.value = loadAvailableDatesFromSchedule()
   if (bookingForm.value.visitDate) {
     const cur = availableDates.value.find(d => d.date === bookingForm.value.visitDate)
@@ -1524,6 +1631,15 @@ const isCurrentDateAllFull = computed(() => {
 })
 
 const selectVisitDate = (d: AvailableDateSlot) => {
+  // Treat the selected date as a toggle. Clearing the date must also clear its
+  // dependent time slot so an old appointment time cannot be submitted.
+  if (bookingForm.value.visitDate === d.date) {
+    bookingForm.value.visitDate = ''
+    bookingForm.value.visitSlot = ''
+    formErrors.value.visitDate = ''
+    formErrors.value.visitSlot = ''
+    return
+  }
   if (d.isClosed) {
     formErrors.value.visitDate = `วันที่ ${d.dayName} ที่ ${d.dayNum} ${d.monthShort} ปิดรับนัดหมายเข้าชม กรุณาเลือกวันอื่นที่เปิดให้บริการ`
     return
@@ -1533,42 +1649,42 @@ const selectVisitDate = (d: AvailableDateSlot) => {
 }
 
 const selectTimeSlot = (slot: TimeSlotItem) => {
+  // A second click on the active slot deselects it, matching the date-card
+  // behaviour and letting the tenant change their mind before proceeding.
+  if (bookingForm.value.visitSlot === slot.time) {
+    bookingForm.value.visitSlot = ''
+    formErrors.value.visitSlot = ''
+    return
+  }
   if (!bookingForm.value.visitDate) {
     formErrors.value.visitDate = 'กรุณาคลิกเลือกวันที่เปิดให้เข้าชมแผงในข้อ 1 ด้านบนก่อนเลือกรอบเวลา'
     return
   }
+  if (slot.enabled === false) {
+    formErrors.value.visitSlot = `รอบเวลา ${slot.time} งดให้บริการในวันที่เลือก กรุณาเลือกรอบเวลาอื่น`
+    return
+  }
+  if (slot.hasTenantConflict) {
+    const cInfo = slot.tenantConflictInfo
+    const placeText = cInfo
+      ? `${cInfo.projectName} (${cInfo.marketName}${cInfo.stallNumbers.length ? ' • แผง ' + cInfo.stallNumbers.join(', ') : ''})`
+      : 'โครงการอื่น'
+    formErrors.value.visitSlot = `คุณมีนัดหมายเข้าชมแผงที่ "${placeText}" ในรอบเวลา ${slot.time} อยู่แล้ว ไม่สามารถนัดเวลาชนกันได้ กรุณาเลือกรอบเวลาอื่น`
+    return
+  }
   if (slot.isFull) {
-    formErrors.value.visitSlot = `รอบเวลา ${slot.time} ของวันที่เลือก มีผู้ลงทะเบียนเต็มโควตาแล้ว กรุณาเลือกรอบเวลาอื่น`
+    formErrors.value.visitSlot = `รอบเวลา ${slot.time} ของวันที่เลือก มีผู้ลงทะเบียนเต็มโควตาแล้ว (${slot.bookedCount || slot.capacity}/${slot.capacity} คิว) กรุณาเลือกรอบเวลาอื่น`
     return
   }
   bookingForm.value.visitSlot = slot.time
   formErrors.value.visitSlot = ''
 }
 
-const formErrors = ref({
-  business: '',
-  visitDate: '',
-  visitSlot: ''
-})
-
-// เริ่มต้น: ข้อมูลโปรไฟล์ผู้เช่าดึงมาแสดงอัตโนมัติ (ห้ามว่าง) ส่วนฟิลด์ที่ต้องกรอก/เลือกเองให้เป็นค่าว่างทั้งหมด
-const bookingForm = ref({
-  firstName: 'สมชาย',
-  lastName: 'ใจดี',
-  idCard: '1-1004-98721-34-5',
-  phone: '087-567-4497',
-  email: 'somchai.jai@thaigov.or.th',
-  business: '',
-  notes: '',
-  visitDate: '',
-  visitSlot: ''
-})
-
 watch(() => bookingForm.value.business, (val) => {
   if (val) formErrors.value.business = ''
 })
 
-// Auto-switch slot if current slot is full on the newly selected date
+// Auto-switch slot if current slot is full or conflicts on the newly selected date
 watch(() => bookingForm.value.visitDate, (newDate) => {
   if (!newDate) {
     bookingForm.value.visitSlot = ''
@@ -1578,9 +1694,9 @@ watch(() => bookingForm.value.visitDate, (newDate) => {
   if (selectedDateObj) {
     const slots = selectedDateObj.slots || []
     const currentSlotObj = slots.find(s => s.time === bookingForm.value.visitSlot)
-    // หากเคยเลือกรอบไว้แล้วและรอบนั้นเต็มในวันใหม่ ให้สลับไปรอบแรกที่ยังว่าง
-    if (bookingForm.value.visitSlot && (!currentSlotObj || currentSlotObj.isFull)) {
-      const firstAvailable = slots.find(s => !s.isFull)
+    // หากเคยเลือกรอบไว้แล้วและรอบนั้นเต็มหรือชนนัดตัวเองในวันใหม่ ให้สลับไปรอบแรกที่ยังว่าง
+    if (bookingForm.value.visitSlot && (!currentSlotObj || currentSlotObj.isFull || currentSlotObj.hasTenantConflict)) {
+      const firstAvailable = slots.find(s => !s.isFull && !s.hasTenantConflict)
       bookingForm.value.visitSlot = firstAvailable ? firstAvailable.time : ''
     }
   }
@@ -1592,8 +1708,12 @@ const bookingRefCode = ref('BMA-JJ-2026-08942')
 watch(user, (newU: any) => {
   if (newU) {
     if (newU.full_name) {
-      const parts = newU.full_name.trim().split(' ')
-      if (parts.length > 0) bookingForm.value.firstName = parts[0].replace(/^(คุณ|นาย|นาง|นางสาว)/, '') || parts[0]
+      const cleanedFullName = String(newU.full_name)
+        .replace(/\([^)]*\)/g, '')
+        .replace(/^(คุณ|นาย|นางสาว|นาง|น\.ส\.)\s*/g, '')
+        .trim()
+      const parts = cleanedFullName.split(/\s+/).filter(Boolean)
+      if (parts.length > 0) bookingForm.value.firstName = parts[0]
       if (parts.length > 1) bookingForm.value.lastName = parts.slice(1).join(' ')
     } else if (newU.first_name) {
       bookingForm.value.firstName = newU.first_name
@@ -1619,7 +1739,9 @@ let sigCtx: CanvasRenderingContext2D | null = null
 
 // Representative stalls array matching screenshot
 interface StallModel {
+  selectionId?: string
   code: string
+  projectId?: string
   zone: string
   floorName?: string
   status: 'available' | 'occupied' | 'reserved'
@@ -1634,6 +1756,170 @@ interface StallModel {
   backendId?: number
 }
 
+interface BackendStallRecord {
+  id: number
+  ident?: string
+  stall_ident?: string
+  stall_number?: string
+  status?: string
+}
+
+const backendStallsByIdent = ref<Record<string, BackendStallRecord>>({})
+
+const getBackendStallIdent = (stall: BackendStallRecord): string => (
+  String(stall.ident || stall.stall_ident || stall.stall_number || '').trim()
+)
+
+const normalizeBackendStallStatus = (status?: string): StallModel['status'] => {
+  if (status === 'available' || status === 'reserved' || status === 'occupied') return status
+  return 'occupied'
+}
+
+const stallStatusOverrides = computed<Record<string, StallModel['status']>>(() => {
+  const statuses: Record<string, StallModel['status']> = {}
+  Object.entries(backendStallsByIdent.value).forEach(([ident, stall]) => {
+    if (stall.status) statuses[ident] = normalizeBackendStallStatus(stall.status)
+  })
+  return statuses
+})
+
+const refreshBackendStalls = async (): Promise<void> => {
+  try {
+    const marketParam = currentMarket.value?.slug || currentMarketId.value
+    const url = marketParam ? `/stalls?market=${encodeURIComponent(marketParam)}` : '/stalls'
+    const response = await get<any>(url)
+    const list: BackendStallRecord[] = Array.isArray(response)
+      ? response
+      : (Array.isArray(response?.data) ? response.data : [])
+    const records: Record<string, BackendStallRecord> = { ...backendStallsByIdent.value }
+    list.forEach(stall => {
+      const ident = getBackendStallIdent(stall)
+      if (ident) records[ident] = stall
+    })
+    backendStallsByIdent.value = records
+  } catch (error) {
+    console.warn('Could not refresh stall statuses:', error)
+  }
+}
+
+
+const handleBackendStallSync = () => {
+  void refreshBackendStalls()
+  void refreshMyActiveBookings()
+}
+
+// Track active bookings belonging to the current tenant so the same stall cannot be booked/queued twice
+const myActiveBookingsByStall = ref<Record<string, any>>({})
+const sessionBookedStallMap = ref<Record<string, any>>({})
+const confirmedPassStalls = ref<StallModel[]>([])
+const passDisplayStalls = computed<StallModel[]>(() => (
+  selectedStalls.value.length > 0 ? selectedStalls.value : confirmedPassStalls.value
+))
+
+const getDuplicateBookingStatusLabel = (status?: string): string => {
+  switch (status) {
+    case 'waiting_queue': return 'อยู่ในคิวสำรอง'
+    case 'pending_approval':
+    case 'pending': return 'รอเจ้าหน้าที่อนุมัติวันนัด'
+    case 'pending_slot': return 'รอเลือกวันนัดใหม่'
+    case 'approved': return 'นัดหมายสำเร็จ (รอเข้าชมแผง)'
+    case 'pending_decision': return 'เข้าชมแผงแล้ว (รอตัดสินใจ)'
+    case 'interested': return 'ยืนยันสนใจเช่าแผงแล้ว'
+    case 'lease_applied':
+    case 'completed': return 'ส่งคำขอเช่าแผงแล้ว'
+    default: return 'มีรายการจองที่กำลังดำเนินการอยู่'
+  }
+}
+
+const showDuplicateBookingWarning = (stallCode: string, existingBooking?: any) => {
+  const bNo = existingBooking?.booking_number || existingBooking?.booking_no || ''
+  const statusLabel = getDuplicateBookingStatusLabel(existingBooking?.status)
+  const refSuffix = bNo ? ` (รหัสการจอง ${bNo} • สถานะ: ${statusLabel})` : ` (${statusLabel})`
+  showWarning(
+    `คุณได้ทำการจองหรืออยู่ในคิวสำรองของแผง ${stallCode} ไว้แล้ว${refSuffix} ไม่สามารถทำรายการจองแผงเดิมซ้ำได้ กรุณาตรวจสอบที่หน้า "รายการจองของฉัน"`,
+    'ไม่สามารถจองแผงซ้ำได้'
+  )
+}
+
+const refreshMyActiveBookings = async (): Promise<void> => {
+  try {
+    const response = await get<any>('/bookings')
+    const list: any[] = Array.isArray(response)
+      ? response
+      : (Array.isArray(response?.data) ? response.data : [])
+
+    // The regular endpoint is deliberately scoped to the signed-in tenant.
+    // Fetch only anonymous per-slot totals separately, so slot availability is
+    // shared by every tenant without exposing another tenant's booking details.
+    let scheduleBookings = list
+    try {
+      const capacityResponse = await get<any>(
+        `/bookings/visit-capacity?market_id=${encodeURIComponent(currentMarketId.value)}`
+      )
+      const capacityItems: any[] = Array.isArray(capacityResponse)
+        ? capacityResponse
+        : (Array.isArray(capacityResponse?.data) ? capacityResponse.data : [])
+
+      scheduleBookings = [
+        ...capacityItems.flatMap((item) => {
+          const bookedCount = Math.max(0, Number(item?.booked_count) || 0)
+          return Array.from({ length: bookedCount }, () => ({
+            market_id: item.market_id || currentMarketId.value,
+            market_name: item.market_name || currentMarketName.value,
+            visit_date: item.visit_date,
+            visit_time_slot: item.visit_time_slot,
+            status: 'pending_approval',
+            __visit_capacity_record: true
+          }))
+        }),
+        // Keep the tenant's own records for the "you already have an
+        // appointment at this time" validation; capacity is counted above.
+        ...list.map(booking => ({ ...booking, __tenant_private_record: true }))
+      ]
+    } catch {
+      // Older backends do not yet provide the aggregate endpoint. Retain the
+      // tenant's own count rather than presenting an unusable booking screen.
+    }
+
+    allMarketBookings.value = scheduleBookings
+    setCachedScheduleBookings(scheduleBookings)
+
+    const map: Record<string, any> = { ...sessionBookedStallMap.value }
+    list.forEach((b) => {
+      const codes = String(b.stall_number || b.stall_ident || '')
+        .split(',')
+        .map(c => c.trim())
+        .filter(Boolean)
+      codes.forEach((code) => {
+        if (['rejected', 'not_interested', 'cancelled', 'no_show'].includes(b.status)) {
+          if (map[code]?.id === b.id || map[code]?.booking_number === b.booking_number) {
+            delete map[code]
+            delete sessionBookedStallMap.value[code]
+          }
+          return
+        }
+        if (isBookingOwnedByCurrentTenant(b) || sessionBookedStallMap.value[code]) {
+          map[code] = b
+        }
+      })
+    })
+    myActiveBookingsByStall.value = map
+    availableDates.value = loadAvailableDatesFromSchedule()
+
+    if (bookingForm.value.visitDate && bookingForm.value.visitSlot) {
+      const selectedDateObj = availableDates.value.find(d => d.date === bookingForm.value.visitDate)
+      const currentSlotObj = selectedDateObj?.slots?.find(s => s.time === bookingForm.value.visitSlot)
+      if (currentSlotObj?.isFull || currentSlotObj?.hasTenantConflict) {
+        const firstAvailable = selectedDateObj?.slots?.find(s => !s.isFull && !s.hasTenantConflict)
+        bookingForm.value.visitSlot = firstAvailable ? firstAvailable.time : ''
+      }
+    }
+  } catch (err) {
+    myActiveBookingsByStall.value = { ...sessionBookedStallMap.value }
+    availableDates.value = loadAvailableDatesFromSchedule()
+  }
+}
+
 // Upper hall stalls grid
 const upperHallStalls = ref<StallModel[]>([])
 // Lower hall stalls grid
@@ -1642,6 +1928,7 @@ const lowerHallStalls = ref<StallModel[]>([])
 // Multi-Stall Selection & Status Handling (BA & QA Requirement)
 const selectedStalls = ref<StallModel[]>([])
 const selectedStall = computed(() => selectedStalls.value[0] || null)
+const stallSelectionKey = (stall: StallModel): string => stall.selectionId || stall.code
 
 // Current Selection Status ('available' or 'reserved')
 const currentSelectionStatus = computed<'available' | 'reserved' | null>(() => {
@@ -1670,6 +1957,8 @@ interface WaitingQueueBooker {
 interface WaitingQueueData {
   stall_id?: number | null
   stall_number: string
+  queue_count?: number
+  current_position?: number
   total_waiting_count: number
   next_queue_number: number
   has_waiting_list: boolean
@@ -1694,38 +1983,24 @@ const fetchWaitingQueueForStall = async (stallCode: string) => {
   try {
     const data = await get<WaitingQueueData>(`/bookings/waiting-queue/${encodeURIComponent(stallCode)}`)
     if (data) {
-      stallWaitingQueueCache.value[stallCode] = data
+      const currentBooker = data.current_booker || ((data as any).masked_current_booker ? {
+        masked_name: (data as any).masked_current_booker,
+        masked_phone: (data as any).masked_booker_phone || '',
+        status: (data as any).status || 'reserved',
+        status_label: 'ติดจอง',
+        days_left_estimate: 0
+      } : null)
+      stallWaitingQueueCache.value[stallCode] = {
+        ...data,
+        total_waiting_count: Number(data.total_waiting_count ?? (data as any).queue_count ?? 0),
+        next_queue_number: Number(data.next_queue_number ?? (data as any).current_position ?? 1),
+        current_booker: currentBooker,
+        queues: data.queues || []
+      }
     }
   } catch (err) {
-    // Graceful fallback simulation with PDPA masking
-    stallWaitingQueueCache.value[stallCode] = {
-      stall_number: stallCode,
-      total_waiting_count: 1,
-      next_queue_number: 2,
-      has_waiting_list: true,
-      current_booker: {
-        queue_number: 1,
-        booking_number: 'BK-2026-0002',
-        masked_name: 'คุณ รัต*** มี***',
-        masked_phone: '081-XXX-5566',
-        visit_date: '2026-10-19',
-        visit_time_slot: '14:00 - 16:00',
-        status: 'approved',
-        status_label: 'นัดหมายสำเร็จ (รอเข้าชมแผง)',
-        days_left_estimate: 2
-      },
-      queues: [{
-        queue_number: 1,
-        booking_number: 'BK-2026-0002',
-        masked_name: 'คุณ รัต*** มี***',
-        masked_phone: '081-XXX-5566',
-        visit_date: '2026-10-19',
-        visit_time_slot: '14:00 - 16:00',
-        status: 'approved',
-        status_label: 'นัดหมายสำเร็จ (รอเข้าชมแผง)',
-        days_left_estimate: 2
-      }]
-    }
+    // Do not invent a queue owner or position when the source cannot be read.
+    delete stallWaitingQueueCache.value[stallCode]
   } finally {
     loadingWaitingQueue.value = false
   }
@@ -1793,7 +2068,7 @@ const currentBreadcrumbText = computed(() => {
 })
 
 // Input Formatters (QA & UX)
-const formatThaiId = (val: string) => {
+function formatThaiId(val: string) {
   const raw = val.replace(/[^0-9]/g, '').slice(0, 13)
   if (raw.length <= 1) return raw
   if (raw.length <= 5) return `${raw.slice(0, 1)}-${raw.slice(1)}`
@@ -1827,24 +2102,6 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
   const numOnly = project.name.replace(/[^0-9]/g, '') || '1'
   const prefix = isProj23 ? '' : `P${numOnly}-`
 
-  const specialStalls: Record<string, 'available' | 'reserved' | 'occupied'> = isProj23
-    ? {
-        '20A': 'available',
-        '20B': 'available',
-        'A-03': 'reserved',
-        'A-05': 'available',
-        'B-04': 'reserved',
-        'C-02': 'available',
-        'D-01': 'available'
-      }
-    : {
-        [`${prefix}01`]: 'available',
-        [`${prefix}05`]: 'available',
-        [`${prefix}12`]: 'available',
-        [`${prefix}03`]: 'reserved',
-        [`${prefix}08`]: 'reserved'
-      }
-
   for (let r = 1; r <= 5; r++) {
     for (let c = 1; c <= 14; c++) {
       let code = ''
@@ -1854,20 +2111,15 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
         code = r === 2 && c === 12 ? `${prefix}20A` : `${prefix}U${r}${String.fromCharCode(64 + c)}`
       }
 
-      let status: 'available' | 'reserved' | 'occupied' = 'occupied'
-      if (!isMarketFull.value && Number(project.stallsAvailable ?? 1) > 0) {
-        if (specialStalls[code]) {
-          status = specialStalls[code]
-        } else if ((r === 1 && c === 4) || (r === 2 && c === 6) || (r === 3 && c === 11) || (r === 4 && c === 2)) {
-          status = 'available'
-        } else if ((r === 2 && c === 10) || (r === 4 && c === 5)) {
-          status = 'reserved'
-        }
-      }
+      const backendStatus = backendStallsByIdent.value[code]?.status
+      const status: StallModel['status'] = isMarketFull.value
+        ? 'occupied'
+        : (backendStatus ? normalizeBackendStallStatus(backendStatus) : 'available')
 
       upper.push({
         code,
         zone: project.name,
+        projectId: project.id,
         status,
         areaType: code.includes('20A') || code.includes('01') ? 'ติดเวที' : 'ทั่วไป',
         size: 5,
@@ -1890,18 +2142,15 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
         code = `${prefix}L${r}${String.fromCharCode(64 + c)}`
       }
 
-      let status: 'available' | 'reserved' | 'occupied' = 'occupied'
-      if (!isMarketFull.value && Number(project.stallsAvailable ?? 1) > 0) {
-        if ((r === 1 && c === 1) || (r === 2 && c === 5) || (r === 3 && c === 8) || (r === 4 && c === 13)) {
-          status = 'available'
-        } else if (r === 2 && c === 11) {
-          status = 'reserved'
-        }
-      }
+      const backendStatus = backendStallsByIdent.value[code]?.status
+      const status: StallModel['status'] = isMarketFull.value
+        ? 'occupied'
+        : (backendStatus ? normalizeBackendStallStatus(backendStatus) : 'available')
 
       lower.push({
         code,
         zone: project.name,
+        projectId: project.id,
         status,
         areaType: 'ทั่วไป',
         size: 5,
@@ -1921,29 +2170,12 @@ const generateStallsForProject = (project: any, realStall20a?: any) => {
 }
 
 const handleSelectProject = async (project: any) => {
-  const isSameProject = selectedProject.value?.id === project.id
-  if (isSameProject) return
-
-  // หากมีแผงที่เลือกไว้ในโครงการเดิม ให้ยืนยันก่อนเปลี่ยนโครงการเพื่อป้องกันข้อมูลสูญหายโดยไม่ตั้งใจ
-  if (selectedStalls.value.length > 0) {
-    const prevProject = selectedProject.value
-    const confirmed = await showConfirm(
-      `คุณได้เลือกแผงใน "${prevProject?.name || 'โครงการเดิม'}" ไว้แล้วจำนวน ${selectedStalls.value.length} แผง (${selectedStalls.value.map(s => s.code).join(', ')})\n\nระบบกำหนดให้ทำรายการจองได้ครั้งละ 1 โครงการเท่านั้น หากต้องการเปลี่ยนไปยัง "${project.name}" แผงที่เลือกไว้เดิมจะถูกล้างออก`,
-      'เปลี่ยนโครงการที่ต้องการจอง?'
-    )
-    if (!confirmed) {
-      if (overviewMapRef.value && prevProject) {
-        overviewMapRef.value.enterProject(prevProject)
-      }
-      return
-    }
-  }
-
+  if (selectedProject.value?.id === project.id) return
   selectedProject.value = project
-  selectedStalls.value = [] // Reset selected stalls when switching project so tenant chooses freely
-  activeWaitingStallCode.value = ''
+  if (selectedStalls.value.length === 0) {
+    bookedProject.value = project
+  }
   generateStallsForProject(project)
-  // แผงย่อยถูกวาดภายในกรอบโครงการบนแผนที่แล้ว จึงคงอยู่หน้าแผนที่ (ไม่สลับไปผังแผงแยก)
 }
 
 const handleExitProject = () => {
@@ -1952,7 +2184,10 @@ const handleExitProject = () => {
 
 // Stall clicked inside a project polygon on the GIS map
 const handleMapStallSelect = (stall: StallModel) => {
-  selectStall(stall)
+  const backendStall = backendStallsByIdent.value[stall.code]
+  const effectiveStatus = backendStall ? normalizeBackendStallStatus(backendStall.status) : stall.status
+  const resolvedProjectId = stall.projectId || selectedProject.value?.id || bookedProject.value?.id
+  selectStall({ ...stall, projectId: resolvedProjectId, status: effectiveStatus, backendId: backendStall?.id })
 }
 
 const handleNextFromStep1 = () => {
@@ -1962,6 +2197,13 @@ const handleNextFromStep1 = () => {
   }
   if (selectedStalls.value.length === 0) {
     showWarning('กรุณาคลิกเลือกโครงการบนแผนที่ แล้วเลือกแผงย่อยที่ต้องการก่อนไปขั้นตอนถัดไป', 'แจ้งเตือนการเลือกแผง')
+    return
+  }
+  const duplicateStall = selectedStalls.value.find(s => Boolean(myActiveBookingsByStall.value[s.code]))
+  if (duplicateStall) {
+    const existingBooking = myActiveBookingsByStall.value[duplicateStall.code]
+    selectedStalls.value = selectedStalls.value.filter(s => !myActiveBookingsByStall.value[s.code])
+    showDuplicateBookingWarning(duplicateStall.code, existingBooking)
     return
   }
   goToStep(2)
@@ -2148,7 +2390,7 @@ const printPass = () => {
 }
 
 const addToCalendar = () => {
-  const stallCodes = selectedStalls.value.map(s => s.code).join(', ') || '20A'
+  const stallCodes = passDisplayStalls.value.map(s => s.code).join(', ') || '20A'
   const title = `นัดหมายเยี่ยมชมแผง ${stallCodes} - ${currentMarketName.value}`
   const details = `นัดหมายเข้าชมพื้นที่แผงเช่ากับเจ้าหน้าที่ รหัสอ้างอิง: ${bookingRefCode.value}`
   const dateStr = (bookingForm.value.visitDate || '').replace(/-/g, '')
@@ -2162,6 +2404,13 @@ const addToCalendar = () => {
   document.body.removeChild(link)
 }
 
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
+  if (selectedStalls.value.length === 0) {
+    currentStep.value = 1
+  }
+}
+
 const selectStall = (s: StallModel) => {
   if (isMarketFull.value) {
     showWarning(`ตลาด${currentMarketName.value} มีผู้เช่าเต็มแล้ว ขณะนี้ยังไม่สามารถเลือกหรือจองแผงได้`, 'ตลาดนี้เต็มแล้ว')
@@ -2171,52 +2420,76 @@ const selectStall = (s: StallModel) => {
     return
   }
   // Toggle off if clicking an already selected stall
-  const existingIdx = selectedStalls.value.findIndex(item => item.code === s.code)
+  const selectedKey = stallSelectionKey(s)
+  const existingIdx = selectedStalls.value.findIndex(item => stallSelectionKey(item) === selectedKey)
   if (existingIdx !== -1) {
     selectedStalls.value.splice(existingIdx, 1)
+    if (selectedStalls.value.length === 0) {
+      bookedProject.value = null
+    }
     if (activeWaitingStallCode.value === s.code) {
       activeWaitingStallCode.value = selectedStalls.value[0]?.code || ''
     }
     return
   }
 
-  // Conflict Prevention Rule (BA & UX Requirement):
-  // Cannot select stalls with status 'available' and 'reserved' together in the same booking!
-  if (selectedStalls.value.length > 0) {
-    const activeStatus = currentSelectionStatus.value
-    if (s.status !== activeStatus) {
-      pendingConflictingStall.value = s
-      if (s.status === 'reserved') {
-        fetchWaitingQueueForStall(s.code)
-      }
-      showConflictModal.value = true
-      return
-    }
+  // Duplicate Booking Prevention: block selecting a stall the current tenant already booked or queued for
+  const existingActiveBooking = myActiveBookingsByStall.value[s.code]
+  if (existingActiveBooking) {
+    showDuplicateBookingWarning(s.code, existingActiveBooking)
+    return
   }
 
-  // Same status (or first stall) -> add to selection!
-  selectedStalls.value.push(s)
+  // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด):
+  // Clicking another stall switches the current selection to that stall immediately
+  if (!s.projectId && selectedProject.value?.id) {
+    s.projectId = selectedProject.value.id
+  }
+  if (selectedProject.value) {
+    bookedProject.value = selectedProject.value
+  }
+  selectedStalls.value = [s]
   if (s.status === 'reserved') {
     activeWaitingStallCode.value = s.code
     fetchWaitingQueueForStall(s.code)
+  } else {
+    activeWaitingStallCode.value = ''
   }
 }
 
-const removeStall = (code: string) => {
-  selectedStalls.value = selectedStalls.value.filter(item => item.code !== code)
-  if (activeWaitingStallCode.value === code) {
+const removeStall = (stall: StallModel) => {
+  const selectedKey = stallSelectionKey(stall)
+  selectedStalls.value = selectedStalls.value.filter(item => stallSelectionKey(item) !== selectedKey)
+  if (selectedStalls.value.length === 0) {
+    bookedProject.value = null
+  }
+  if (activeWaitingStallCode.value === stall.code) {
     activeWaitingStallCode.value = selectedStalls.value[0]?.code || ''
   }
 }
 
 const clearAllSelectedStalls = () => {
   selectedStalls.value = []
+  bookedProject.value = null
   activeWaitingStallCode.value = ''
 }
 
 const resolveConflictAndSelect = () => {
   if (pendingConflictingStall.value) {
     const stall = pendingConflictingStall.value
+    const existingActiveBooking = myActiveBookingsByStall.value[stall.code]
+    if (existingActiveBooking) {
+      pendingConflictingStall.value = null
+      showConflictModal.value = false
+      showDuplicateBookingWarning(stall.code, existingActiveBooking)
+      return
+    }
+    if (!stall.projectId && selectedProject.value?.id) {
+      stall.projectId = selectedProject.value.id
+    }
+    if (selectedProject.value) {
+      bookedProject.value = selectedProject.value
+    }
     selectedStalls.value = [stall]
     if (stall.status === 'reserved') {
       activeWaitingStallCode.value = stall.code
@@ -2338,7 +2611,12 @@ const validateStep2 = (): boolean => {
     isValid = false
   } else {
     const currentSlotObj = currentTimeSlots.value.find(s => s.time === bookingForm.value.visitSlot)
-    if (currentSlotObj?.isFull) {
+    if (currentSlotObj?.hasTenantConflict) {
+      const conflictMarket = currentSlotObj.tenantConflictInfo?.marketName || 'ตลาดอื่น'
+      const conflictProject = currentSlotObj.tenantConflictInfo?.projectName || ''
+      formErrors.value.visitSlot = `คุณมีนัดหมายเข้าชมแผงที่ ${conflictMarket}${conflictProject ? ` (${conflictProject})` : ''} ในวันและเวลานี้แล้ว กรุณาเลือกรอบเวลาอื่น`
+      isValid = false
+    } else if (currentSlotObj?.isFull) {
       formErrors.value.visitSlot = `รอบเวลา ${bookingForm.value.visitSlot} เต็มแล้ว กรุณาเลือกรอบเวลาอื่น`
       isValid = false
     }
@@ -2366,6 +2644,15 @@ const goToStep = (step: number) => {
     showWarning('กรุณาเลือกแผงบนแผนที่ก่อนถึงจะไปขั้นตอนถัดไปได้', 'แจ้งเตือนการเลือกแผง')
     return
   }
+  if (step > 1) {
+    const duplicateStall = selectedStalls.value.find(s => Boolean(myActiveBookingsByStall.value[s.code]))
+    if (duplicateStall) {
+      const existingBooking = myActiveBookingsByStall.value[duplicateStall.code]
+      selectedStalls.value = selectedStalls.value.filter(s => !myActiveBookingsByStall.value[s.code])
+      showDuplicateBookingWarning(duplicateStall.code, existingBooking)
+      return
+    }
+  }
   if (step === 3) {
     if (!validateStep2()) {
       return
@@ -2376,6 +2663,9 @@ const goToStep = (step: number) => {
 }
 
 watch(currentStep, (newStep) => {
+  if (newStep === 2) {
+    void refreshMyActiveBookings()
+  }
   if (newStep === 1 || newStep === 3) {
     nextTick(() => {
       window.dispatchEvent(new Event('resize'))
@@ -2401,52 +2691,144 @@ const submitBooking = async () => {
   }
   submitting.value = true
   try {
-    const list = await get('/stalls')
-    const createdBookingNumbers: string[] = []
+    await Promise.all([refreshBackendStalls(), refreshMyActiveBookings(), fetchNotifications()])
 
-    // Independent booking record per stall (Prevents stuck/blocked workflow!)
-    for (const stallItem of selectedStalls.value) {
-      let stallId = stallItem.backendId
-      if (!stallId) {
-        const target = list.find((s: any) => s.stall_number === stallItem.code) || list[0]
-        stallId = target.id
+    // Prevent submitting a duplicate booking for a stall the current tenant already holds or queues for
+    const duplicateStall = selectedStalls.value.find(stall => Boolean(myActiveBookingsByStall.value[stall.code]))
+    if (duplicateStall) {
+      const existingBooking = myActiveBookingsByStall.value[duplicateStall.code]
+      selectedStalls.value = selectedStalls.value.filter(stall => !myActiveBookingsByStall.value[stall.code])
+      if (selectedStalls.value.length === 0) {
+        bookedProject.value = null
       }
+      showDuplicateBookingWarning(duplicateStall.code, existingBooking)
+      return
+    }
 
-      const isQueue = stallItem.status === 'reserved' || bookingMode.value === 'queue'
-      const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
-      const contactPhone = (bookingForm.value.phone || '087-567-4497').trim()
-      const contactEmail = (bookingForm.value.email || '').trim()
-      const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
-      const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
+    const refreshedSelection = selectedStalls.value.map(stall => {
+      const backendStall = backendStallsByIdent.value[stall.code]
+      return backendStall
+        ? { ...stall, status: normalizeBackendStallStatus(backendStall.status), backendId: backendStall.id }
+        : stall
+    })
+    const statusChanged = refreshedSelection.some((stall, index) => stall.status !== selectedStalls.value[index]?.status)
+    const firstSelectableStatus = refreshedSelection.find(stall => stall.status !== 'occupied')?.status
+    selectedStalls.value = refreshedSelection.filter(stall => (
+      stall.status !== 'occupied' && stall.status === firstSelectableStatus
+    ))
+    if (statusChanged) {
+      showWarning(
+        selectedStalls.value.length > 0
+          ? 'สถานะของแผงที่เลือกมีการเปลี่ยนแปลงโดยเจ้าหน้าที่ กรุณาตรวจสอบรายการอีกครั้งก่อนยืนยัน'
+          : 'แผงที่เลือกถูกล็อกหรือมีผู้เช่าแล้ว รายการดังกล่าวถูกนำออกจากการจอง',
+        'สถานะแผงมีการเปลี่ยนแปลง'
+      )
+      return
+    }
 
-      const res = await post('/bookings', {
-        // Standard Go backend fields (CreateBookingRequest)
-        stall_ident: stallItem.code,
-        applicant_name: fullName,
-        applicant_phone: contactPhone,
-        applicant_email: contactEmail,
-        business_type: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
-        visit_date: visitDate,
-        visit_time: visitTime,
-        note: bookingForm.value.notes || '',
+    const createdBookingNumbers: string[] = []
+    const succeededStalls: StallModel[] = []
+    const failedBookings: Array<{ stall: StallModel; error: any }> = []
+    const appointmentGroupId = `APT-${Date.now()}`
+    let primaryGroupBookingNumber = ''
 
-        // Backward compatibility & client-side metadata fields
-        stall_id: stallId,
-        stall_number: stallItem.code,
-        market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
-        tenant_name: fullName,
-        tenant_phone: contactPhone,
-        tenant_email: contactEmail || null,
-        intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
-        visit_time_slot: visitTime,
-        is_queue: isQueue
-      })
+    // Each stall is recorded independently under a shared appointment_group_id.
+    // Keep failed items selected so a partial API failure cannot cause successful bookings to be submitted twice.
+    for (const stallItem of selectedStalls.value) {
+      try {
+        const backendStall = backendStallsByIdent.value[stallItem.code]
+        const stallId = stallItem.backendId || backendStall?.id
+        const isQueue = stallItem.status === 'reserved'
+        const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
+        const contactPhone = (bookingForm.value.phone || '081-234-5678').trim()
+        const contactEmail = (bookingForm.value.email || '').trim()
+        const idCard = (bookingForm.value.idCard || '1-1004-00234-56-7').trim()
+        const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
+        const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
 
-      const bNo = res?.data?.booking_no || res?.booking_no || res?.data?.booking_number || res?.booking_number
-      if (bNo) {
-        createdBookingNumbers.push(bNo)
+        const res = await post('/bookings', {
+          // Standard Go backend fields (CreateBookingRequest)
+          stall_ident: stallItem.code,
+          applicant_name: fullName,
+          applicant_phone: contactPhone,
+          applicant_email: contactEmail,
+          business_type: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+          visit_date: visitDate,
+          visit_time: visitTime,
+          note: bookingForm.value.notes || '',
+
+          // Backward compatibility & client-side metadata fields
+          stall_id: stallId,
+          stall_number: stallItem.code,
+          market_id: currentMarketId.value,
+          project_name: selectedProject.value?.name || stallItem.zone || 'โครงการ 01',
+          market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
+          tenant_name: fullName,
+          tenant_user_id: (user.value as any)?.id || undefined,
+          tenant_phone: contactPhone,
+          tenant_email: contactEmail || null,
+          tenant_id_card: idCard,
+          intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+          visit_time_slot: visitTime,
+          is_queue: isQueue,
+          appointment_group_id: appointmentGroupId,
+          group_booking_number: primaryGroupBookingNumber || undefined
+        })
+
+        const createdRecord = res?.data || res
+        const bNo = createdRecord?.booking_no || createdRecord?.booking_number || res?.booking_no || res?.booking_number
+        if (bNo) {
+          if (!primaryGroupBookingNumber) primaryGroupBookingNumber = bNo
+          if (!createdBookingNumbers.includes(bNo)) createdBookingNumbers.push(bNo)
+        }
+        succeededStalls.push(stallItem)
+        sessionBookedStallMap.value[stallItem.code] = {
+          ...(createdRecord || {}),
+          stall_number: stallItem.code,
+          booking_number: bNo,
+          appointment_group_id: appointmentGroupId,
+          status: createdRecord?.status || (isQueue ? 'waiting_queue' : 'pending_approval')
+        }
+        delete stallWaitingQueueCache.value[stallItem.code]
+      } catch (error: any) {
+        failedBookings.push({ stall: stallItem, error })
       }
     }
+
+    await Promise.all([refreshBackendStalls(), refreshMyActiveBookings(), fetchNotifications()])
+
+    if (failedBookings.length > 0) {
+      // Remove stalls that failed with 409 Conflict (already booked) from selection so user doesn't retry a duplicate
+      selectedStalls.value = failedBookings
+        .filter(item => item.error?.status !== 409 && item.error?.statusCode !== 409 && item.error?.data?.code !== 409)
+        .map(item => item.stall)
+      if (selectedStalls.value.length === 0) {
+        bookedProject.value = null
+      }
+      if (succeededStalls.length > 0) {
+        bookingRefCode.value = createdBookingNumbers.join(', ')
+        showWarning(
+          `บันทึกสำเร็จ ${succeededStalls.length} แผง และไม่สำเร็จ ${failedBookings.length} แผง ระบบคงไว้เฉพาะรายการที่ยังไม่สำเร็จเพื่อให้ลองใหม่ได้โดยไม่จองซ้ำ`,
+          'บันทึกการจองได้บางรายการ'
+        )
+      } else {
+        const firstError = failedBookings[0]?.error
+        if (firstError?.status === 409 || firstError?.statusCode === 409 || firstError?.data?.code === 409) {
+          showWarning(
+            firstError?.data?.detail || firstError?.data?.message || 'คุณได้ทำการจองแผงหรือรอบเวลานี้ไว้แล้ว ไม่สามารถจองซ้ำได้',
+            'ไม่สามารถจองซ้ำได้'
+          )
+        } else {
+          showError(firstError?.data?.detail || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
+        }
+      }
+      return
+    }
+
+    confirmedPassStalls.value = [...succeededStalls]
+    selectedStalls.value = []
+    bookedProject.value = null
+    activeWaitingStallCode.value = ''
 
     const randomDigits = Math.floor(10000 + Math.random() * 90000)
     bookingRefCode.value = createdBookingNumbers.length > 0
@@ -2464,7 +2846,7 @@ const submitBooking = async () => {
 // Keyboard shortcuts (QA & Dev)
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    showSuccessModal.value = false
+    if (showSuccessModal.value) closeSuccessModal()
     showVirtualModal.value = false
     showCompareModal.value = false
   }
@@ -2476,6 +2858,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('focus', handleBackendStallSync)
 
   // Listen for schedule updates from VisitScheduleMain in same window or across tabs
   const handleScheduleSync = () => {
@@ -2493,19 +2876,28 @@ onMounted(async () => {
     const queryStr = String(marketQuery || '1')
     const localMaster = getMarketGisConfig(queryStr)
     if (localMaster) {
-      currentMarketName.value = localMaster.name
-      currentMarketDistrict.value = localMaster.district
+      const overriddenLocal = applyMarketOverride({
+        id: localMaster.id,
+        slug: localMaster.slug,
+        name: localMaster.name,
+        district: localMaster.district
+      })
+      currentMarketName.value = overriddenLocal.name || localMaster.name
+      currentMarketDistrict.value = overriddenLocal.district || localMaster.district
     }
 
     try {
       const markets = await get('/markets')
       const found = markets.find((m: any) => String(m.id) === queryStr || m.slug === queryStr)
       if (found) {
-        currentMarket.value = found
-        currentMarketName.value = found.name
-        currentMarketDistrict.value = found.district
-        // ตรวจสอบว่าตลาดนี้เต็มหรือไม่ (status === 'full' หรือ available_stalls === 0)
-        if (found.status === 'full' || Number(found.available_stalls) === 0) {
+        const resolved = applyMarketOverride(found)
+        currentMarket.value = resolved
+        currentMarketName.value = resolved.name
+        currentMarketDistrict.value = resolved.district
+        // Treat zero as authoritative only when the API actually supplies the
+        // field. `null`/missing values must not accidentally close the market.
+        const hasAvailableCount = found.available_stalls !== undefined && found.available_stalls !== null
+        if (found.status === 'full' || (hasAvailableCount && Number(found.available_stalls) === 0)) {
           isMarketFull.value = true
           if (selectedProject.value) selectedProject.value.stallsAvailable = 0
         } else {
@@ -2518,39 +2910,52 @@ onMounted(async () => {
   }
 
   await syncMarketData(route.query.market || '1')
-  watch(currentMarketId, (newId) => {
-    syncMarketData(newId)
+  watch(currentMarketId, async (newId) => {
+    await syncMarketData(newId)
+    await Promise.all([refreshBackendStalls(), refreshMyActiveBookings(), fetchNotifications()])
   })
 
-  let realStall20a: any = null
-  try {
-    const list = await get('/stalls')
-    realStall20a = list.find((s: any) => s.stall_number === '20A')
-  } catch {}
-
-  // Initialize stalls for selected project if any was preselected
-  if (selectedProject.value) {
-    generateStallsForProject(selectedProject.value, realStall20a)
-  }
-  selectedStall.value = null
-
-  // If a specific stall was requested via URL query (?stall=20A), select it (only if market not full)
-  if (route.query.stall && !isMarketFull.value) {
-    const targetCode = String(route.query.stall).trim()
-    const found = upperHallStalls.value.find(s => s.code === targetCode) || lowerHallStalls.value.find(s => s.code === targetCode)
-    if (found && found.status === 'available') {
-      selectedStall.value = found
-    }
-  }
-
   if (user.value) {
+    const demoTenantProfiles: Record<string, { phone: string; idCard: string }> = {
+      tenant: { phone: '081-234-5678', idCard: '1-1004-99887-12-3' },
+      tenant2: { phone: '089-111-2233', idCard: '1-1005-44221-55-6' }
+    }
+    const demoProfile = demoTenantProfiles[String((user.value as any).username || '')]
     if (user.value.full_name) {
-      const parts = user.value.full_name.split(' ')
+      const cleanedFullName = String(user.value.full_name)
+        .replace(/\([^)]*\)/g, '')
+        .replace(/^(คุณ|นาย|นางสาว|นาง|น\.ส\.)\s*/g, '')
+        .trim()
+      const parts = cleanedFullName.split(/\s+/).filter(Boolean)
       bookingForm.value.firstName = parts[0] || 'สมชาย'
       bookingForm.value.lastName = parts.slice(1).join(' ') || 'ใจดี'
     }
     if (user.value.email) {
       bookingForm.value.email = user.value.email
+    }
+    if ((user.value as any).phone || (user.value as any).phone_number || demoProfile) {
+      bookingForm.value.phone = (user.value as any).phone || (user.value as any).phone_number || demoProfile?.phone || bookingForm.value.phone
+    }
+    if ((user.value as any).citizen_id || (user.value as any).id_card || demoProfile) {
+      bookingForm.value.idCard = formatThaiId((user.value as any).citizen_id || (user.value as any).id_card || demoProfile?.idCard || bookingForm.value.idCard)
+    }
+  }
+
+  await Promise.all([refreshBackendStalls(), refreshMyActiveBookings()])
+  const realStall20a = backendStallsByIdent.value['20A'] || null
+
+  // Initialize stalls for selected project if any was preselected
+  if (selectedProject.value) {
+    generateStallsForProject(selectedProject.value, realStall20a)
+  }
+  selectedStalls.value = []
+
+  // If a specific stall was requested via URL query (?stall=20A), select it (only if market not full and not already booked)
+  if (route.query.stall && !isMarketFull.value) {
+    const targetCode = String(route.query.stall).trim()
+    const found = upperHallStalls.value.find(s => s.code === targetCode) || lowerHallStalls.value.find(s => s.code === targetCode)
+    if (found && found.status === 'available' && !myActiveBookingsByStall.value[targetCode]) {
+      selectedStalls.value = [found]
     }
   }
 
@@ -2563,14 +2968,15 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('focus', handleBackendStallSync)
 })
 </script>
 
 <style scoped>
-.booking-stepper-wrap { margin-top: 24px; }
+.booking-stepper-wrap { margin-top: 40px; }
 
-.step1-title-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
-.step1-map-toolbar { flex: 0 1 700px; width: min(100%, 700px); margin-left: auto; display: flex; justify-content: flex-end; }
+.step1-title-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.step1-map-toolbar { flex: 0 1 700px; width: min(100%, 700px); margin-left: auto; display: flex; align-items: flex-end; justify-content: flex-end; }
 @media (max-width: 760px) { .step1-title-bar { align-items: flex-start; flex-direction: column; gap: 12px; } .step1-map-toolbar { width: 100%; max-width: none; } }
 
 .map-selection-empty-drawer {

@@ -141,26 +141,32 @@ const satelliteStyle: any = {
   ]
 }
 
+const { role } = useAuth()
+const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
+
 onMounted(async () => {
   if (process.client) {
     (window as any).$navigateToMarket = (marketId: number | string, action: 'book' | 'stalls') => {
       if (action === 'book') {
-        navigateTo(`/stalls/book?market=${marketId}`)
+        navigateTo(isOfficer.value ? `/stalls/manage?market=${marketId}` : `/stalls/book?market=${marketId}`)
       } else {
         navigateTo(`/stalls?market=${marketId}`)
       }
     }
 
     const ml = await import('maplibre-gl')
-    maplibregl = ml
+    maplibregl = ml.default || ml
     initMap()
   }
 })
 
 onBeforeUnmount(() => {
   if (map) {
-    map.remove()
+    const mapInstance = map
     map = null
+    try {
+      mapInstance.remove()
+    } catch {}
   }
 })
 

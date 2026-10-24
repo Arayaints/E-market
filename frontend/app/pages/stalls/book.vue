@@ -10,8 +10,11 @@ definePageMeta({
   middleware: (to) => {
     const authStore = useAuthStore()
     authStore.hydrate()
+    if (import.meta.client && !authStore.isLoggedIn) {
+      return navigateTo('/auth/login')
+    }
     if (import.meta.client && authStore.role !== 'tenant') {
-      return navigateTo({ path: '/stalls/manage', query: to.query })
+      return navigateTo({ path: '/stalls/manage', query: to.query }, { replace: true })
     }
   }
 })

@@ -45,13 +45,26 @@ export interface DayMetaItem {
   isWeekend: boolean
 }
 
+export interface TenantSlotConflictInfo {
+  bookingNumber: string
+  marketName: string
+  projectName: string
+  stallNumbers: string[]
+}
+
 export interface TimeSlotItem {
   time: string
   capacityText: string
   capacityClass: string
   note: string
   isFull: boolean
+  enabled?: boolean
+  capacity?: number
+  bookedCount?: number
+  bookedStalls?: string[]
   remainingQueues: number
+  hasTenantConflict?: boolean
+  tenantConflictInfo?: TenantSlotConflictInfo | null
 }
 
 export interface AvailableDateSlot {
@@ -67,11 +80,137 @@ export interface AvailableDateSlot {
   description?: string
   isAllFull?: boolean
   isClosed?: boolean
+  totalCapacity?: number
+  totalBooked?: number
+  totalRemainingQueues?: number
   slots: TimeSlotItem[]
 }
 
 const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์']
 const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const thaiMonthsFull = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+]
+
+const MARKET_LOOKUP_META: Array<{ id: string; slug: string; name: string; prefix: string }> = [
+  { id: '1', slug: 'chatuchak', name: 'ตลาดนัดจตุจักร', prefix: 'JJ-' },
+  { id: '2', slug: 'pracha-niwet-1', name: 'ตลาดประชานิเวศน์ 1', prefix: 'PRA-' },
+  { id: '3', slug: 'min-buri', name: 'ตลาดมีนบุรี', prefix: 'MIN-' },
+  { id: '4', slug: 'singhanat', name: 'ตลาดสิงหา', prefix: 'SIN-' },
+  { id: '5', slug: 'thewarat', name: 'ตลาดเทวราช', prefix: 'THE-' },
+  { id: '6', slug: 'rat-burana', name: 'ตลาดราษฎร์บูรณะ', prefix: 'RAT-' },
+  { id: '7', slug: 'bang-kapi', name: 'ตลาดบางกะปิ', prefix: 'BKP-' },
+  { id: '8', slug: 'wongwian-lek', name: 'ตลาดพระเครื่องวงเวียนเล็ก', prefix: 'WON-' },
+  { id: '9', slug: 'nong-chok', name: 'ตลาดหนองจอก', prefix: 'NON-' },
+  { id: '10', slug: 'ratchadaphisek', name: 'ตลาดรัชดาภิเษก', prefix: 'RCH-' },
+  { id: '11', slug: 'thonburi-sanamluang-2', name: 'ตลาดธนบุรี (สนามหลวง 2)', prefix: 'THO-' },
+  { id: '12', slug: 'bang-khae-phirom', name: 'ตลาดบางแคภิรมย์', prefix: 'BKH-' }
+]
+
+let cachedScheduleBookings: any[] = []
+
+export const setCachedScheduleBookings = (bookings: any[]) => {
+  cachedScheduleBookings = Array.isArray(bookings) ? bookings : []
+}
+
+export const getCachedScheduleBookings = (): any[] => cachedScheduleBookings
+
+export const normalizeVisitDateToIso = (dateStr?: string): string => {
+  if (!dateStr) return ''
+  const raw = String(dateStr).trim()
+  if (!raw || raw === 'รอยืนยันวันนัดหมาย') return ''
+
+  // 1. ISO YYYY-MM-DD (or YYYY-MM-DDTHH:mm:ss)
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoMatch) {
+    let year = parseInt(isoMatch[1], 10)
+    if (year > 2400) year -= 543
+    return `${year}-${isoMatch[2]}-${isoMatch[3]}`
+  }
+
+  // 2. DD/MM/YYYY
+  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (slashMatch) {
+    const day = slashMatch[1].padStart(2, '0')
+    const month = slashMatch[2].padStart(2, '0')
+    let year = parseInt(slashMatch[3], 10)
+    if (year > 2400) year -= 543
+    return `${year}-${month}-${day}`
+  }
+
+  // 3. Thai Date String (e.g. 'อาทิตย์ 25 ตุลาคม 2569' or '25 ต.ค. 69')
+  for (let mIdx = 0; mIdx < 12; mIdx++) {
+    const fullM = thaiMonthsFull[mIdx]
+    const shortM = thaiMonths[mIdx]
+    if (raw.includes(fullM) || raw.includes(shortM)) {
+      const mToken = raw.includes(fullM) ? fullM : shortM
+      const escapedToken = mToken.replace(/\./g, '\\.')
+      const regex = new RegExp(`(\\d{1,2})\\s*${escapedToken}\\s*(\\d{2,4})`)
+      const m = raw.match(regex)
+      if (m) {
+        const day = m[1].padStart(2, '0')
+        const month = String(mIdx + 1).padStart(2, '0')
+        let year = parseInt(m[2], 10)
+        if (year < 100) year = 2500 + year - 543
+        else if (year > 2400) year -= 543
+        return `${year}-${month}-${day}`
+      }
+    }
+  }
+
+  return ''
+}
+
+export const doesBookingMatchMarket = (booking: any, marketId: string, marketName?: string): boolean => {
+  if (!booking) return false
+  const targetStr = String(marketId || '').trim().toLowerCase()
+  const targetName = String(marketName || '').trim()
+  const meta = MARKET_LOOKUP_META.find(
+    m => m.id === targetStr || m.slug === targetStr || (targetName && (m.name === targetName || targetName.includes(m.name)))
+  )
+
+  const bMarketId = String(booking.market_id || '').trim()
+  const bMarketSlug = String(booking.market_slug || '').trim().toLowerCase()
+  const bMarketName = String(booking.market_name || '').trim()
+  const bStallNum = String(booking.stall_number || booking.stall_ident || '').trim().toUpperCase()
+
+  if (meta) {
+    if (bMarketId && bMarketId === meta.id) return true
+    if (bMarketSlug && bMarketSlug === meta.slug) return true
+    if (bMarketName && (bMarketName === meta.name || bMarketName.includes(meta.name) || meta.name.includes(bMarketName))) return true
+    if (bStallNum && bStallNum.startsWith(meta.prefix)) return true
+    return false
+  }
+
+  if (targetName && bMarketName) {
+    return bMarketName === targetName || bMarketName.includes(targetName)
+  }
+  return true
+}
+
+export const isBookingOccupyingVisitSlot = (booking: any): boolean => {
+  if (!booking) return false
+  const status = String(booking.status || '').trim()
+  if (['cancelled', 'rejected', 'not_interested', 'no_show'].includes(status)) return false
+  const dateIso = normalizeVisitDateToIso(booking.visit_date)
+  const slotStr = String(booking.visit_time_slot || booking.visit_time || '').trim()
+  if (!dateIso || !slotStr || slotStr === 'รอยืนยันเวลา') return false
+  return true
+}
+
+export const getAppointmentRoundKey = (booking: any): string => {
+  if (!booking) return ''
+  if (booking.appointment_group_id) return String(booking.appointment_group_id).trim()
+  const tenantKey = String(booking.tenant_id_card || booking.tenant_phone || booking.tenant_name || booking.id || '')
+    .replace(/\s+/g, '')
+    .toLowerCase()
+  const marketKey = String(booking.market_name || booking.market_id || '').trim().toLowerCase()
+  const projectKey = String(booking.project_name || booking.stall_zone_name || '').trim().toLowerCase()
+  const dateIso = normalizeVisitDateToIso(booking.visit_date)
+  const slotStart = parseSlotTimeRange(String(booking.visit_time_slot || booking.visit_time || '')).startTime
+  return `${tenantKey}::${marketKey}::${projectKey}::${dateIso}::${slotStart}`
+}
 
 export const parseSlotTimeRange = (timeStr: string) => {
   if (!timeStr) return { startTime: '09:00', endTime: '10:00' }
@@ -114,10 +253,10 @@ export const createDefaultWeeklyMaster = (): IWeeklyMasterMap => {
       badgeType: 'badge-success',
       description: 'เปิดเต็มวัน เหมาะดูทำเลและทราฟฟิกครอบครัว',
       slots: [
-        { id: 1, time: '09.30 - 10.30 น.', capacity: 3, enabled: true, note: 'มีผู้ลงทะเบียนเต็มโควตาแล้ว', remainingQueues: 0, isFull: true },
-        { id: 2, time: '11.00 - 12.00 น.', capacity: 4, enabled: true, note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', remainingQueues: 3, isFull: false },
-        { id: 3, time: '13.00 - 14.00 น.', capacity: 2, enabled: true, note: 'รอบยอดนิยม (เต็มแล้ว)', remainingQueues: 0, isFull: true },
-        { id: 4, time: '15.30 - 16.30 น.', capacity: 3, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', remainingQueues: 1, isFull: false }
+        { id: 1, time: '09.30 - 10.30 น.', startTime: '09:30', endTime: '10:30', capacity: 3, enabled: true, note: 'ช่วงเช้า อากาศสบาย เหมาะดูโครงสร้าง', remainingQueues: 3, isFull: false },
+        { id: 2, time: '11.00 - 12.00 น.', startTime: '11:00', endTime: '12:00', capacity: 4, enabled: true, note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', remainingQueues: 4, isFull: false },
+        { id: 3, time: '13.00 - 14.00 น.', startTime: '13:00', endTime: '14:00', capacity: 2, enabled: true, note: 'ช่วงบ่าย มีเจ้าหน้าที่พาชม', remainingQueues: 2, isFull: false },
+        { id: 4, time: '15.30 - 16.30 น.', startTime: '15:30', endTime: '16:30', capacity: 3, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', remainingQueues: 3, isFull: false }
       ]
     },
     // 1 = วันจันทร์
@@ -149,10 +288,10 @@ export const createDefaultWeeklyMaster = (): IWeeklyMasterMap => {
       badgeType: 'badge-neutral',
       description: 'วันทำการราชการ ตรวจดูโครงสร้างระบบอาคาร',
       slots: [
-        { id: 1, time: '09.30 - 10.30 น.', capacity: 2, enabled: true, note: 'ช่วงเช้า เจ้าหน้าที่ฝ่ายอาคารพาชม', remainingQueues: 2, isFull: false },
-        { id: 2, time: '11.00 - 12.00 น.', capacity: 3, enabled: false, note: 'ติดตรวจพื้นที่ประจำสัปดาห์', remainingQueues: 0, isFull: true },
-        { id: 3, time: '13.00 - 14.00 น.', capacity: 3, enabled: true, note: 'ช่วงบ่าย ตรวจระบบไฟฟ้า-ประปา', remainingQueues: 3, isFull: false },
-        { id: 4, time: '15.30 - 16.30 น.', capacity: 2, enabled: false, note: 'ไม่มีรอบเจ้าหน้าที่ช่วงเย็น', remainingQueues: 0, isFull: true }
+        { id: 1, time: '09.30 - 10.30 น.', startTime: '09:30', endTime: '10:30', capacity: 2, enabled: true, note: 'ช่วงเช้า เจ้าหน้าที่ฝ่ายอาคารพาชม', remainingQueues: 2, isFull: false },
+        { id: 2, time: '11.00 - 12.00 น.', startTime: '11:00', endTime: '12:00', capacity: 3, enabled: false, note: 'ติดตรวจพื้นที่ประจำสัปดาห์', remainingQueues: 0, isFull: true },
+        { id: 3, time: '13.00 - 14.00 น.', startTime: '13:00', endTime: '14:00', capacity: 3, enabled: true, note: 'ช่วงบ่าย ตรวจระบบไฟฟ้า-ประปา', remainingQueues: 3, isFull: false },
+        { id: 4, time: '15.30 - 16.30 น.', startTime: '15:30', endTime: '16:30', capacity: 2, enabled: false, note: 'ไม่มีรอบเจ้าหน้าที่ช่วงเย็น', remainingQueues: 0, isFull: true }
       ]
     },
     // 4 = วันพฤหัสบดี
@@ -174,10 +313,10 @@ export const createDefaultWeeklyMaster = (): IWeeklyMasterMap => {
       badgeType: 'badge-purple',
       description: 'รอบบ่าย-ค่ำ เตรียมพื้นที่ตลาดกลางคืน',
       slots: [
-        { id: 1, time: '09.30 - 10.30 น.', capacity: 2, enabled: false, note: 'งดรอบเช้า เตรียมพื้นที่ตลาดกลางคืน', remainingQueues: 0, isFull: true },
-        { id: 2, time: '11.00 - 12.00 น.', capacity: 3, enabled: true, note: 'ช่วงสาย เริ่มเตรียมพื้นที่', remainingQueues: 2, isFull: false },
-        { id: 3, time: '13.00 - 14.00 น.', capacity: 4, enabled: true, note: 'ช่วงบ่าย มีเจ้าหน้าที่พาชม', remainingQueues: 4, isFull: false },
-        { id: 4, time: '15.30 - 16.30 น.', capacity: 5, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกตลาดกลางคืน', remainingQueues: 5, isFull: false }
+        { id: 1, time: '09.30 - 10.30 น.', startTime: '09:30', endTime: '10:30', capacity: 2, enabled: false, note: 'งดรอบเช้า เตรียมพื้นที่ตลาดกลางคืน', remainingQueues: 0, isFull: true },
+        { id: 2, time: '11.00 - 12.00 น.', startTime: '11:00', endTime: '12:00', capacity: 3, enabled: true, note: 'ช่วงสาย เริ่มเตรียมพื้นที่', remainingQueues: 3, isFull: false },
+        { id: 3, time: '13.00 - 14.00 น.', startTime: '13:00', endTime: '14:00', capacity: 4, enabled: true, note: 'ช่วงบ่าย มีเจ้าหน้าที่พาชม', remainingQueues: 4, isFull: false },
+        { id: 4, time: '15.30 - 16.30 น.', startTime: '15:30', endTime: '16:30', capacity: 5, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกตลาดกลางคืน', remainingQueues: 5, isFull: false }
       ]
     },
     // 6 = วันเสาร์
@@ -189,13 +328,44 @@ export const createDefaultWeeklyMaster = (): IWeeklyMasterMap => {
       badgeType: 'badge-primary',
       description: 'เปิดเต็มวัน คนเดินหนาแน่น เหมาะดูทำเลและการค้าขายจริง',
       slots: [
-        { id: 1, time: '09.30 - 10.30 น.', capacity: 3, enabled: true, note: 'ช่วงเช้า อากาศสบาย เหมาะดูโครงสร้าง', remainingQueues: 3, isFull: false },
-        { id: 2, time: '11.00 - 12.00 น.', capacity: 5, enabled: true, note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', remainingQueues: 5, isFull: false },
-        { id: 3, time: '13.00 - 14.00 น.', capacity: 2, enabled: true, note: 'ช่วงบ่าย มีเจ้าหน้าที่เทคนิคพาชม', remainingQueues: 1, isFull: false },
-        { id: 4, time: '15.30 - 16.30 น.', capacity: 4, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', remainingQueues: 4, isFull: false }
+        { id: 1, time: '09.30 - 10.30 น.', startTime: '09:30', endTime: '10:30', capacity: 3, enabled: true, note: 'ช่วงเช้า อากาศสบาย เหมาะดูโครงสร้าง', remainingQueues: 3, isFull: false },
+        { id: 2, time: '11.00 - 12.00 น.', startTime: '11:00', endTime: '12:00', capacity: 5, enabled: true, note: 'ช่วงสาย บรรยากาศเริ่มคึกคัก', remainingQueues: 5, isFull: false },
+        { id: 3, time: '13.00 - 14.00 น.', startTime: '13:00', endTime: '14:00', capacity: 2, enabled: true, note: 'ช่วงบ่าย มีเจ้าหน้าที่เทคนิคพาชม', remainingQueues: 2, isFull: false },
+        { id: 4, time: '15.30 - 16.30 น.', startTime: '15:30', endTime: '16:30', capacity: 4, enabled: true, note: 'ช่วงเย็น ชมทราฟฟิกคนเดินจริง', remainingQueues: 4, isFull: false }
       ]
     }
   }
+}
+
+const sanitizeWeeklyMaster = (weekly: IWeeklyMasterMap): IWeeklyMasterMap => {
+  Object.values(weekly || {}).forEach(day => {
+    if (!day || !Array.isArray(day.slots)) return
+    day.slots.forEach(slot => {
+      const cap = Math.max(1, Number(slot.capacity) || 2)
+      slot.capacity = cap
+      if (slot.enabled !== false) {
+        slot.enabled = true
+        slot.isFull = false
+        slot.remainingQueues = cap
+        if (slot.note === 'มีผู้ลงทะเบียนเต็มโควตาแล้ว') {
+          slot.note = 'ช่วงเช้า อากาศสบาย เหมาะดูโครงสร้าง'
+        } else if (slot.note === 'รอบยอดนิยม (เต็มแล้ว)') {
+          slot.note = 'ช่วงบ่าย มีเจ้าหน้าที่พาชม'
+        }
+      } else {
+        slot.isFull = true
+        slot.remainingQueues = 0
+      }
+    })
+  })
+  return weekly
+}
+
+export const doesBookingMatchSlotTime = (bookingSlotStr: string, slot: IVisitSlot): boolean => {
+  if (!bookingSlotStr || !slot) return false
+  const bRange = parseSlotTimeRange(bookingSlotStr)
+  const sRange = parseSlotTimeRange(slot.time || `${slot.startTime || '09:00'} - ${slot.endTime || '10:00'}`)
+  return bRange.startTime === sRange.startTime
 }
 
 // Generate future calendar days rolling dynamically
@@ -233,7 +403,8 @@ export const getStoredWeeklyMaster = (marketId: string): IWeeklyMasterMap => {
   try {
     const raw = localStorage.getItem(`visit-schedule-weekly:${marketId}`)
     if (!raw) return createDefaultWeeklyMaster()
-    return JSON.parse(raw) as IWeeklyMasterMap
+    const parsed = JSON.parse(raw) as IWeeklyMasterMap
+    return sanitizeWeeklyMaster(parsed)
   } catch {
     return createDefaultWeeklyMaster()
   }
@@ -243,7 +414,8 @@ export const getStoredWeeklyMaster = (marketId: string): IWeeklyMasterMap => {
 export const saveStoredWeeklyMaster = (marketId: string, weekly: IWeeklyMasterMap): void => {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(`visit-schedule-weekly:${marketId}`, JSON.stringify(weekly))
+    const sanitized = sanitizeWeeklyMaster(weekly)
+    localStorage.setItem(`visit-schedule-weekly:${marketId}`, JSON.stringify(sanitized))
     window.dispatchEvent(new CustomEvent('market-visit-schedule-updated', { detail: { marketId } }))
   } catch (e) {
     console.error('Failed to save weekly master visit schedule:', e)
@@ -321,10 +493,28 @@ export const loadEffectiveMarketSchedule = (marketId: string, daysAhead: number 
   return { days, schedule, weeklyMaster, overrides }
 }
 
-// Generate ready-to-use Booking Dates for Step 2
-export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): AvailableDateSlot[] => {
+// Generate ready-to-use Booking Dates for Step 2 (Relates 100% with active bookings & officer weekly master)
+export const getBookingVisitDates = (
+  marketId: string,
+  daysAhead: number = 14,
+  bookingsInput?: any[],
+  marketName?: string,
+  tenantMatcher?: (booking: any) => boolean
+): AvailableDateSlot[] => {
   const { days, schedule } = loadEffectiveMarketSchedule(marketId, daysAhead)
   const bookingDates: AvailableDateSlot[] = []
+
+  const sourceBookings = Array.isArray(bookingsInput) ? bookingsInput : cachedScheduleBookings
+  const allActiveVisitBookings = sourceBookings.filter(b => isBookingOccupyingVisitSlot(b))
+  const marketActiveBookings = allActiveVisitBookings.filter(
+    b => doesBookingMatchMarket(b, marketId, marketName)
+  )
+  // Tenant-facing booking lists intentionally contain only that tenant's records.
+  // When the API also supplies privacy-safe capacity records, use those records
+  // exclusively for availability so an owner's appointment is never counted twice.
+  const capacityBookings = marketActiveBookings.some(b => b.__visit_capacity_record)
+    ? marketActiveBookings.filter(b => b.__visit_capacity_record)
+    : marketActiveBookings
 
   days.forEach(day => {
     const dayConfig = schedule[day.date]
@@ -333,11 +523,68 @@ export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): 
     const isEnabled = dayConfig.enabled
     const rawSlots = dayConfig.slots || []
 
+    let dayTotalCapacity = 0
+    let dayTotalBooked = 0
+    let dayTotalRemaining = 0
+
     const mappedSlots: TimeSlotItem[] = rawSlots.map(s => {
       const isSlotActive = s.enabled !== false
-      const cap = s.capacity || 2
-      const rem = s.remainingQueues !== undefined ? s.remainingQueues : (isSlotActive ? cap : 0)
-      const full = s.isFull || !isSlotActive || rem <= 0
+      const cap = Math.max(1, Number(s.capacity) || 2)
+
+      const matchingBookings = isSlotActive
+        ? capacityBookings.filter(
+            b =>
+              normalizeVisitDateToIso(b.visit_date) === day.date &&
+              doesBookingMatchSlotTime(String(b.visit_time_slot || b.visit_time || ''), s)
+          )
+        : []
+
+      // 1 การจอง = 1 แผง = 1 คิวเวลา
+      const bookedCount = matchingBookings.length
+      const bookedStalls = Array.from(
+        new Set(
+          matchingBookings
+            .flatMap(b => String(b.stall_number || b.stall_ident || '').split(','))
+            .map(code => code.trim())
+            .filter(Boolean)
+        )
+      )
+
+      // Check if the current tenant already has an active appointment in this exact date & time slot (across any project/market)
+      const tenantConflictBookings = (isSlotActive && tenantMatcher)
+        ? allActiveVisitBookings.filter(
+            b =>
+              ['pending', 'pending_approval', 'approved'].includes(String(b.status || '').trim()) &&
+              tenantMatcher(b) &&
+              normalizeVisitDateToIso(b.visit_date) === day.date &&
+              doesBookingMatchSlotTime(String(b.visit_time_slot || b.visit_time || ''), s)
+          )
+        : []
+      const hasTenantConflict = tenantConflictBookings.length > 0
+      const tenantConflictInfo: TenantSlotConflictInfo | null = hasTenantConflict
+        ? {
+            bookingNumber: String(tenantConflictBookings[0]?.booking_number || ''),
+            marketName: String(tenantConflictBookings[0]?.market_name || marketName || ''),
+            projectName: String(tenantConflictBookings[0]?.project_name || tenantConflictBookings[0]?.stall_zone_name || 'โครงการอื่น'),
+            stallNumbers: Array.from(
+              new Set(
+                tenantConflictBookings
+                  .flatMap(b => String(b.stall_number || b.stall_ident || '').split(','))
+                  .map(c => c.trim())
+                  .filter(Boolean)
+              )
+            )
+          }
+        : null
+
+      const rem = isSlotActive ? Math.max(0, cap - bookedCount) : 0
+      const full = !isSlotActive || rem <= 0
+
+      if (isSlotActive && isEnabled) {
+        dayTotalCapacity += cap
+        dayTotalBooked += Math.min(cap, bookedCount)
+        dayTotalRemaining += rem
+      }
 
       let capText = ''
       let capClass = 'cap-high'
@@ -345,9 +592,17 @@ export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): 
       if (!isSlotActive) {
         capText = 'งดให้บริการรอบนี้'
         capClass = 'cap-full'
+      } else if (hasTenantConflict) {
+        capText = 'คุณมีนัดหมายอื่นในเวลานี้แล้ว'
+        capClass = 'cap-low'
       } else if (full) {
-        capText = 'เต็มแล้ว'
+        capText = `เต็มแล้ว (${bookedCount}/${cap} คิว)`
         capClass = 'cap-full'
+      } else if (bookedCount > 0) {
+        capText = rem === 1
+          ? `เหลือ 1 คิวสุดท้าย (จองแล้ว ${bookedCount}/${cap})`
+          : `ว่าง ${rem} คิว (จองแล้ว ${bookedCount}/${cap})`
+        capClass = rem === 1 ? 'cap-low' : (rem === 2 ? 'cap-med' : 'cap-high')
       } else if (rem === 1) {
         capText = 'เหลือ 1 คิวสุดท้าย'
         capClass = 'cap-low'
@@ -359,18 +614,45 @@ export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): 
         capClass = 'cap-high'
       }
 
+      let slotNote = s.note || ''
+      if (slotNote === 'มีผู้ลงทะเบียนเต็มโควตาแล้ว' || slotNote === 'รอบยอดนิยม (เต็มแล้ว)') {
+        slotNote = 'มีเจ้าหน้าที่พาชมพื้นที่'
+      }
+
+      if (!isSlotActive) {
+        slotNote = s.note || 'งดให้บริการรอบเวลานี้'
+      } else if (hasTenantConflict && tenantConflictInfo) {
+        const stallListText = tenantConflictInfo.stallNumbers.length > 0
+          ? `แผง ${tenantConflictInfo.stallNumbers.join(', ')}`
+          : ''
+        slotNote = `ชนกับนัดหมายของคุณที่ ${tenantConflictInfo.projectName} (${tenantConflictInfo.marketName}${stallListText ? ' • ' + stallListText : ''})`
+      } else if (full) {
+        slotNote = bookedStalls.length > 0
+          ? `มีผู้จองเต็มโควตาแล้ว (${bookedCount} คิว • แผง ${bookedStalls.join(', ')})`
+          : 'มีผู้ลงทะเบียนเต็มโควตาแล้ว'
+      } else if (bookedStalls.length > 0) {
+        slotNote = `จองแล้ว ${bookedCount} คิว (แผง ${bookedStalls.join(', ')}) • ${slotNote}`
+      }
+
       return {
         time: s.time,
         capacityText: capText,
         capacityClass: capClass,
-        note: s.note || '',
+        note: slotNote,
         isFull: full,
-        remainingQueues: rem
+        enabled: isSlotActive,
+        capacity: cap,
+        bookedCount,
+        bookedStalls,
+        remainingQueues: rem,
+        hasTenantConflict,
+        tenantConflictInfo
       }
     })
 
-    const activeAvailableSlots = mappedSlots.filter(s => !s.isFull)
-    const isAllFull = isEnabled && activeAvailableSlots.length === 0 && mappedSlots.length > 0
+    const enabledSlots = mappedSlots.filter(s => s.enabled !== false)
+    const activeAvailableSlots = enabledSlots.filter(s => !s.isFull)
+    const isAllFull = isEnabled && activeAvailableSlots.length === 0 && enabledSlots.length > 0
     const isClosed = !isEnabled
 
     let slotsText = 'ปิดรับนัดหมาย'
@@ -384,8 +666,9 @@ export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): 
       statusClass = 'status-limited'
     } else {
       const count = activeAvailableSlots.length
-      slotsText = count <= 2 ? `เหลือ ${count} รอบ` : `ว่าง ${count} รอบ`
-      statusClass = count <= 2 ? 'status-limited' : 'status-open'
+      const hasFullSlot = count < enabledSlots.length
+      slotsText = (hasFullSlot || count <= 2) ? `เหลือ ${count} รอบ` : `ว่าง ${count} รอบ`
+      statusClass = (hasFullSlot || count <= 2) ? 'status-limited' : 'status-open'
     }
 
     bookingDates.push({
@@ -401,6 +684,9 @@ export const getBookingVisitDates = (marketId: string, daysAhead: number = 14): 
       description: dayConfig.description || '',
       isAllFull,
       isClosed,
+      totalCapacity: dayTotalCapacity,
+      totalBooked: dayTotalBooked,
+      totalRemainingQueues: dayTotalRemaining,
       slots: mappedSlots
     })
   })

@@ -28,7 +28,15 @@ export const useMarketOverrides = () => {
 
   const applyMarketOverride = (market: Record<string, any>) => {
     const saved = getMarketOverride(market.id) || getMarketOverride(market.slug)
-    return saved ? { ...market, ...saved } : market
+    if (!saved) return market
+    const {
+      available_stalls: _avail,
+      total_stalls: _total,
+      reserved_stalls: _res,
+      occupied_stalls: _occ,
+      ...restSaved
+    } = saved
+    return { ...market, ...restSaved }
   }
 
   return { getMarketOverride, saveMarketOverride, applyMarketOverride }

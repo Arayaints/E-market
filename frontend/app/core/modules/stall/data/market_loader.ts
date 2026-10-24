@@ -51,11 +51,6 @@ export function getMarketSlug(marketIdOrSlug: string | number): string {
 export async function loadMarketGisJson(marketIdOrSlug?: string | number | null): Promise<MarketGisConfig> {
   const slug = getMarketSlug(marketIdOrSlug || '1')
 
-  // ตลาดนัดจตุจักรใช้โมเดลเดิมและ Layout Engine ดั้งเดิม (ไม่โหลด JSON)
-  if (slug === 'chatuchak') {
-    return getMarketGisConfig('chatuchak')
-  }
-
   if (marketCache.has(slug)) {
     return marketCache.get(slug)!
   }

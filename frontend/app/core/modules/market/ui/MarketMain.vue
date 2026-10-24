@@ -139,8 +139,8 @@
                   <span class="stat-number">0</span>
                   <span class="stat-unit">แผง</span>
                 </div>
-                <NuxtLink to="/stalls/book?market=1" class="btn btn-primary btn-sm btn-event-act">
-                  จองพื้นที่ &gt;
+                <NuxtLink :to="isOfficer ? '/stalls/manage?market=1' : '/stalls/book?market=1'" class="btn btn-primary btn-sm btn-event-act">
+                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
                 </NuxtLink>
               </div>
             </div>
@@ -166,8 +166,8 @@
                   <span class="stat-number">18</span>
                   <span class="stat-unit">แผง</span>
                 </div>
-                <NuxtLink to="/stalls/book?market=11" class="btn btn-primary btn-sm btn-event-act">
-                  จองพื้นที่ &gt;
+                <NuxtLink :to="isOfficer ? '/stalls/manage?market=11' : '/stalls/book?market=11'" class="btn btn-primary btn-sm btn-event-act">
+                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
                 </NuxtLink>
               </div>
             </div>
@@ -193,8 +193,8 @@
                   <span class="stat-number">3</span>
                   <span class="stat-unit">แผง</span>
                 </div>
-                <NuxtLink to="/stalls/book?market=5" class="btn btn-primary btn-sm btn-event-act">
-                  จองพื้นที่ &gt;
+                <NuxtLink :to="isOfficer ? '/stalls/manage?market=5' : '/stalls/book?market=5'" class="btn btn-primary btn-sm btn-event-act">
+                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
                 </NuxtLink>
               </div>
             </div>
@@ -237,7 +237,7 @@
               type="text"
               class="search-input-field"
               placeholder="ค้นหาตลาดที่ต้องการจอง, ชื่อเขต, หรือทำเล (เช่น จตุจักร, มีนบุรี, ธนบุรี)..."
-              @input="filterMarkets"
+              @input="applyMarketSearch"
             />
             <button
               v-if="searchQuery"
@@ -377,9 +377,9 @@
                 <img :src="m.image_url" :alt="m.name" class="market-box-img" />
                 <div class="market-img-gradient"></div>
                 <!-- Status Badge (Top-Right Pill: "● ว่าง" or "● เต็ม") -->
-                <div class="market-avail-badge" :class="m.status === 'open' && m.available_stalls > 0 ? 'badge-green' : 'badge-red'">
+                <div class="market-avail-badge" :class="m.status === 'open' && getAvailableCount(m) > 0 ? 'badge-green' : 'badge-red'">
                   <span class="badge-dot-live"></span>
-                  <span>{{ m.status === 'open' && m.available_stalls > 0 ? 'ว่าง' : 'เต็ม' }}</span>
+                  <span>{{ m.status === 'open' && getAvailableCount(m) > 0 ? 'ว่าง' : 'เต็ม' }}</span>
                 </div>
               </NuxtLink>
 
@@ -506,6 +506,8 @@ const marketActionLink = (market: any) => {
 // Search & Filter State
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
+const appliedSearchQuery = ref('')
+const appliedCategory = ref<string>('all')
 const viewMode = ref<'grid' | 'map'>('grid')
 const showGisMap = computed(() => viewMode.value === 'map')
 const currentHeroSlide = ref(1)
@@ -533,8 +535,8 @@ const filterMarkets = () => {
   let list = [...marketsList.value]
 
   // Filter by text search
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase().trim()
+  if (appliedSearchQuery.value.trim()) {
+    const q = appliedSearchQuery.value.toLowerCase().trim()
     list = list.filter(m =>
       (m.name && m.name.toLowerCase().includes(q)) ||
       (m.name_en && m.name_en.toLowerCase().includes(q)) ||
@@ -545,13 +547,13 @@ const filterMarkets = () => {
   }
 
   // Filter by category icon
-  if (selectedCategory.value === 'promo') {
+  if (appliedCategory.value === 'promo') {
     list = list.filter(m => m.starting_price_daily <= 120 || m.has_event)
-  } else if (selectedCategory.value === 'new') {
+  } else if (appliedCategory.value === 'new') {
     list = list.filter(m => m.available_stalls > 5)
-  } else if (selectedCategory.value === 'metro') {
+  } else if (appliedCategory.value === 'metro') {
     list = list.filter(m => m.tags && m.tags.some((t: string) => t.includes('BTS') || t.includes('MRT') || t.includes('รถไฟฟ้า')))
-  } else if (selectedCategory.value === 'parking') {
+  } else if (appliedCategory.value === 'parking') {
     list = list.filter(m => m.tags && m.tags.some((t: string) => t.includes('จอดรถ') || t.includes('รถเมล์')))
   }
 
@@ -560,17 +562,26 @@ const filterMarkets = () => {
 
 const toggleCategory = (cat: string) => {
   selectedCategory.value = cat
+  appliedCategory.value = cat
+  filterMarkets()
+}
+
+const applyMarketSearch = () => {
+  appliedSearchQuery.value = searchQuery.value
   filterMarkets()
 }
 
 const clearSearch = () => {
   searchQuery.value = ''
+  appliedSearchQuery.value = ''
   filterMarkets()
 }
 
 const resetFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = 'all'
+  appliedSearchQuery.value = ''
+  appliedCategory.value = 'all'
   filterMarkets()
 }
 
@@ -647,6 +658,15 @@ const getPriceUnit = (m: any) => (m.starting_price_monthly || !m.starting_price_
 
 onMounted(() => {
   loadData()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('focus', loadData)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('focus', loadData)
+  }
 })
 </script>
 
@@ -1232,6 +1252,7 @@ onMounted(() => {
 .search-clear-btn:hover {
   background: #cbd5e1;
 }
+
 
 /* Category Filter Buttons Row */
 .category-icon-buttons-row {
