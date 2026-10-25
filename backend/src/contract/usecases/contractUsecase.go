@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"emarket-api/logs"
@@ -70,25 +71,83 @@ func (u *useCase) GetContractByID(id int) (*responses.ContractResponse, error) {
 }
 
 func (u *useCase) CreateContract(userID int, req requests.CreateContractRequest) (*responses.ContractResponse, error) {
-	contractNo := fmt.Sprintf("CTR-%s-%d", time.Now().Format("20060102"), time.Now().UnixNano()%100000)
+	stallIdent := strings.TrimSpace(req.StallIdent)
+	if stallIdent == "" {
+		stallIdent = strings.TrimSpace(req.StallNumber)
+	}
+	if stallIdent == "" && req.StallID > 0 {
+		stallIdent = fmt.Sprintf("%d", req.StallID)
+	}
+	if stallIdent == "" {
+		return nil, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาระบุรหัสแผงค้า")
+	}
+
+	tenantName := strings.TrimSpace(req.TenantName)
+	if tenantName == "" {
+		return nil, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาระบุชื่อผู้เช่า")
+	}
+
+	tenantPhone := strings.TrimSpace(req.TenantPhone)
+	if tenantPhone == "" {
+		tenantPhone = "081-234-5678"
+	}
+
+	shopName := strings.TrimSpace(req.ShopName)
+	if shopName == "" {
+		shopName = strings.TrimSpace(req.BusinessName)
+	}
+	if shopName == "" {
+		shopName = tenantName
+	}
+
+	startDate := strings.TrimSpace(req.StartDate)
+	if startDate == "" {
+		startDate = time.Now().Format("2006-01-02")
+	}
+
+	endDate := strings.TrimSpace(req.EndDate)
+	if endDate == "" {
+		endDate = time.Now().AddDate(1, 0, 0).Format("2006-01-02")
+	}
+
+	monthlyRental := req.MonthlyRental
+	if monthlyRental <= 0 {
+		monthlyRental = req.RentalFee
+	}
+	if monthlyRental <= 0 {
+		monthlyRental = 2000
+	}
+
+	securityDeposit := req.SecurityDeposit
+	if securityDeposit <= 0 {
+		securityDeposit = monthlyRental * 2
+	}
+
+	contractNo := fmt.Sprintf("CTR-%s-%06d", time.Now().Format("20060102"), time.Now().UnixMicro()%1000000)
 
 	var appID *int
 	if req.ApplicationID > 0 {
 		appID = &req.ApplicationID
 	}
 
+	var stallIDPtr *int
+	if req.StallID > 0 {
+		stallIDPtr = &req.StallID
+	}
+
 	contract := models.Contract{
 		ContractNumber:  contractNo,
 		ApplicationID:   appID,
-		StallIdent:      req.StallIdent,
-		TenantName:      req.TenantName,
-		TenantPhone:     req.TenantPhone,
+		StallID:         stallIDPtr,
+		StallIdent:      stallIdent,
+		TenantName:      tenantName,
+		TenantPhone:     tenantPhone,
 		TenantIDCard:    req.TenantIDCard,
-		ShopName:        req.ShopName,
-		StartDate:       req.StartDate,
-		EndDate:         req.EndDate,
-		MonthlyRental:   req.MonthlyRental,
-		SecurityDeposit: req.SecurityDeposit,
+		ShopName:        shopName,
+		StartDate:       startDate,
+		EndDate:         endDate,
+		MonthlyRental:   monthlyRental,
+		SecurityDeposit: securityDeposit,
 		ContractState:   "active",
 	}
 	if userID > 0 {
@@ -101,9 +160,17 @@ func (u *useCase) CreateContract(userID int, req requests.CreateContractRequest)
 		return nil, responses.NewInternalServerError()
 	}
 
-	// Update stall status to occupied
-	_ = u.repo.UpdateStallStatus(req.StallIdent, "occupied")
-
 	res := toContractResponse(&contract)
 	return &res, nil
+}
+
+func (u *useCase) TerminateContract(id int, userID int) error {
+	if err := u.repo.Terminate(id); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return responses.NewAppErr(http.StatusNotFound, "ไม่พบข้อมูลสัญญา")
+		}
+		logs.Error(err)
+		return responses.NewInternalServerError()
+	}
+	return nil
 }

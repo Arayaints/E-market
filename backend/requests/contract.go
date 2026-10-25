@@ -10,13 +10,20 @@ type ContractFilter struct {
 
 type CreateContractRequest struct {
 	ApplicationID   int     `json:"application_id"`
-	StallIdent      string  `json:"stall_ident" validate:"nonzero"`
-	TenantName      string  `json:"tenant_name" validate:"nonzero"`
-	TenantPhone     string  `json:"tenant_phone" validate:"nonzero"`
+	StallIdent      string  `json:"stall_ident"`
+	StallNumber     string  `json:"stall_number"`
+	StallID         int     `json:"stall_id"`
+	TenantName      string  `json:"tenant_name"`
+	TenantPhone     string  `json:"tenant_phone"`
 	TenantIDCard    string  `json:"tenant_id_card"`
-	ShopName        string  `json:"shop_name" validate:"nonzero"`
-	StartDate       string  `json:"start_date" validate:"nonzero"`
-	EndDate         string  `json:"end_date" validate:"nonzero"`
-	MonthlyRental   float64 `json:"monthly_rental" validate:"nonzero"`
+	TenantAddress   string  `json:"tenant_address"`
+	ShopName        string  `json:"shop_name"`
+	BusinessName    string  `json:"business_name"`
+	BusinessType    string  `json:"business_type"`
+	StartDate       string  `json:"start_date"`
+	EndDate         string  `json:"end_date"`
+	MonthlyRental   float64 `json:"monthly_rental"`
+	RentalFee       float64 `json:"rental_fee"`
 	SecurityDeposit float64 `json:"security_deposit"`
+	AdvancePayment  float64 `json:"advance_payment"`
 }

@@ -71,15 +71,18 @@ func (h *Handler) GetMarketByID(c *gin.Context) {
 // @Router /markets/{id}/zones [get]
 func (h *Handler) GetMarketZones(c *gin.Context) {
 	idStr := c.Param("id")
-	marketID, err := strconv.Atoi(idStr)
-	if err != nil {
-		// Try resolving slug to ID if slug was passed
-		market, mErr := h.useCase.GetMarketByIDOrSlug(idStr)
-		if mErr != nil {
-			respondError(c, responses.NewAppErr(http.StatusBadRequest, "Market ID ไม่ถูกต้อง"))
-			return
+	marketID := 0
+	if idStr != "" {
+		var err error
+		marketID, err = strconv.Atoi(idStr)
+		if err != nil {
+			market, mErr := h.useCase.GetMarketByIDOrSlug(idStr)
+			if mErr != nil {
+				respondError(c, responses.NewAppErr(http.StatusBadRequest, "Market ID ไม่ถูกต้อง"))
+				return
+			}
+			marketID = market.ID
 		}
-		marketID = market.ID
 	}
 
 	res, err := h.useCase.GetMarketZones(marketID)

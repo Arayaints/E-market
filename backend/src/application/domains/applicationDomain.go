@@ -11,6 +11,7 @@ type UseCase interface {
 	GetApplicationByID(id int) (*responses.ApplicationResponse, error)
 	CreateApplication(userID int, req requests.CreateApplicationRequest) (*responses.ApplicationResponse, error)
 	UpdateStatus(id int, userID int, req requests.UpdateApplicationStatusRequest) (*responses.ApplicationResponse, error)
+	Action(id int, userID int, req requests.ApplicationActionRequest) (*responses.ApplicationResponse, error)
 }
 
 type Repository interface {
@@ -18,4 +19,5 @@ type Repository interface {
 	FindByID(id int) (*models.Application, error)
 	Create(app *models.Application) error
 	Update(app *models.Application) error
+	UpdateStallStatus(stallIdent string, status string) error
 }

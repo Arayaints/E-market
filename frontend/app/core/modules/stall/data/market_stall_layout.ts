@@ -357,9 +357,14 @@ export const buildProjectStallLayout = (project: ProjectZone, floorId?: string):
 // Pre-compute layouts for all projects & floors (deterministic)
 const layoutCache = new Map<string, ProjectStallLayout>()
 
+export const clearLayoutCache = (): void => {
+  layoutCache.clear()
+}
+
 export const getProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
   const effectiveFloorId = floorId || project.floors?.[0]?.id || '1'
-  const cacheKey = `${project.id}:${effectiveFloorId}:${project.centroid.join(',')}:${project.totalStalls}`
+  const hasSurveyStalls = Boolean(project.stalls && project.stalls.length > 0)
+  const cacheKey = `${project.id}:${effectiveFloorId}:${project.centroid.join(',')}:${project.totalStalls}:${hasSurveyStalls ? project.stalls!.length : 'gen'}`
 
   // If the project carries its own pre-surveyed real stalls (e.g. from official GIS shapefile)
   if (project.stalls && project.stalls.length > 0) {

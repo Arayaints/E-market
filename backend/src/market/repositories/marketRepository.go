@@ -18,14 +18,36 @@ func NewRepository(db *gorm.DB) domains.Repository {
 
 func (r *repository) syncMarketStats(m *models.Market) {
 	var occupiedCount int64
-	r.conn.Model(&models.Booking{}).
-		Where("status = 'A' AND (market_id = ? OR market_name LIKE ?) AND booking_status IN ('lease_applied', 'completed')", m.ID, "%"+m.Name+"%").
+	r.conn.Model(&models.Stall{}).
+		Where("status = 'A' AND (market_id = ? OR market_name LIKE ?) AND stall_status = 'occupied'", m.ID, "%"+m.Name+"%").
+		Distinct("ident").
 		Count(&occupiedCount)
 
+	var activeContractCount int64
+	r.conn.Model(&models.Contract{}).
+		Where("status = 'A' AND contract_state = 'active' AND stall_ident IN (?)",
+			r.conn.Model(&models.Stall{}).Select("ident").Where("market_id = ? OR market_name LIKE ?", m.ID, "%"+m.Name+"%"),
+		).
+		Distinct("stall_ident").
+		Count(&activeContractCount)
+	if activeContractCount > occupiedCount {
+		occupiedCount = activeContractCount
+	}
+
 	var reservedCount int64
-	r.conn.Model(&models.Booking{}).
-		Where("status = 'A' AND (market_id = ? OR market_name LIKE ?) AND booking_status IN ('pending', 'approved', 'visited') AND booking_status NOT IN ('rejected', 'not_interested', 'cancelled', 'no_show')", m.ID, "%"+m.Name+"%").
+	r.conn.Model(&models.Stall{}).
+		Where("status = 'A' AND (market_id = ? OR market_name LIKE ?) AND stall_status = 'reserved'", m.ID, "%"+m.Name+"%").
+		Distinct("ident").
 		Count(&reservedCount)
+
+	var activeBookingReserved int64
+	r.conn.Model(&models.Booking{}).
+		Where("status = 'A' AND (market_id = ? OR market_name LIKE ?) AND booking_status NOT IN ('waiting_queue', 'rejected', 'not_interested', 'cancelled', 'no_show', 'lease_applied', 'completed', 'terminated', 'closed')", m.ID, "%"+m.Name+"%").
+		Distinct("stall_ident").
+		Count(&activeBookingReserved)
+	if activeBookingReserved > reservedCount {
+		reservedCount = activeBookingReserved
+	}
 
 	m.OccupiedStalls = int(occupiedCount)
 	m.ReservedStalls = int(reservedCount)
@@ -75,6 +97,10 @@ func (r *repository) FindByIDOrSlug(idOrSlug string) (*models.Market, error) {
 
 func (r *repository) FindZonesByMarketID(marketID int) ([]models.Zone, error) {
 	var zones []models.Zone
-	err := r.conn.Where("market_id = ? AND status = 'A'", marketID).Order("id ASC").Find(&zones).Error
+	query := r.conn.Where("status = 'A'")
+	if marketID > 0 {
+		query = query.Where("market_id = ?", marketID)
+	}
+	err := query.Order("id ASC").Find(&zones).Error
 	return zones, err
 }

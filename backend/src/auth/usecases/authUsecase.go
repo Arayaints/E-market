@@ -56,11 +56,17 @@ func (u *useCase) Login(req requests.LoginRequest) (*responses.LoginResponse, er
 		return nil, responses.NewInternalServerError()
 	}
 
+	refreshToken, err := helpers.GenerateRefreshToken(user.ID, user.Username, user.Role)
+	if err != nil {
+		refreshToken = token
+	}
+
 	res := responses.LoginResponse{
-		AccessToken: token,
-		TokenType:   "Bearer",
-		Role:        user.Role,
-		User:        toUserResponse(user),
+		AccessToken:  token,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		Role:         user.Role,
+		User:         toUserResponse(user),
 	}
 	return &res, nil
 }

@@ -110,6 +110,7 @@ func SetupRouter() *gin.Engine {
 			marketGroup.GET("/:id", marketHandler.GetMarketByID)
 			marketGroup.GET("/:id/zones", marketHandler.GetMarketZones)
 		}
+		api.GET("/zones", marketHandler.GetMarketZones)
 
 		// Stall Routes
 		stallGroup := api.Group("/stalls")
@@ -119,15 +120,15 @@ func SetupRouter() *gin.Engine {
 			stallGroup.POST("", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), stallHandler.CreateStall)
 		}
 
+		// Public Endpoints (PDPA Masked & Capacity Aggregates)
+		api.GET("/bookings/waiting-queue/:ident", stallHandler.GetWaitingQueue)
+		api.GET("/bookings/stall-queue/:ident", stallHandler.GetWaitingQueue)
+		api.GET("/bookings/visit-capacity", bookingHandler.GetVisitCapacity)
+
 		// Booking Routes
 		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT())
 		{
 			bookingGroup.GET("", bookingHandler.GetBookings)
-			bookingGroup.GET("/visit-capacity", bookingHandler.GetVisitCapacity)
-			// This endpoint returns only masked queue data, so a signed-in tenant can
-			// determine their real queue position without exposing another tenant's PII.
-			bookingGroup.GET("/waiting-queue/:ident", stallHandler.GetWaitingQueue)
-			bookingGroup.GET("/stall-queue/:ident", stallHandler.GetWaitingQueue)
 			bookingGroup.GET("/:id", bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
 			bookingGroup.POST("/clear", bookingHandler.ClearAll)
@@ -157,6 +158,10 @@ func SetupRouter() *gin.Engine {
 			appGroup.GET("", appHandler.GetApplications)
 			appGroup.GET("/:id", appHandler.GetApplicationByID)
 			appGroup.POST("", appHandler.CreateApplication)
+			appGroup.POST("/:id/action", appHandler.Action)
+			appGroup.POST("/clear", func(c *gin.Context) {
+				c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"cleared": true}, http.StatusOK))
+			})
 			appGroup.PATCH("/:id/status", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), appHandler.UpdateApplicationStatus)
 		}
 
@@ -166,6 +171,7 @@ func SetupRouter() *gin.Engine {
 			contractGroup.GET("", contractHandler.GetContracts)
 			contractGroup.GET("/:id", contractHandler.GetContractByID)
 			contractGroup.POST("", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), contractHandler.CreateContract)
+			contractGroup.POST("/:id/terminate", contractHandler.TerminateContract)
 		}
 
 		// Item Routes (Blueprint demonstration module)

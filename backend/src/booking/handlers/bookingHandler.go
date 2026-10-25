@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"emarket-api/helpers"
 	"emarket-api/middlewares"
@@ -98,8 +99,27 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 		respondError(c, err)
 		return
 	}
-	if err := validator.Validate(req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, responses.ValidateResponse(helpers.ConverstError(err)))
+	if strings.TrimSpace(req.StallIdent) == "" {
+		req.StallIdent = strings.TrimSpace(req.StallNumber)
+	}
+	if strings.TrimSpace(req.ApplicantName) == "" {
+		req.ApplicantName = strings.TrimSpace(req.TenantName)
+	}
+	if strings.TrimSpace(req.ApplicantPhone) == "" {
+		req.ApplicantPhone = strings.TrimSpace(req.TenantPhone)
+	}
+	if strings.TrimSpace(req.VisitTime) == "" {
+		req.VisitTime = strings.TrimSpace(req.VisitTimeSlot)
+	}
+	if strings.TrimSpace(req.BusinessType) == "" {
+		if strings.TrimSpace(req.IntendedBusiness) != "" {
+			req.BusinessType = strings.TrimSpace(req.IntendedBusiness)
+		} else {
+			req.BusinessType = strings.TrimSpace(req.ProductType)
+		}
+	}
+	if req.StallIdent == "" || req.ApplicantName == "" || req.ApplicantPhone == "" {
+		respondError(c, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาระบุรหัสแผง ชื่อผู้จอง และเบอร์โทรศัพท์ให้ครบถ้วน"))
 		return
 	}
 
@@ -168,7 +188,10 @@ func (h *Handler) transition(c *gin.Context, status string, officerOnly bool) {
 	var body struct {
 		Reason          string `json:"reason"`
 		RejectionReason string `json:"rejection_reason"`
+		MeetingPoint    string `json:"meeting_point"`
+		EscortOfficer   string `json:"escort_officer"`
 		OfficerNotes    string `json:"officer_notes"`
+		ByOfficer       bool   `json:"by_officer"`
 	}
 	_ = c.ShouldBindJSON(&body)
 	reason := body.Reason
@@ -179,8 +202,14 @@ func (h *Handler) transition(c *gin.Context, status string, officerOnly bool) {
 		reason = body.OfficerNotes
 	}
 	res, err := h.useCase.UpdateStatus(id, middlewares.GetUserID(c), requests.UpdateBookingStatusRequest{
-		Status: status,
-		Reason: reason,
+		Status:          status,
+		Reason:          reason,
+		RejectionReason: body.RejectionReason,
+		MeetingPoint:    body.MeetingPoint,
+		EscortOfficer:   body.EscortOfficer,
+		OfficerNotes:    body.OfficerNotes,
+		ByOfficer:       body.ByOfficer || role == "admin" || role == "staff",
+		ActorRole:       role,
 	})
 	if err != nil {
 		respondError(c, err)
@@ -274,13 +303,40 @@ func (h *Handler) OfficerRecordProxy(c *gin.Context) {
 	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
 
+var marketSlugToID = map[string]int{
+	"chatuchak":             1,
+	"pracha-niwet-1":        2,
+	"min-buri":              3,
+	"singhanat":             4,
+	"thewarat":              5,
+	"rat-burana":            6,
+	"bang-kapi":             7,
+	"wongwian-lek":          8,
+	"nong-chok":             9,
+	"ratchadaphisek":        10,
+	"thonburi-sanamluang-2": 11,
+	"bang-khae-phirom":      12,
+}
+
 func (h *Handler) GetVisitCapacity(c *gin.Context) {
 	items, err := h.useCase.GetBookings(requests.BookingFilter{}, 1, "admin")
 	if err != nil {
 		respondError(c, err)
 		return
 	}
-	marketKey := c.Query("market_id")
+	marketKey := strings.TrimSpace(c.Query("market_id"))
+	if marketKey == "" {
+		marketKey = strings.TrimSpace(c.Query("market"))
+	}
+	var targetMarketID int
+	if marketKey != "" {
+		if id, err := strconv.Atoi(marketKey); err == nil {
+			targetMarketID = id
+		} else if id, ok := marketSlugToID[strings.ToLower(marketKey)]; ok {
+			targetMarketID = id
+		}
+	}
+
 	type capacityEntry struct {
 		MarketID      any    `json:"market_id"`
 		MarketName    string `json:"market_name"`
@@ -290,14 +346,18 @@ func (h *Handler) GetVisitCapacity(c *gin.Context) {
 	}
 	counts := map[string]*capacityEntry{}
 	for _, b := range items {
-		if b.Status != "pending" && b.Status != "pending_approval" && b.Status != "approved" {
+		if b.Status == "cancelled" || b.Status == "rejected" || b.Status == "not_interested" || b.Status == "no_show" || b.Status == "terminated" {
 			continue
 		}
 		if b.VisitDate == "" || b.VisitTime == "" {
 			continue
 		}
-		if marketKey != "" && b.MarketID != nil && strconv.Itoa(*b.MarketID) != marketKey {
+		if targetMarketID > 0 && b.MarketID != nil && *b.MarketID != targetMarketID {
 			continue
+		} else if targetMarketID == 0 && marketKey != "" {
+			if b.MarketName != "" && !strings.Contains(strings.ToLower(b.MarketName), strings.ToLower(marketKey)) {
+				continue
+			}
 		}
 		key := b.VisitDate + "__" + b.VisitTime
 		entry, exists := counts[key]

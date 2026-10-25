@@ -1,6 +1,9 @@
+import { useAuthStore } from "~/core/modules/auth/store/AuthStore"
+
 export const useApi = () => {
   const config = useRuntimeConfig()
   const { token, role, logout } = useAuth()
+  const authStore = useAuthStore()
 
   const apiFetch = async <T = any>(endpoint: string, options: any = {}): Promise<T> => {
     // Production must honour NUXT_PUBLIC_API_BASE so writes reach the persistent
@@ -27,6 +30,39 @@ export const useApi = () => {
         headers
       })
     } catch (err: any) {
+      // Auto Refresh Token Interceptor: When 401 Unauthorized occurs, try silent refresh once
+      if (
+        err?.response?.status === 401 &&
+        !options._retry &&
+        !url.includes('/auth/login') &&
+        !url.includes('/auth/refresh_token') &&
+        authStore.refreshToken
+      ) {
+        try {
+          const refreshUrl = `${base.replace(/\/+$/, '')}/auth/refresh_token`
+          const refreshRes: any = await $fetch(refreshUrl, {
+            method: 'POST',
+            body: {
+              access_token: authStore.accessToken,
+              refresh_token: authStore.refreshToken
+            }
+          })
+          const newToken = refreshRes?.data?.access_token || refreshRes?.access_token
+          const newRefresh = refreshRes?.data?.refresh_token || refreshRes?.refresh_token
+          if (newToken) {
+            authStore.setToken(newToken, newRefresh)
+            headers['Authorization'] = `Bearer ${newToken}`
+            return await $fetch<T>(url, {
+              ...options,
+              _retry: true,
+              headers
+            })
+          }
+        } catch {
+          logout()
+        }
+      }
+
       if (err?.response?.status === 401) {
         logout()
       }

@@ -190,7 +190,7 @@
                     <!-- Final: Approved -> Generate Contract -->
                     <NuxtLink
                       v-else-if="app.status === 'approved'"
-                      :to="`/contracts?new_for_stall=${app.stall_id}`"
+                      :to="`/contracts?new_for_stall=${encodeURIComponent(app.stall_number || app.stall_id || '')}&app_id=${app.id}`"
                       class="btn-table-action btn-table-primary"
                       title="จัดทำสัญญาเช่า"
                     >
@@ -277,7 +277,8 @@ const pageSize = ref(10)
 const loadApplications = async () => {
   loading.value = true
   try {
-    applications.value = await get('/applications')
+    const res: any = await get('/applications')
+    applications.value = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
     await fetchNotifications()
   } catch (err) {
     console.error('Failed to load applications:', err)
@@ -287,11 +288,11 @@ const loadApplications = async () => {
 }
 
 const countByStatus = (status: string) => {
-  return applications.value.filter(a => a.status === status).length
+  return (Array.isArray(applications.value) ? applications.value : []).filter(a => a.status === status).length
 }
 
 const filteredApplications = computed(() => {
-  let list = applications.value
+  let list = Array.isArray(applications.value) ? applications.value : []
 
   if (activeTab.value !== 'all') {
     if (activeTab.value === 'rejected') {

@@ -107,3 +107,27 @@ func (h *Handler) CreateContract(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, responses.SuccessResponse(res, http.StatusCreated))
 }
+
+// TerminateContract godoc
+// @Summary ยกเลิก/สิ้นสุดสัญญาเช่า
+// @Tags Contracts
+// @ID terminate-contract
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Contract ID"
+// @Success 200 {object} responses.Success
+// @Router /contracts/{id}/terminate [post]
+func (h *Handler) TerminateContract(c *gin.Context) {
+	userID := middlewares.GetUserID(c)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+
+	if err := h.useCase.TerminateContract(id, userID); err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"terminated": true}, http.StatusOK))
+}

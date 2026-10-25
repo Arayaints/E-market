@@ -9,20 +9,41 @@ type ApplicationFilter struct {
 }
 
 type CreateApplicationRequest struct {
-	BookingID             *int   `json:"booking_id"`
-	StallIdent            string `json:"stall_ident"`
-	StallNumber           string `json:"stall_number"`
-	ApplicantName         string `json:"applicant_name" validate:"nonzero"`
-	ApplicantPhone        string `json:"applicant_phone" validate:"nonzero"`
-	ApplicantIDCard       string `json:"applicant_id_card" validate:"nonzero"`
-	ShopName              string `json:"shop_name" validate:"nonzero"`
-	ProductCategory       string `json:"product_category"`
-	ProductType           string `json:"product_type"`
-	LeaseTermMonths       int    `json:"lease_term_months"`
-	RequestedPeriodMonths int    `json:"requested_period_months"`
+	BookingID             interface{} `json:"booking_id"`
+	StallID               interface{} `json:"stall_id"`
+	StallIdent            string      `json:"stall_ident"`
+	StallNumber           string      `json:"stall_number"`
+	MarketName            string      `json:"market_name"`
+	ApplicantName         string      `json:"applicant_name"`
+	TenantName            string      `json:"tenant_name"`
+	ApplicantPhone        string      `json:"applicant_phone"`
+	TenantPhone           string      `json:"tenant_phone"`
+	ApplicantIDCard       string      `json:"applicant_id_card"`
+	IDCard                string      `json:"id_card"`
+	ApplicantEmail        string      `json:"applicant_email"`
+	ApplicantAddress      string      `json:"applicant_address"`
+	Address               string      `json:"address"`
+	ShopName              string      `json:"shop_name"`
+	ProductCategory       string      `json:"product_category"`
+	ProductType           string      `json:"product_type"`
+	RequestedStartDate    string      `json:"requested_start_date"`
+	LeaseTermMonths       int         `json:"lease_term_months"`
+	RequestedPeriodMonths int         `json:"requested_period_months"`
+	MonthlyRate           float64     `json:"monthly_rate"`
+	Fee                   float64     `json:"fee"`
 }
 
 type UpdateApplicationStatusRequest struct {
-	Status string `json:"status" validate:"nonzero"`
-	Reason string `json:"reason"`
+	Status                string `json:"status" validate:"nonzero"`
+	Reason                string `json:"reason"`
+	OfficerComment        string `json:"officer_comment"`
+	MarketDirectorComment string `json:"market_director_comment"`
+	BureauDirectorComment string `json:"bureau_director_comment"`
+}
+
+type ApplicationActionRequest struct {
+	Action  string `json:"action"` // "approve" or "reject"
+	Status  string `json:"status"`
+	Comment string `json:"comment"`
+	Reason  string `json:"reason"`
 }

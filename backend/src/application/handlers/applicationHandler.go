@@ -94,10 +94,6 @@ func (h *Handler) CreateApplication(c *gin.Context) {
 		respondError(c, err)
 		return
 	}
-	if err := validator.Validate(req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, responses.ValidateResponse(helpers.ConverstError(err)))
-		return
-	}
 
 	res, err := h.useCase.CreateApplication(userID, req)
 	if err != nil {
@@ -137,6 +133,35 @@ func (h *Handler) UpdateApplicationStatus(c *gin.Context) {
 	}
 
 	res, err := h.useCase.UpdateStatus(id, userID, req)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+// Action godoc
+// @Summary ดำเนินการอนุมัติ/ปฏิเสธคำร้อง (Action endpoint)
+// @Tags Applications
+// @ID application-action
+// @Accept json
+// @Produce json
+// @Param id path int true "Application ID"
+// @Param body body requests.ApplicationActionRequest true "การดำเนินการ"
+// @Success 200 {object} responses.Success{data=responses.ApplicationResponse}
+// @Router /applications/{id}/action [post]
+func (h *Handler) Action(c *gin.Context) {
+	userID := middlewares.GetUserID(c)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+
+	var req requests.ApplicationActionRequest
+	_ = c.ShouldBindJSON(&req)
+
+	res, err := h.useCase.Action(id, userID, req)
 	if err != nil {
 		respondError(c, err)
 		return

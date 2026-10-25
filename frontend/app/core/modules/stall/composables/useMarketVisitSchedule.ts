@@ -192,7 +192,7 @@ export const doesBookingMatchMarket = (booking: any, marketId: string, marketNam
 export const isBookingOccupyingVisitSlot = (booking: any): boolean => {
   if (!booking) return false
   const status = String(booking.status || '').trim()
-  if (['cancelled', 'rejected', 'not_interested', 'no_show'].includes(status)) return false
+  if (['cancelled', 'rejected', 'not_interested', 'no_show', 'terminated'].includes(status)) return false
   const dateIso = normalizeVisitDateToIso(booking.visit_date)
   const slotStr = String(booking.visit_time_slot || booking.visit_time || '').trim()
   if (!dateIso || !slotStr || slotStr === 'รอยืนยันเวลา') return false
@@ -201,15 +201,8 @@ export const isBookingOccupyingVisitSlot = (booking: any): boolean => {
 
 export const getAppointmentRoundKey = (booking: any): string => {
   if (!booking) return ''
-  if (booking.appointment_group_id) return String(booking.appointment_group_id).trim()
-  const tenantKey = String(booking.tenant_id_card || booking.tenant_phone || booking.tenant_name || booking.id || '')
-    .replace(/\s+/g, '')
-    .toLowerCase()
-  const marketKey = String(booking.market_name || booking.market_id || '').trim().toLowerCase()
-  const projectKey = String(booking.project_name || booking.stall_zone_name || '').trim().toLowerCase()
-  const dateIso = normalizeVisitDateToIso(booking.visit_date)
-  const slotStart = parseSlotTimeRange(String(booking.visit_time_slot || booking.visit_time || '')).startTime
-  return `${tenantKey}::${marketKey}::${projectKey}::${dateIso}::${slotStart}`
+  // 1 การจอง = 1 แผง = 1 การ์ด (ไม่รวมหลายแผงเข้าด้วยกัน)
+  return String(booking.id || booking.booking_number || booking.booking_no || '')
 }
 
 export const parseSlotTimeRange = (timeStr: string) => {

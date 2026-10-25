@@ -31,6 +31,22 @@ func GenerateToken(userID int, username string, role string) (string, error) {
 	return token.SignedString([]byte(cfg.JWTSecret))
 }
 
+func GenerateRefreshToken(userID int, username string, role string) (string, error) {
+	cfg := config.Get()
+	claims := JWTClaims{
+		UserID:   userID,
+		Username: username,
+		Role:     role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(cfg.JWTSecret))
+}
+
 func ValidateToken(tokenString string) (*JWTClaims, error) {
 	cfg := config.Get()
 	secrets := []string{

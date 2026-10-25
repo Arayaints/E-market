@@ -304,5 +304,45 @@ func SeedAll(db *gorm.DB) error {
 		})
 	}
 
+	// Normalize legacy booking queue_number and waiting_queue / pending_slot states
+	var activeBookings []models.Booking
+	if err := db.Where("status = 'A' AND booking_status NOT IN ('rejected', 'cancelled', 'not_interested', 'no_show', 'terminated')").
+		Order("id ASC").Find(&activeBookings).Error; err == nil {
+		holderSeen := map[string]bool{}
+		queueIndex := map[string]int{}
+		for _, bk := range activeBookings {
+			stall := bk.StallIdent
+			wasLegacyQueue := bk.BookingStatus == "waiting_queue"
+			newStatus := bk.BookingStatus
+			if newStatus == "waiting_queue" || newStatus == "pending_slot" {
+				newStatus = "pending_approval"
+			}
+			newQueueNum := bk.QueueNumber
+			if !wasLegacyQueue && !holderSeen[stall] {
+				holderSeen[stall] = true
+				newQueueNum = 0
+			} else {
+				queueIndex[stall]++
+				newQueueNum = queueIndex[stall]
+			}
+			updates := map[string]interface{}{}
+			if newStatus != bk.BookingStatus {
+				updates["booking_status"] = newStatus
+			}
+			if newQueueNum != bk.QueueNumber {
+				updates["queue_number"] = newQueueNum
+			}
+			if bk.VisitDate == "" {
+				updates["visit_date"] = "2026-10-26"
+			}
+			if bk.VisitTime == "" {
+				updates["visit_time"] = "10:00 - 11:00"
+			}
+			if len(updates) > 0 {
+				db.Model(&models.Booking{}).Where("id = ?", bk.ID).Updates(updates)
+			}
+		}
+	}
+
 	return nil
 }

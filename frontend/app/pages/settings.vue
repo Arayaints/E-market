@@ -210,7 +210,8 @@ const formZone = ref({
 const loadZones = async () => {
   loading.value = true
   try {
-    zones.value = await get('/zones')
+    const res: any = await get('/zones')
+    zones.value = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
   } catch (err) {
     console.error('Failed to load zones:', err)
   } finally {

@@ -33,6 +33,7 @@ type WaitingQueueResponse struct {
 	CurrentPosition     int     `json:"current_position"`
 	MaskedCurrentBooker string  `json:"masked_current_booker"`
 	MaskedBookerPhone   string  `json:"masked_booker_phone"`
+	ActiveHolderStatus  string  `json:"active_holder_status,omitempty"`
 	Status              string  `json:"status"`
 	ExpiresAt           *string `json:"expires_at,omitempty"`
 }

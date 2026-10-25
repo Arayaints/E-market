@@ -487,24 +487,61 @@ const currentDoc = ref<any>(null)
 const loadData = async () => {
   loading.value = true
   try {
-    const [contractsRes, stallsRes] = await Promise.all([
+    const [contractsRes, stallsRes, appsRes] = await Promise.all([
       get('/contracts'),
-      get('/stalls')
+      get('/stalls'),
+      get('/applications').catch(() => [])
     ])
-    contracts.value = contractsRes
-    availableStalls.value = stallsRes.filter((s: any) => s.status === 'available')
+    contracts.value = Array.isArray(contractsRes) ? contractsRes : (Array.isArray(contractsRes?.data) ? contractsRes.data : [])
+    const rawStalls = Array.isArray(stallsRes) ? stallsRes : (Array.isArray(stallsRes?.data) ? stallsRes.data : [])
+    const rawApps = Array.isArray(appsRes) ? appsRes : (Array.isArray(appsRes?.data) ? appsRes.data : [])
+    availableStalls.value = rawStalls.filter((s: any) => s.status === 'available' || s.stall_status === 'available')
     filterContracts()
 
-    // If query contains new_for_stall
+    // If query contains new_for_stall (from Approved Lease Application)
     if (route.query.new_for_stall) {
-      const targetStallId = Number(route.query.new_for_stall)
-      const target = stallsRes.find((s: any) => s.id === targetStallId)
+      const stallKey = String(route.query.new_for_stall).trim()
+      const appId = route.query.app_id ? Number(route.query.app_id) : null
+      const matchedApp = rawApps.find((a: any) =>
+        (appId && Number(a.id) === appId) ||
+        String(a.stall_number || a.stall_ident) === stallKey ||
+        String(a.stall_id) === stallKey
+      )
+      let target = rawStalls.find((s: any) =>
+        String(s.id) === stallKey ||
+        String(s.stall_number || s.ident) === stallKey
+      )
+      if (!target && matchedApp) {
+        target = {
+          id: matchedApp.stall_id || matchedApp.stall_number,
+          stall_number: matchedApp.stall_number || matchedApp.stall_ident,
+          ident: matchedApp.stall_number || matchedApp.stall_ident,
+          zone_id: 'A',
+          monthly_rate: matchedApp.stall_monthly_rate || matchedApp.monthly_rate || 3600
+        }
+      }
       if (target) {
+        if (!availableStalls.value.some((s: any) => String(s.id) === String(target.id))) {
+          availableStalls.value = [target, ...availableStalls.value]
+        }
         openCreateModal()
         formContract.value.stall_id = target.id
-        formContract.value.rental_fee = target.monthly_rate
-        formContract.value.security_deposit = target.monthly_rate * 2
-        formContract.value.advance_payment = target.monthly_rate
+        const rate = matchedApp?.stall_monthly_rate || matchedApp?.monthly_rate || target.monthly_rate || target.monthly_rent || 3600
+        formContract.value.rental_fee = rate
+        formContract.value.security_deposit = rate * 2
+        formContract.value.advance_payment = rate
+        if (matchedApp) {
+          formContract.value.tenant_name = matchedApp.applicant_name || matchedApp.tenant_name || ''
+          formContract.value.tenant_id_card = matchedApp.applicant_id_card || ''
+          formContract.value.tenant_phone = matchedApp.applicant_phone || matchedApp.tenant_phone || ''
+          formContract.value.tenant_email = matchedApp.applicant_email || ''
+          formContract.value.tenant_address = matchedApp.applicant_address || ''
+          formContract.value.business_name = matchedApp.shop_name || ''
+          formContract.value.business_type = matchedApp.product_type || matchedApp.product_category || ''
+          if (matchedApp.requested_start_date) {
+            formContract.value.start_date = matchedApp.requested_start_date
+          }
+        }
       }
     }
   } catch (err) {
@@ -515,17 +552,18 @@ const loadData = async () => {
 }
 
 const filterContracts = () => {
-  let list = [...contracts.value]
+  let list = Array.isArray(contracts.value) ? [...contracts.value] : []
   if (selectedStatus.value) {
     list = list.filter(c => c.status === selectedStatus.value)
   }
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
     list = list.filter(c =>
-      c.contract_number.toLowerCase().includes(q) ||
-      c.tenant_name.toLowerCase().includes(q) ||
-      c.business_name.toLowerCase().includes(q) ||
-      c.tenant_phone.includes(q)
+      (c.contract_number && c.contract_number.toLowerCase().includes(q)) ||
+      (c.tenant_name && c.tenant_name.toLowerCase().includes(q)) ||
+      (c.business_name && c.business_name.toLowerCase().includes(q)) ||
+      (c.shop_name && c.shop_name.toLowerCase().includes(q)) ||
+      (c.tenant_phone && c.tenant_phone.includes(q))
     )
   }
   filteredContracts.value = list
@@ -534,10 +572,11 @@ const filterContracts = () => {
 const onStallSelected = () => {
   const stall = availableStalls.value.find(s => s.id === formContract.value.stall_id)
   if (stall) {
-    formContract.value.rental_fee = stall.monthly_rate
-    formContract.value.security_deposit = stall.monthly_rate * 2
-    formContract.value.advance_payment = stall.monthly_rate
-    formContract.value.business_type = stall.category
+    const rate = stall.monthly_rate || stall.monthly_rent || 2000
+    formContract.value.rental_fee = rate
+    formContract.value.security_deposit = rate * 2
+    formContract.value.advance_payment = rate
+    formContract.value.business_type = stall.category || stall.zone_name || ''
   }
 }
 
@@ -569,12 +608,21 @@ const openCreateModal = () => {
 const submitContract = async () => {
   saving.value = true
   try {
-    await post('/contracts', formContract.value)
+    const selectedStall = availableStalls.value.find(s => s.id === formContract.value.stall_id)
+    const stallIdent = selectedStall?.ident || selectedStall?.stall_number || String(formContract.value.stall_id || '')
+    const payload = {
+      ...formContract.value,
+      stall_ident: stallIdent,
+      stall_number: stallIdent,
+      shop_name: formContract.value.business_name || formContract.value.tenant_name || 'ร้านค้า',
+      monthly_rental: Number(formContract.value.rental_fee) || 0
+    }
+    await post('/contracts', payload)
     showCreateModal.value = false
     await loadData()
     await showSuccess('บันทึกสัญญาเช่าและเปิดใช้งานแผงเช่าเรียบร้อยแล้ว', 'สร้างสัญญาสำเร็จ')
   } catch (err: any) {
-    await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างสัญญา', 'ข้อผิดพลาด')
+    await showError(err?.data?.detail || err?.data?.error?.message || 'เกิดข้อผิดพลาดในการสร้างสัญญา', 'ข้อผิดพลาด')
   } finally {
     saving.value = false
   }

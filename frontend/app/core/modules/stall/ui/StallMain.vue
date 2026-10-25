@@ -644,10 +644,20 @@ const travelOptions = computed<string[]>(() => currentMarket.value.travel_option
   : ['รถโดยสารประจำทาง', 'รถรับจ้างสาธารณะ', 'รถยนต์ส่วนบุคคล', 'รถไฟฟ้า BTS / MRT'])
 
 // แผงว่าง: ใช้เกณฑ์สีเดียวกับการ์ดตลาดหน้าแรก (ok ≥50%, mid 20-49%, low 1-19%, full)
-const availNow = computed<number>(() => gisStallSummary.value?.available
-  ?? (Number(currentMarket.value.available_stalls) || 0))
-const totalStalls = computed<number>(() => gisStallSummary.value?.total
-  ?? Math.max(Number(currentMarket.value.total_stalls) || 180, availNow.value))
+// The API is the source of truth for market-wide counts. GIS derives the
+// floorplan total, but it does not contain every booking record as a stall row
+// (for example, a newly generated GIS stall), so preferring it here made the
+// card stay at the original full count after booking.
+const availNow = computed<number>(() => {
+  const fromApi = Number(currentMarket.value.available_stalls)
+  if (Number.isFinite(fromApi) && fromApi >= 0) return fromApi
+  return gisStallSummary.value?.available ?? 0
+})
+const totalStalls = computed<number>(() => {
+  const fromApi = Number(currentMarket.value.total_stalls)
+  if (Number.isFinite(fromApi) && fromApi > 0) return fromApi
+  return gisStallSummary.value?.total ?? Math.max(180, availNow.value)
+})
 const availLevel = computed(() => {
   if (availNow.value <= 0) return 'full'
   const pct = (availNow.value / totalStalls.value) * 100
@@ -694,10 +704,11 @@ const loadMarketDetailData = async (marketQueryRaw?: any) => {
     const statusOverrides: Record<string, StallStatus> = {}
     backendStalls.forEach((stall: any) => {
       const ident = String(stall.ident || stall.stall_ident || stall.stall_number || '').trim()
-      if (!ident || !stall.status) return
-      statusOverrides[ident] = stall.status === 'available' || stall.status === 'reserved' || stall.status === 'occupied'
-        ? stall.status
-        : 'occupied'
+      // `status` is the record lifecycle flag (for example "A"), while
+      // `stall_status` is the availability changed by a booking transaction.
+      const stallStatus = String(stall.stall_status || '').trim().toLowerCase()
+      if (!ident || !['available', 'reserved', 'occupied'].includes(stallStatus)) return
+      statusOverrides[ident] = stallStatus as StallStatus
     })
     gisStallSummary.value = getMarketStallSummary(gisMarket.projects, statusOverrides, marketFullFromApi.value)
   } catch (error) {

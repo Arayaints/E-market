@@ -12,9 +12,15 @@ type Application struct {
 	ApplicantIDCard  string     `gorm:"size:50;column:applicant_id_card" json:"applicant_id_card"`
 	ShopName         string     `gorm:"size:255;not null;column:shop_name" json:"shop_name"`
 	ProductCategory  string     `gorm:"size:255;column:product_category" json:"product_category"`
-	LeaseTermMonths  int        `gorm:"default:12;column:lease_term_months" json:"lease_term_months"`
-	MonthlyRate      float64    `gorm:"column:monthly_rate" json:"monthly_rate"`
-	ApplicationState string     `gorm:"size:50;default:'submitted';column:application_state" json:"application_state"`
+	LeaseTermMonths       int        `gorm:"default:12;column:lease_term_months" json:"lease_term_months"`
+	MonthlyRate           float64    `gorm:"column:monthly_rate" json:"monthly_rate"`
+	RequestedStartDate    string     `gorm:"size:50;column:requested_start_date" json:"requested_start_date"`
+	ApplicantEmail        string     `gorm:"size:255;column:applicant_email" json:"applicant_email"`
+	ApplicantAddress      string     `gorm:"type:text;column:applicant_address" json:"applicant_address"`
+	OfficerComment        string     `gorm:"type:text;column:officer_comment" json:"officer_comment"`
+	MarketDirectorComment string     `gorm:"type:text;column:market_director_comment" json:"market_director_comment"`
+	BureauDirectorComment string     `gorm:"type:text;column:bureau_director_comment" json:"bureau_director_comment"`
+	ApplicationState      string     `gorm:"size:50;default:'submitted';column:application_state" json:"application_state"`
 	ReviewedAt       *time.Time `gorm:"column:reviewed_at" json:"reviewed_at"`
 	ReviewNote       string     `gorm:"type:text;column:review_note" json:"review_note"`
 	Status           string     `gorm:"type:char(1);default:'A';column:status" json:"status"`

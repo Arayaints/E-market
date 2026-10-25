@@ -24,9 +24,15 @@
         <div class="modal-status-banner" :class="getStatusBannerClass(booking.status)">
           <div>
             <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; opacity: 0.85;">สถานะปัจจุบัน</div>
-            <div style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+            <div style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-top: 2px; flex-wrap: wrap;">
               <span class="badge-dot"></span>
               <span>{{ getStatusLabel(booking.status) }}</span>
+              <span v-if="isQueueBooking(booking)" style="font-size: 0.78rem; padding: 2px 10px; border-radius: 999px; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700;">
+                คิวสำรองที่ {{ booking.queue_position || booking.queue_number || 1 }}
+              </span>
+              <span v-else-if="booking.holding_stall && !['rejected', 'cancelled', 'not_interested', 'no_show', 'lease_applied', 'completed'].includes(booking.status)" style="font-size: 0.78rem; padding: 2px 10px; border-radius: 999px; background: #ecfdf5; color: #15803d; border: 1px solid #a7f3d0; font-weight: 700;">
+                ผู้จองหลัก (ตัวจริง)
+              </span>
             </div>
           </div>
           <div class="modal-status-dates" style="text-align: right; font-size: 0.8rem;">
@@ -54,30 +60,29 @@
         </div>
 
         <!-- Waiting Queue Banner if in queue -->
-        <div v-if="booking.status === 'waiting_queue'" class="queue-notice-banner" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div v-if="isQueueBooking(booking)" class="queue-notice-banner" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
           <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 260px;">
             <div style="width: 42px; height: 42px; border-radius: 50%; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; flex-shrink: 0; border: 2px solid #fde68a; margin-top: 2px;">
-              {{ booking.queue_position || 1 }}
+              {{ booking.queue_position || booking.queue_number || 1 }}
             </div>
             <div>
               <div style="font-weight: 700; color: #92400e; font-size: 0.95rem;">
-                คุณเป็นคิวสำรองลำดับที่ {{ booking.queue_position || 1 }} ของแผง {{ booking.stall_number }}
+                คิวสำรองลำดับที่ {{ booking.queue_position || booking.queue_number || 1 }} ของแผง {{ booking.stall_number }}
               </div>
               <div style="font-size: 0.82rem; color: #b45309; margin-top: 3px; line-height: 1.45;">
-                <span v-if="(booking.queue_position || 1) === 1">
-                  แผงนี้มี <strong>ผู้จองหลักถือสิทธิ์อยู่ 1 ราย</strong><span v-if="activeHolder"> ({{ formatQueueHolderName(activeHolder.tenant_name) }})</span> — คุณเป็นคิวสำรองลำดับแรกที่จะได้รับสิทธิ์ทันทีหากผู้จองหลักสละสิทธิ์
+                <span v-if="(booking.queue_position || booking.queue_number || 1) === 1">
+                  แผงนี้มี <strong>ผู้จองหลักถือสิทธิ์อยู่ 1 ราย</strong><span v-if="activeHolder"> ({{ formatQueueHolderName(activeHolder.tenant_name) }})</span> — คิวสำรองที่ 1 จะได้รับสิทธิ์เป็นผู้จองหลักทันทีหากผู้จองหลักสละสิทธิ์
                 </span>
                 <span v-else>
                   แผงนี้มี <strong>ผู้จองหลัก 1 ราย</strong><span v-if="activeHolder"> ({{ formatQueueHolderName(activeHolder.tenant_name) }})</span>
-                  และมี <strong>คิวสำรองก่อนหน้าคุณ {{ (booking.queue_position || 1) - 1 }} ราย</strong>
+                  และมี <strong>คิวสำรองก่อนหน้า {{ (booking.queue_position || booking.queue_number || 1) - 1 }} ราย</strong>
                   <span v-if="precedingQueues && precedingQueues.length > 0">
-                    ({{ precedingQueues.map(q => `คิว ${q.queue_position || 1}: ${formatQueueHolderName(q.tenant_name)}`).join(', ') }})
+                    ({{ precedingQueues.map(q => `คิว ${q.queue_position || q.queue_number || 1}: ${formatQueueHolderName(q.tenant_name)}`).join(', ') }})
                   </span>
-                  (รวมมีผู้รอก่อนหน้าคุณทั้งหมด {{ booking.queue_position || 1 }} ราย)
                 </span>
               </div>
               <div style="font-size: 0.78rem; color: #78350f; margin-top: 5px; line-height: 1.4;">
-                * สามารถไปดูแผงตามวันเวลาได้ตามปกติ หากยังไม่ถึงลำดับคิวจะไม่สามารถยื่นคำร้องขอเช่าได้
+                * สามารถเข้าชมแผงตามนัดได้ตามปกติ โดยปุ่มยืนยันการเช่าจะเปิดให้กดเมื่อผู้จองคิวหลักสละสิทธิ์
               </div>
             </div>
           </div>
@@ -178,9 +183,9 @@
           <!-- OFFICER ROLE ACTIONS -->
           <template v-if="role === 'officer'">
             <template v-if="booking.status === 'pending_approval' || booking.status === 'pending'">
-              <AppButton variant="danger" size="md" @click="$emit('reject', booking)">
+              <AppButton variant="danger" size="md" @click="isQueueBooking(booking) ? $emit('cancel', booking) : $emit('reject', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                <span>ยกเลิก</span>
+                <span>{{ isQueueBooking(booking) ? 'ยกเลิกคิว' : 'ยกเลิก' }}</span>
               </AppButton>
               <AppButton variant="primary" size="md" @click="$emit('approve', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -190,9 +195,9 @@
             <template v-else-if="booking.status === 'approved'">
               <AppButton variant="danger" size="md" @click="$emit('cancel', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                <span>ยกเลิก</span>
+                <span>{{ isQueueBooking(booking) ? 'ยกเลิกคิว' : 'ยกเลิก' }}</span>
               </AppButton>
-              <AppButton variant="success" size="md" @click="$emit('markVisited', booking)">
+              <AppButton v-if="!isQueueBooking(booking)" variant="success" size="md" @click="$emit('markVisited', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>ยืนยันการเช่า</span>
               </AppButton>
@@ -210,7 +215,7 @@
             <template v-if="['approved', 'pending_approval', 'pending', 'waiting_queue', 'pending_slot'].includes(booking.status)">
               <AppButton variant="danger-outline" size="md" @click="$emit('cancel', booking)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                <span>ยกเลิก</span>
+                <span>{{ isQueueBooking(booking) ? 'สละสิทธิ์' : 'ยกเลิก' }}</span>
               </AppButton>
             </template>
             <template v-else-if="booking.status === 'interested'">
@@ -281,6 +286,14 @@ defineEmits<{
   (e: 'recordProxy', booking: any): void
 }>()
 
+const isQueueBooking = (b: any): boolean => {
+  if (!b) return false
+  if (['rejected', 'cancelled', 'not_interested', 'no_show', 'lease_applied', 'completed', 'terminated'].includes(b.status)) {
+    return false
+  }
+  return b.status === 'waiting_queue' || (!b.holding_stall && Number(b.queue_position || b.queue_number) > 0)
+}
+
 const isStepPassed = (status: string, step: number) => {
   if (step === 1) {
     return ['waiting_queue', 'approved', 'interested', 'lease_applied', 'completed'].includes(status)
@@ -313,6 +326,7 @@ const getStatusBannerClass = (status: string) => {
     case 'no_show':
     case 'rejected':
     case 'not_interested':
+    case 'terminated':
     case 'cancelled': return 'banner-rejected'
     default: return ''
   }
@@ -333,6 +347,7 @@ const getStatusLabel = (status: string) => {
     case 'rejected':
     case 'cancelled': return 'ยกเลิก'
     case 'not_interested': return 'ไม่สนใจเช่า (สละสิทธิ์)'
+    case 'terminated': return 'สิ้นสุดสัญญาเช่า'
     default: return status
   }
 }

@@ -108,14 +108,22 @@ func (h *Handler) SwitchRole(c *gin.Context) {
 		userID = 4
 		username = "tenant2"
 		role = "tenant"
+	} else if role == "tenant3" {
+		userID = 5
+		username = "tenant3"
+		role = "tenant"
 	}
 
 	token, _ := helpers.GenerateToken(userID, username, role)
+	refreshToken, _ := helpers.GenerateRefreshToken(userID, username, role)
+	if refreshToken == "" {
+		refreshToken = token
+	}
 
 	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{
 		"role":          role,
 		"access_token":  token,
-		"refresh_token": token,
+		"refresh_token": refreshToken,
 		"token_type":    "bearer",
 		"message":       "role switched successfully",
 	}, http.StatusOK))

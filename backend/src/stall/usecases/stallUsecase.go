@@ -50,20 +50,29 @@ func toStallResponse(s *models.Stall) responses.StallResponse {
 }
 
 func maskPDPAName(name string) string {
-	parts := strings.Fields(name)
+	clean := strings.TrimSpace(name)
+	for _, prefix := range []string{"นางสาว", "น.ส.", "นาย", "นาง", "คุณ"} {
+		if strings.HasPrefix(clean, prefix) {
+			clean = strings.TrimSpace(strings.TrimPrefix(clean, prefix))
+			break
+		}
+	}
+	parts := strings.Fields(clean)
 	if len(parts) == 0 {
 		return "คุณ ***"
 	}
-	maskedParts := make([]string, len(parts))
-	for i, part := range parts {
-		runes := []rune(part)
-		if len(runes) <= 2 {
-			maskedParts[i] = string(runes[0]) + "***"
-		} else {
-			maskedParts[i] = string(runes[:2]) + "***"
+	firstName := parts[0]
+	if len(parts) > 1 {
+		lastRunes := []rune(parts[1])
+		if len(lastRunes) > 0 {
+			return fmt.Sprintf("คุณ%s %s.***", firstName, string(lastRunes[0]))
 		}
 	}
-	return "คุณ " + strings.Join(maskedParts, " ")
+	firstRunes := []rune(firstName)
+	if len(firstRunes) > 3 {
+		return fmt.Sprintf("คุณ%s***", string(firstRunes[:3]))
+	}
+	return fmt.Sprintf("คุณ%s***", firstName)
 }
 
 func maskPDPAphone(phone string) string {
@@ -105,42 +114,47 @@ func (u *useCase) GetStallByID(id int) (*responses.StallResponse, error) {
 }
 
 func (u *useCase) GetWaitingQueue(ident string) (*responses.WaitingQueueResponse, error) {
+	stallStatus := "available"
+	stallIdent := ident
+
 	stall, err := u.repo.ByIdent(ident)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, responses.NewAppErr(http.StatusNotFound, "ไม่พบข้อมูลแผงค้า")
-		}
-		logs.Error(err)
-		return nil, responses.NewInternalServerError()
+	if err == nil && stall != nil {
+		stallStatus = stall.StallStatus
+		stallIdent = stall.Ident
 	}
 
 	queueCount, err := u.repo.CountQueue(ident)
 	if err != nil {
-		logs.Error(err)
-		return nil, responses.NewInternalServerError()
+		queueCount = 0
 	}
 
 	var maskedName = "-"
 	var maskedPhone = "-"
+	var activeHolderStatus = ""
 	var expiresAtStr *string
 
 	activeBooking, err := u.repo.GetActiveBooking(ident)
 	if err == nil && activeBooking != nil {
 		maskedName = maskPDPAName(activeBooking.ApplicantName)
 		maskedPhone = maskPDPAphone(activeBooking.ApplicantPhone)
+		activeHolderStatus = activeBooking.BookingStatus
 		if activeBooking.ExpiresAt != nil {
 			tStr := activeBooking.ExpiresAt.Format("2006-01-02T15:04:05Z07:00")
 			expiresAtStr = &tStr
 		}
+		if stallStatus == "available" {
+			stallStatus = "reserved"
+		}
 	}
 
 	res := responses.WaitingQueueResponse{
-		StallIdent:          stall.Ident,
+		StallIdent:          stallIdent,
 		QueueCount:          int(queueCount),
 		CurrentPosition:     int(queueCount) + 1,
 		MaskedCurrentBooker: maskedName,
 		MaskedBookerPhone:   maskedPhone,
-		Status:              stall.StallStatus,
+		ActiveHolderStatus:  activeHolderStatus,
+		Status:              stallStatus,
 		ExpiresAt:           expiresAtStr,
 	}
 	return &res, nil

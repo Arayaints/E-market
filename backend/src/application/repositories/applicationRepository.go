@@ -1,10 +1,13 @@
 package repositories
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"emarket-api/models"
 	"emarket-api/requests"
+	"emarket-api/responses"
 	"emarket-api/src/application/domains"
 	"gorm.io/gorm"
 )
@@ -54,18 +57,189 @@ func (r *repository) Create(app *models.Application) error {
 		if err := tx.Create(app).Error; err != nil {
 			return err
 		}
-		// Mark any matching active booking for this stall as lease_applied
-		_ = tx.Model(&models.Booking{}).
-			Where("stall_ident = ? AND status = 'A' AND booking_status IN ('interested', 'approved', 'pending_decision')", app.StallIdent).
-			Update("booking_status", "lease_applied").Error
-		_ = tx.Model(&models.Stall{}).
-			Where("ident = ?", app.StallIdent).
-			Update("stall_status", "occupied").Error
+		// 1. Mark the primary holder booking for this stall as lease_applied and append timeline
+		var activeBookings []models.Booking
+		tx.Model(&models.Booking{}).
+			Where("stall_ident = ? AND status = 'A' AND queue_number = 0 AND booking_status IN ('interested', 'approved', 'pending_decision', 'pending_approval')", app.StallIdent).
+			Find(&activeBookings)
+
+		for _, bk := range activeBookings {
+			var tl []responses.TimelineItem
+			if bk.Timeline != "" {
+				_ = json.Unmarshal([]byte(bk.Timeline), &tl)
+			}
+			actor := app.ApplicantName
+			if actor == "" {
+				actor = bk.ApplicantName
+			}
+			if actor == "" {
+				actor = "ผู้เช่า"
+			}
+			tl = append(tl, responses.TimelineItem{
+				Action:    "ยื่นคำร้องขอเช่าแผงค้า",
+				ActorRole: "tenant",
+				ActorName: actor,
+				Timestamp: now.Format("2006-01-02T15:04:05Z07:00"),
+				Note:      fmt.Sprintf("ส่งคำร้องขอเช่าแผงค้าเข้าสู่ระบบเรียบร้อยแล้ว รหัสคำร้อง: %s", app.ApplicationNo),
+			})
+			tlBytes, _ := json.Marshal(tl)
+			_ = tx.Model(&models.Booking{}).Where("id = ?", bk.ID).Updates(map[string]interface{}{
+				"booking_status": "lease_applied",
+				"timeline":       string(tlBytes),
+				"updated_at":     now,
+			}).Error
+		}
+
+		// 2. Automatically close all backup waiting queue bookings for this stall and notify each queued tenant
+		var backupQueues []models.Booking
+		tx.Model(&models.Booking{}).
+			Where("stall_ident = ? AND status = 'A' AND (queue_number > 0 OR booking_status = 'waiting_queue') AND booking_status NOT IN ('rejected', 'cancelled', 'not_interested', 'no_show', 'lease_applied', 'completed', 'terminated')", app.StallIdent).
+			Find(&backupQueues)
+
+		for _, q := range backupQueues {
+			var qTl []responses.TimelineItem
+			if q.Timeline != "" {
+				_ = json.Unmarshal([]byte(q.Timeline), &qTl)
+			}
+			qTl = append(qTl, responses.TimelineItem{
+				Action:    "ปิดคิวสำรองอัตโนมัติ (ผู้จองหลักยื่นคำร้องเช่าแล้ว)",
+				ActorRole: "system",
+				ActorName: "ระบบจัดการคิวอัตโนมัติ",
+				Timestamp: now.Format("2006-01-02T15:04:05Z07:00"),
+				Note:      "ผู้จองคิวหลักได้ยื่นคำร้องขอเช่าแผงนี้สำเร็จแล้ว ระบบจึงปิดคิวสำรองของคุณโดยอัตโนมัติ",
+			})
+			qTlBytes, _ := json.Marshal(qTl)
+			closeNote := "ผู้จองคิวหลักได้ยื่นคำร้องเช่าแผงนี้สำเร็จแล้ว (ปิดคิวสำรองอัตโนมัติ)"
+			_ = tx.Model(&models.Booking{}).Where("id = ?", q.ID).Updates(map[string]interface{}{
+				"booking_status": "cancelled",
+				"queue_number":   0,
+				"note":           closeNote,
+				"timeline":       string(qTlBytes),
+				"updated_at":     now,
+			}).Error
+
+			qID := q.ID
+			closeNotif := models.Notification{
+				RecipientRole:   "tenant",
+				RecipientUserID: q.CreatedBy,
+				RecipientName:   q.ApplicantName,
+				Type:            "cancelled",
+				StatusCode:      "cancelled",
+				StatusLabel:     "ปิดคิวสำรอง",
+				Title:           fmt.Sprintf("ปิดคิวสำรองแผง %s (%s)", q.StallIdent, q.BookingNo),
+				Message:         fmt.Sprintf("ผู้จองคิวหลักได้ยื่นคำร้องเช่าแผง %s สำเร็จแล้ว ระบบได้ปิดคิวสำรองของคุณ ท่านสามารถเลือกจองแผงอื่นได้", q.StallIdent),
+				BookingID:       &qID,
+				BookingNumber:   q.BookingNo,
+				StallNumber:     q.StallIdent,
+				MarketName:      q.MarketName,
+				ProjectName:     q.ProjectName,
+				TargetURL:       "/bookings/" + fmt.Sprint(q.ID) + "?role=tenant",
+			}
+			_ = tx.Create(&closeNotif).Error
+		}
+
+		// Upsert stall to occupied
+		var stallCount int64
+		tx.Model(&models.Stall{}).Where("ident = ?", app.StallIdent).Count(&stallCount)
+		if stallCount == 0 {
+			newStall := models.Stall{
+				Ident:       app.StallIdent,
+				Name:        "แผงค้า " + app.StallIdent,
+				StallStatus: "occupied",
+				Floor:       "1",
+				Status:      "A",
+			}
+			_ = tx.Create(&newStall).Error
+		} else {
+			_ = tx.Model(&models.Stall{}).
+				Where("ident = ?", app.StallIdent).
+				Update("stall_status", "occupied").Error
+		}
 		return nil
 	})
 }
 
 func (r *repository) Update(app *models.Application) error {
-	app.UpdatedAt = time.Now()
-	return r.conn.Save(app).Error
+	now := time.Now()
+	app.UpdatedAt = now
+	return r.conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(app).Error; err != nil {
+			return err
+		}
+		if app.StallIdent != "" && app.ApplicationState == "rejected" {
+			var linkedBookings []models.Booking
+			tx.Model(&models.Booking{}).
+				Where("stall_ident = ? AND status = 'A' AND booking_status IN ('lease_applied', 'interested')", app.StallIdent).
+				Find(&linkedBookings)
+			for _, bk := range linkedBookings {
+				var tl []responses.TimelineItem
+				if bk.Timeline != "" {
+					_ = json.Unmarshal([]byte(bk.Timeline), &tl)
+				}
+				reasonNote := app.ReviewNote
+				if reasonNote == "" {
+					reasonNote = "คำร้องขอเช่าแผงค้าไม่ผ่านการอนุมัติ"
+				}
+				tl = append(tl, responses.TimelineItem{
+					Action:    "คำร้องขอเช่าไม่ผ่านการอนุมัติ (ปล่อยแผงค้าคืนสู่ระบบ)",
+					ActorRole: "officer",
+					ActorName: "เจ้าหน้าที่พิจารณาคำร้อง",
+					Timestamp: now.Format("2006-01-02T15:04:05Z07:00"),
+					Note:      reasonNote,
+				})
+				tlBytes, _ := json.Marshal(tl)
+				_ = tx.Model(&models.Booking{}).Where("id = ?", bk.ID).Updates(map[string]interface{}{
+					"booking_status":   "rejected",
+					"queue_number":     0,
+					"rejection_reason": reasonNote,
+					"note":             reasonNote,
+					"timeline":         string(tlBytes),
+					"updated_at":       now,
+				}).Error
+			}
+		} else if app.StallIdent != "" && app.ApplicationState == "approved" {
+			var linkedBookings []models.Booking
+			tx.Model(&models.Booking{}).
+				Where("stall_ident = ? AND status = 'A' AND booking_status = 'lease_applied'", app.StallIdent).
+				Find(&linkedBookings)
+			for _, bk := range linkedBookings {
+				var tl []responses.TimelineItem
+				if bk.Timeline != "" {
+					_ = json.Unmarshal([]byte(bk.Timeline), &tl)
+				}
+				tl = append(tl, responses.TimelineItem{
+					Action:    "อนุมัติคำร้องขอเช่าแผงค้าสำเร็จ",
+					ActorRole: "officer",
+					ActorName: "ผู้อำนวยการสำนักตลาด",
+					Timestamp: now.Format("2006-01-02T15:04:05Z07:00"),
+					Note:      "คำร้องขอเช่าผ่านการอนุมัติเรียบร้อยแล้ว พร้อมจัดทำสัญญาเช่า",
+				})
+				tlBytes, _ := json.Marshal(tl)
+				_ = tx.Model(&models.Booking{}).Where("id = ?", bk.ID).Updates(map[string]interface{}{
+					"booking_status": "completed",
+					"timeline":       string(tlBytes),
+					"updated_at":     now,
+				}).Error
+			}
+		}
+		return nil
+	})
+}
+
+func (r *repository) UpdateStallStatus(stallIdent string, status string) error {
+	var stallCount int64
+	r.conn.Model(&models.Stall{}).Where("ident = ?", stallIdent).Count(&stallCount)
+	if stallCount == 0 {
+		newStall := models.Stall{
+			Ident:       stallIdent,
+			Name:        "แผงค้า " + stallIdent,
+			StallStatus: status,
+			Floor:       "1",
+			Status:      "A",
+		}
+		return r.conn.Create(&newStall).Error
+	}
+	return r.conn.Model(&models.Stall{}).
+		Where("ident = ?", stallIdent).
+		Update("stall_status", status).Error
 }

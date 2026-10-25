@@ -7,61 +7,58 @@
       <!-- ============================================================== -->
       <!-- 1. TOP HERO PROMOTIONAL BANNER (Modern High-Impact Banner)     -->
       <!-- ============================================================== -->
-      <div class="hero-banner-wrapper">
+      <div
+        class="hero-banner-wrapper"
+        @mouseenter="pauseHeroCarousel"
+        @mouseleave="resumeHeroCarousel"
+        @focusin="pauseHeroCarousel"
+        @focusout="resumeHeroCarousel"
+      >
         <div class="hero-banner-card card">
           <!-- Left Side: Market Photo with Diagonal Red Discount Ribbon -->
           <div class="hero-left-media">
             <img
-              src="/images/market_promo_hero.jpg"
-              alt="Bangkok Market Promotion"
+              :key="heroSlides[currentHeroSlide - 1].image"
+              :src="heroSlides[currentHeroSlide - 1].image"
+              :alt="heroSlides[currentHeroSlide - 1].alt"
               class="hero-media-img"
             />
             <div class="hero-media-overlay"></div>
-            <!-- Diagonal Cut 50% OFF Badge -->
-            <div class="hero-discount-ribbon">
-              <div class="ribbon-text-top">รับส่วนลดทันที</div>
-              <div class="ribbon-text-main">50% <span class="ribbon-off">OFF</span></div>
+            <!-- Optional creative badge configured per advertisement -->
+            <div v-if="heroSlide.ribbon" class="hero-discount-ribbon" :class="`hero-ribbon-${heroSlide.ribbon.tone}`">
+              <div class="ribbon-text-top">{{ heroSlide.ribbon.top }}</div>
+              <div class="ribbon-text-main">{{ heroSlide.ribbon.main }} <span class="ribbon-off">{{ heroSlide.ribbon.suffix }}</span></div>
             </div>
           </div>
 
           <!-- Right Side: Clean Callout Content -->
           <div class="hero-right-content">
-            <div class="campaign-tag-pill">
+            <div class="campaign-tag-pill" :class="`campaign-tag-${heroSlide.tone}`">
               <span class="campaign-dot"></span>
-              <span>โครงการสิทธิประโยชน์ผู้ค้า กทม. 2568 - 2569</span>
+              <span>{{ heroSlide.tag }}</span>
             </div>
-            <div class="hero-subheading">หากคุณกำลังมองหา</div>
+            <div class="hero-subheading">{{ heroSlide.subheading }}</div>
             <h1 class="hero-main-heading">
-              ทำเลพื้นที่เช่า <span class="heading-gradient">12 ตลาด กทม.</span>
+              {{ heroSlide.title }} <span class="heading-gradient">{{ heroSlide.highlight }}</span>
             </h1>
-            <p class="hero-description">
-              เปิดรับพ่อค้าแม่ค้า ประชาชนทั่วไป และผู้ประกอบการรายย่อย สำหรับประกอบการค้าปลีก สินค้าแฟชั่น อาหารสด อาหารสำเร็จรูป และสินค้าชุมชน ทำเลทองใจกลางเมือง
-            </p>
+            <p class="hero-description">{{ heroSlide.description }}</p>
 
             <!-- Value Proposition Bullets -->
             <div class="hero-features-list">
-              <div class="hero-feature-item">
+              <div v-for="feature in heroSlide.features" :key="feature" class="hero-feature-item">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>ค่าเช่าเริ่มต้น 500 บ./วัน</span>
-              </div>
-              <div class="hero-feature-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>ติดรถไฟฟ้า & ขนส่งมวลชน</span>
-              </div>
-              <div class="hero-feature-item">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>จองออนไลน์ รู้ผลอนุมัติทันที</span>
+                <span>{{ feature }}</span>
               </div>
             </div>
 
             <!-- CTA Buttons Row -->
             <div class="hero-cta-row">
               <button class="btn btn-primary btn-hero-cta" @click="scrollToMarkets">
-                <span>สำรวจแผงเช่าว่าง 12 ตลาด</span>
+                <span>{{ heroSlide.cta }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
               <div class="hero-note">
-                * เงื่อนไขเป็นไปตามที่สำนักงานตลาดกรุงเทพมหานครกำหนด
+                {{ heroSlide.note }}
               </div>
             </div>
 
@@ -72,142 +69,78 @@
 
         <!-- Carousel Slide Indicators (Blue pill + 3 Gray dots) -->
         <div class="hero-carousel-dots">
-          <span
+          <button
             v-for="i in 4"
             :key="i"
+            type="button"
             class="carousel-dot"
             :class="{ active: currentHeroSlide === i }"
             @click="currentHeroSlide = i"
-          ></span>
+            :aria-label="`แสดงภาพสไลด์ที่ ${i}`"
+          ></button>
         </div>
       </div>
 
       <!-- ============================================================== -->
       <!-- 2. SECTION: อีเวนต์ตลาด (Market Events)                         -->
       <!-- ============================================================== -->
-      <div class="events-card-wrapper card">
-        <div class="events-grid-layout">
-          <!-- Left Column: Title, Subtitle, and "ดูทั้งหมด >" Button -->
-          <div class="events-left-col">
-            <div class="events-title-box">
-              <div class="events-badge-pill">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <span>อีเวนต์พิเศษประจำสัปดาห์</span>
-              </div>
-              <h2 class="events-main-title">อีเวนต์ตลาด</h2>
-              <div class="title-blue-bar"></div>
+      <section class="events-card-wrapper">
+        <header class="events-promo-header">
+          <div class="events-promo-copy">
+            <div class="events-badge-pill">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>อีเวนต์ที่เปิดรับเร็ว ๆ นี้</span>
             </div>
-            <p class="events-desc-text">
-              เปิดรับสมัครผู้ค้าสำหรับงานเทศกาล ป๊อปอัพมาร์เก็ต และพื้นที่อีเวนต์พิเศษใจกลางเมือง โอกาสสร้างยอดขายในทำเลทอง
-            </p>
-            <div>
-              <button class="btn btn-primary btn-sm btn-events-all" @click="scrollToMarkets">
-                <span>ดูตลาดทั้งหมด &gt;</span>
-              </button>
-            </div>
+            <h2 class="events-main-title">อีเวนต์ตลาด</h2>
+            <p class="events-desc-text">ค้นหากิจกรรมที่เหมาะกับสินค้า ตรวจสอบวัน เวลา และจำนวนแผงว่างก่อนจองพื้นที่</p>
+            <button type="button" class="events-view-all" @click="eventPeriod = 'month'">
+              <span>ดูกิจกรรมทั้งหมด</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <img src="/images/megaphone_3d_transparent.png?v=bma-theme" alt="ประชาสัมพันธ์อีเวนต์ตลาด" class="events-promo-image" />
+        </header>
+
+        <div class="events-list-panel">
+          <div class="events-period-tabs" role="tablist" aria-label="เลือกช่วงเวลาอีเวนต์">
+            <button type="button" role="tab" :aria-selected="eventPeriod === 'today'" :class="{ active: eventPeriod === 'today' }" @click="eventPeriod = 'today'">วันนี้</button>
+            <button type="button" role="tab" :aria-selected="eventPeriod === 'week'" :class="{ active: eventPeriod === 'week' }" @click="eventPeriod = 'week'">สัปดาห์นี้</button>
+            <button type="button" role="tab" :aria-selected="eventPeriod === 'month'" :class="{ active: eventPeriod === 'month' }" @click="eventPeriod = 'month'">เดือนนี้</button>
           </div>
 
-          <!-- Middle Column: 3D Megaphone Loudspeaker Illustration -->
-          <div class="events-center-col">
-            <img
-              src="/images/megaphone_3d.jpg"
-              alt="3D Announcement Megaphone"
-              class="megaphone-img floating-animation"
-            />
-          </div>
-
-          <!-- Right Column: 3 Event Cards Stack with Pagination -->
-          <div class="events-right-col">
-            <!-- Event Card 1: ช้อป ชิม ชิลล์ สัญจร 2026 -->
-            <div class="event-row-card">
-              <div class="event-thumb-box">
-                <img src="/images/chatuchak_entrance.jpg" alt="Weekend Craft Market" class="event-thumb-img" />
-              </div>
-              <div class="event-details-box">
-                <h4 class="event-name">ช้อป ชิม ชิลล์ สัญจร 2026</h4>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>25 - 26 ต.ค. 2568</span>
+          <div class="events-list">
+            <article v-for="event in filteredMarketEvents" :key="event.name" class="event-list-row">
+              <img :src="event.image" :alt="event.name" class="event-list-image" />
+              <div class="event-list-content">
+                <h3>{{ event.name }}</h3>
+                <div class="event-list-meta">
+                  <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>{{ event.date }}</span>
+                  <span class="event-time-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 16 14"></polyline></svg>{{ event.time }}</span>
                 </div>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>ตลาดนัดจตุจักร โครงการ 23</span>
+                <div class="event-location-line">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>{{ event.location }}</span>
                 </div>
               </div>
-              <div class="event-action-box">
-                <div class="event-stall-stat stat-zero">
-                  <span class="stat-number">0</span>
-                  <span class="stat-unit">แผง</span>
+              <div class="event-list-action">
+                <div class="event-capacity" :class="{ 'is-full': event.available === 0, 'is-low': event.available > 0 && event.available <= 3 }">
+                  <strong>{{ event.available }}</strong>
+                  <span>{{ event.available === 0 ? 'เต็ม' : event.available <= 3 ? 'ใกล้เต็ม' : 'ว่าง' }}</span>
                 </div>
-                <NuxtLink :to="isOfficer ? '/stalls/manage?market=1' : '/stalls/book?market=1'" class="btn btn-primary btn-sm btn-event-act">
-                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
+                <NuxtLink
+                  v-if="isOfficer || event.available > 0"
+                  :to="isOfficer ? `/stalls/manage?market=${event.marketId}` : `/stalls/book?market=${event.marketId}`"
+                  class="event-primary-link"
+                >
+                  <span>{{ isOfficer ? 'จัดการพื้นที่' : 'จองลานกิจกรรม' }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </NuxtLink>
+                <span v-else class="event-disabled-link">ปิดรับจอง</span>
               </div>
-            </div>
-
-            <!-- Event Card 2: เทศกาลอาหาร & ดนตรี -->
-            <div class="event-row-card">
-              <div class="event-thumb-box">
-                <img src="/images/market_hall_front.jpg" alt="Food Festival" class="event-thumb-img" />
-              </div>
-              <div class="event-details-box">
-                <h4 class="event-name">เทศกาลอาหาร &amp; ดนตรี</h4>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>1 - 3 พ.ย. 2568</span>
-                </div>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>ตลาดธนบุรี (สนามหลวง 2)</span>
-                </div>
-              </div>
-              <div class="event-action-box">
-                <div class="event-stall-stat stat-green">
-                  <span class="stat-number">18</span>
-                  <span class="stat-unit">แผง</span>
-                </div>
-                <NuxtLink :to="isOfficer ? '/stalls/manage?market=11' : '/stalls/book?market=11'" class="btn btn-primary btn-sm btn-event-act">
-                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
-                </NuxtLink>
-              </div>
-            </div>
-
-            <!-- Event Card 3: NEIGHBORHOOD MARKET -->
-            <div class="event-row-card">
-              <div class="event-thumb-box">
-                <img src="/images/market_promo_hero.jpg" alt="Neighborhood Market" class="event-thumb-img" />
-              </div>
-              <div class="event-details-box">
-                <h4 class="event-name">NEIGHBORHOOD MARKET</h4>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                  <span>8 - 10 พ.ย. 2568</span>
-                </div>
-                <div class="event-meta-line">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>ตลาดเทวราช ดุสิต</span>
-                </div>
-              </div>
-              <div class="event-action-box">
-                <div class="event-stall-stat stat-orange">
-                  <span class="stat-number">3</span>
-                  <span class="stat-unit">แผง</span>
-                </div>
-                <NuxtLink :to="isOfficer ? '/stalls/manage?market=5' : '/stalls/book?market=5'" class="btn btn-primary btn-sm btn-event-act">
-                  {{ isOfficer ? 'จัดการแผง >' : 'จองพื้นที่ >' }}
-                </NuxtLink>
-              </div>
-            </div>
-
-            <!-- Pagination Below Event Cards -->
-            <div class="events-page-nav">
-              <button class="page-btn" :disabled="currentEventsPage === 1" @click="currentEventsPage = Math.max(1, currentEventsPage - 1)">&lt;</button>
-              <button v-for="p in 5" :key="p" class="page-btn" :class="{ active: currentEventsPage === p }" @click="currentEventsPage = p">{{ p }}</button>
-              <button class="page-btn" :disabled="currentEventsPage === 5" @click="currentEventsPage = Math.min(5, currentEventsPage + 1)">&gt;</button>
-            </div>
+            </article>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- ============================================================== -->
       <!-- 3. SECTION: 12 ตลาด (The 12 Markets Directory)                 -->
@@ -359,10 +292,24 @@
 
         <!-- VIEW MODE 2: 12 MARKET CARDS GRID (When Grid is Selected) -->
         <template v-else-if="viewMode === 'grid'">
-          <div v-if="loadingMarkets" style="text-align: center; padding: 60px;">
-            <div style="font-size: 1rem; color: #64748b; display: inline-flex; align-items: center; gap: 8px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span>กำลังโหลดข้อมูลตลาด กทม. ...</span>
+          <div v-if="showMarketSkeleton" class="market-cards-3col-grid market-skeleton-grid" role="status" aria-live="polite" aria-label="กำลังโหลดรายการตลาด">
+            <div v-for="index in 3" :key="index" class="market-box-card market-skeleton-card" aria-hidden="true">
+              <div class="market-skeleton-shape market-skeleton-image"></div>
+              <div class="market-box-body market-skeleton-body">
+                <span class="market-skeleton-shape market-skeleton-title"></span>
+                <span class="market-skeleton-shape market-skeleton-address"></span>
+                <span class="market-skeleton-shape market-skeleton-address is-short"></span>
+                <div class="market-skeleton-availability">
+                  <span class="market-skeleton-shape market-skeleton-label"></span>
+                  <span class="market-skeleton-shape market-skeleton-count"></span>
+                  <span class="market-skeleton-shape market-skeleton-progress"></span>
+                </div>
+                <div class="market-skeleton-price-row">
+                  <span class="market-skeleton-shape market-skeleton-price-label"></span>
+                  <span class="market-skeleton-shape market-skeleton-price"></span>
+                </div>
+                <span class="market-skeleton-shape market-skeleton-button"></span>
+              </div>
             </div>
           </div>
 
@@ -492,10 +439,12 @@
 
 <script setup lang="ts">
 import AppFooter from '~/components/AppFooter.vue'
+import { onBeforeRouteLeave } from 'vue-router'
 
 const { get } = useApi()
 const { role } = useAuth()
 const { applyMarketOverride } = useMarketOverrides()
+const route = useRoute()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 
 const marketActionLink = (market: any) => {
@@ -511,12 +460,77 @@ const appliedCategory = ref<string>('all')
 const viewMode = ref<'grid' | 'map'>('grid')
 const showGisMap = computed(() => viewMode.value === 'map')
 const currentHeroSlide = ref(1)
-const currentEventsPage = ref(2)
+const heroCarouselPaused = ref(false)
+const heroSlides = [
+  {
+    image: '/images/market_promo_hero.jpg', alt: 'บรรยากาศตลาดนัดจตุจักร', tone: 'green',
+    tag: 'โครงการสิทธิประโยชน์ผู้ค้า กทม. 2568 - 2569', subheading: 'หากคุณกำลังมองหา',
+    title: 'ทำเลพื้นที่เช่า', highlight: '12 ตลาด กทม.',
+    description: 'เปิดรับพ่อค้าแม่ค้า ประชาชนทั่วไป และผู้ประกอบการรายย่อย สำหรับประกอบการค้าปลีก สินค้าแฟชั่น อาหารสด อาหารสำเร็จรูป และสินค้าชุมชน ทำเลทองใจกลางเมือง',
+    features: ['ค่าเช่าเริ่มต้น 500 บ./วัน', 'ติดรถไฟฟ้า & ขนส่งมวลชน', 'จองออนไลน์ รู้ผลอนุมัติทันที'],
+    cta: 'สำรวจแผงเช่าว่าง 12 ตลาด', note: '* เงื่อนไขเป็นไปตามที่สำนักงานตลาดกรุงเทพมหานครกำหนด',
+    ribbon: { tone: 'red', top: 'รับส่วนลดทันที', main: '50%', suffix: 'OFF' }
+  },
+  {
+    image: '/images/market_hall_front.jpg', alt: 'บรรยากาศตลาดในอาคาร', tone: 'blue',
+    tag: 'ตลาดแนะนำประจำเดือน', subheading: 'เปิดโอกาสให้ธุรกิจของคุณ',
+    title: 'เริ่มต้นขายง่าย', highlight: 'ทำเลพร้อมเช่า',
+    description: 'เลือกพื้นที่ค้าขายที่เหมาะกับธุรกิจ พร้อมข้อมูลแผง ราคา และสิ่งอำนวยความสะดวกครบในที่เดียว',
+    features: ['ดูข้อมูลแผงแบบ 3 มิติ', 'เปรียบเทียบตลาดได้ทันที', 'จองวันนัดหมายออนไลน์'],
+    cta: 'ดูตลาดแนะนำ', note: 'ข้อมูลพื้นที่อัปเดตตามรอบการจัดสรร', ribbon: { tone: 'blue', top: 'ตลาดแนะนำ', main: 'NEW', suffix: '' }
+  },
+  {
+    image: '/images/chatuchak_entrance.jpg', alt: 'ทางเข้าตลาดนัดจตุจักร', tone: 'orange',
+    tag: 'โอกาสพิเศษสำหรับผู้ค้าใหม่', subheading: 'ทำเลดี ลูกค้าเห็นง่าย',
+    title: 'จองพื้นที่ขาย', highlight: 'ให้ธุรกิจเติบโต',
+    description: 'พบพื้นที่ว่างในตลาดสังกัดกรุงเทพมหานคร พร้อมเงื่อนไขการเช่าที่ชัดเจนและขั้นตอนสมัครที่เข้าใจง่าย',
+    features: ['มีพื้นที่หลายรูปแบบ', 'ค่าเช่าตามประเภทแผง', 'เจ้าหน้าที่ให้คำแนะนำ'],
+    cta: 'ค้นหาพื้นที่ที่เหมาะกับคุณ', note: 'สิทธิ์และเงื่อนไขเป็นไปตามประกาศของตลาด', ribbon: null
+  },
+  {
+    image: '/images/market_stall_sample.jpg', alt: 'ตัวอย่างแผงค้าในตลาด', tone: 'purple',
+    tag: 'ประชาสัมพันธ์จากสำนักงานตลาด', subheading: 'พร้อมให้คุณเริ่มต้น',
+    title: 'พื้นที่ค้าขาย', highlight: 'ที่ใช่สำหรับคุณ',
+    description: 'ติดตามข่าวสาร กิจกรรม และพื้นที่เปิดใหม่จากตลาดในสังกัด กทม. ได้จากหน้าเดียว',
+    features: ['ข่าวสารและกิจกรรมตลาด', 'ประกาศพื้นที่เปิดใหม่', 'ติดต่อเจ้าหน้าที่ได้สะดวก'],
+    cta: 'ดูประกาศและกิจกรรม', note: 'ติดตามข้อมูลใหม่ได้ทุกสัปดาห์', ribbon: null
+  }
+]
+const heroSlide = computed(() => heroSlides[currentHeroSlide.value - 1] || heroSlides[0])
+let heroCarouselTimer: ReturnType<typeof setInterval> | null = null
+const marketEvents = [
+  { name: 'ช้อป ชิม ชิลล์ สัญจร 2026', date: '25–26 ต.ค. 2568', time: '10:00–22:00 น.', location: 'ตลาดนัดจตุจักร โครงการ 23', available: 0, marketId: 1, periods: ['today', 'week', 'month'], image: '/images/chatuchak_entrance.jpg' },
+  { name: 'เทศกาลอาหารและดนตรี', date: '1–3 พ.ย. 2568', time: '11:00–21:00 น.', location: 'ตลาดธนบุรี (สนามหลวง 2)', available: 18, marketId: 11, periods: ['week', 'month'], image: '/images/market_hall_front.jpg' },
+  { name: 'Neighborhood Market', date: '8–10 พ.ย. 2568', time: '10:00–22:00 น.', location: 'ตลาดเทวราช เขตดุสิต', available: 3, marketId: 5, periods: ['month'], image: '/images/market_promo_hero.jpg' }
+]
+const eventPeriod = ref<'today' | 'week' | 'month'>('week')
+const filteredMarketEvents = computed(() => marketEvents.filter(event => event.periods.includes(eventPeriod.value)))
 
 // Data State
 const loadingMarkets = ref(true)
 const marketsList = ref<any[]>([])
 const filteredMarkets = ref<any[]>([])
+// ใช้ตรวจ visual skeleton ใน local เท่านั้น: /markets?skeleton=1
+const showMarketSkeleton = computed(() => loadingMarkets.value || (import.meta.dev && route.query.skeleton === '1'))
+
+const MARKET_LIST_SCROLL_KEY = 'e-market:market-list-scroll-y'
+const shouldRestoreMarketListScroll = ref(false)
+
+const saveMarketListScroll = () => {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(MARKET_LIST_SCROLL_KEY, String(window.scrollY))
+}
+
+const restoreMarketListScroll = async () => {
+  if (!shouldRestoreMarketListScroll.value || typeof window === 'undefined') return
+  const savedScrollY = Number(sessionStorage.getItem(MARKET_LIST_SCROLL_KEY))
+  shouldRestoreMarketListScroll.value = false
+  sessionStorage.removeItem(MARKET_LIST_SCROLL_KEY)
+  if (!Number.isFinite(savedScrollY) || savedScrollY <= 0) return
+
+  await nextTick()
+  requestAnimationFrame(() => window.scrollTo({ top: savedScrollY, behavior: 'auto' }))
+}
 
 const loadData = async () => {
   loadingMarkets.value = true
@@ -529,6 +543,7 @@ const loadData = async () => {
     console.error('Failed to load markets:', err)
   } finally {
     loadingMarkets.value = false
+    await restoreMarketListScroll()
   }
 }
 
@@ -591,6 +606,29 @@ const scrollToMarkets = () => {
   if (el) {
     el.scrollIntoView({ behavior: 'smooth' })
   }
+}
+
+const nextHeroSlide = () => {
+  currentHeroSlide.value = currentHeroSlide.value === heroSlides.length
+    ? 1
+    : currentHeroSlide.value + 1
+}
+
+const pauseHeroCarousel = () => {
+  heroCarouselPaused.value = true
+}
+
+const resumeHeroCarousel = () => {
+  heroCarouselPaused.value = false
+}
+
+const startHeroCarousel = () => {
+  if (heroCarouselTimer || heroSlides.length < 2) return
+  heroCarouselTimer = setInterval(() => {
+    if (!heroCarouselPaused.value && document.visibilityState === 'visible') {
+      nextHeroSlide()
+    }
+  }, 5000)
 }
 
 const onSelectMarketOnMap = (market: any) => {
@@ -657,14 +695,27 @@ const getStartingPrice = (m: any) => {
 
 const getPriceUnit = (m: any) => (m.starting_price_monthly || !m.starting_price_daily ? 'เดือน' : 'วัน')
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  startHeroCarousel()
+  if (typeof window !== 'undefined') {
+    shouldRestoreMarketListScroll.value = sessionStorage.getItem(MARKET_LIST_SCROLL_KEY) !== null
+  }
+  await loadData()
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', loadData)
   }
 })
 
+onBeforeRouteLeave(() => {
+  saveMarketListScroll()
+})
+
 onBeforeUnmount(() => {
+  if (heroCarouselTimer) {
+    clearInterval(heroCarouselTimer)
+    heroCarouselTimer = null
+  }
+  saveMarketListScroll()
   if (typeof window !== 'undefined') {
     window.removeEventListener('focus', loadData)
   }
@@ -676,13 +727,15 @@ onBeforeUnmount(() => {
 .homepage-container {
   background-color: var(--bg-main);
   min-height: 100vh;
+  --hero-to-events-gap: 80px;
+  --events-to-markets-gap: 128px;
 }
 
 /* ============================================================== */
 /* 1. HERO PROMOTIONAL BANNER                                     */
 /* ============================================================== */
 .hero-banner-wrapper {
-  margin-bottom: 64px;
+  margin-bottom: var(--hero-to-events-gap);
 }
 
 .hero-banner-card {
@@ -690,7 +743,7 @@ onBeforeUnmount(() => {
   padding: 0;
   overflow: hidden;
   border-radius: var(--radius-2xl);
-  min-height: 250px;
+  height: clamp(360px, 28vw, 460px);
   background: #ffffff;
   border: 1px solid var(--border-card);
   box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
@@ -699,8 +752,10 @@ onBeforeUnmount(() => {
 
 .hero-left-media {
   position: relative;
-  flex: 1.25;
-  min-height: 250px;
+  flex: 1.08 1 0;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -709,7 +764,7 @@ onBeforeUnmount(() => {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero-banner-card:hover .hero-media-img {
@@ -736,6 +791,10 @@ onBeforeUnmount(() => {
   z-index: 5;
 }
 
+.hero-ribbon-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
 .ribbon-text-top {
   font-size: 0.74rem;
   font-weight: 700;
@@ -756,8 +815,9 @@ onBeforeUnmount(() => {
 }
 
 .hero-right-content {
-  flex: 1;
-  padding: 34px 44px;
+  flex: 0.92 1 0;
+  min-width: 0;
+  padding: 28px 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -778,6 +838,24 @@ onBeforeUnmount(() => {
   font-weight: 700;
   width: fit-content;
   margin-bottom: 8px;
+}
+
+.campaign-tag-blue {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.campaign-tag-orange {
+  color: #c2410c;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.campaign-tag-purple {
+  color: #7e22ce;
+  background: #faf5ff;
+  border-color: #e9d5ff;
 }
 
 .campaign-dot {
@@ -878,6 +956,9 @@ onBeforeUnmount(() => {
 }
 
 .carousel-dot {
+  appearance: none;
+  border: 0;
+  padding: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -896,12 +977,401 @@ onBeforeUnmount(() => {
 /* 2. SECTION: อีเวนต์ตลาด                                        */
 /* ============================================================== */
 .events-card-wrapper {
-  margin-bottom: 80px;
-  padding: 30px;
+  margin-bottom: var(--events-to-markets-gap);
+  padding: 0;
+  background: transparent;
+}
+
+.events-promo-header {
+  width: min(100%, 860px);
+  min-height: 240px;
+  display: grid;
+  grid-template-columns: minmax(0, 470px) 320px;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  margin: 0 auto;
+  padding: 12px 16px 8px;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.events-promo-copy {
+  max-width: 680px;
+}
+
+.events-promo-copy .events-badge-pill {
+  margin-bottom: 12px;
+}
+
+.events-promo-copy .events-main-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.2vw, 2.35rem);
+}
+
+.events-promo-copy .events-main-title::after {
+  content: '';
+  display: block;
+  width: 54px;
+  height: 4px;
+  margin-top: 9px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+.events-promo-copy .events-desc-text {
+  max-width: 610px;
+  margin: 18px 0 20px;
+  color: #52637a;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.events-promo-image {
+  width: min(100%, 380px);
+  max-height: 310px;
+  justify-self: center;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(37, 99, 235, 0.14));
+}
+
+.events-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.events-section-header .events-desc-text {
+  margin: 6px 0 0;
+}
+
+.events-view-all {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #2563eb;
+  border-radius: 9px;
+  color: #2563eb;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.events-view-all:hover {
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.events-period-tabs {
+  width: fit-content;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  margin: 16px auto 0;
+  padding: 4px;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  position: relative;
+  z-index: 1;
+}
+
+.events-list-panel {
+  max-width: 880px;
+  width: calc(100% - 48px);
+  margin: 48px auto 0;
+  padding-top: 0;
+  overflow: hidden;
+  border: 1px solid #dfe7f1;
+  border-radius: 18px;
   background: #ffffff;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--border-card);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
+}
+
+.events-period-tabs button {
+  min-height: 38px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.events-period-tabs button:hover:not(.active) {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.events-period-tabs button.active {
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.events-list {
+  margin-top: 22px;
+  padding: 0 20px 18px;
+}
+
+.event-list-row {
+  min-height: 118px;
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr) 220px;
+  align-items: center;
+  gap: 22px;
+  padding: 18px 8px;
+  border-bottom: 1px solid #e8edf4;
+  transition: background 0.18s ease;
+}
+
+.event-list-row:first-child {
+  border-top: 1px solid #e8edf4;
+}
+
+.event-list-row:hover {
+  background: #fbfdff;
+}
+
+.event-list-image {
+  width: 108px;
+  height: 82px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.event-list-content {
+  min-width: 0;
+}
+
+.event-list-content h3 {
+  margin: 0 0 9px;
+  color: #172033;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.event-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.event-list-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-list-meta svg {
+  color: #2563eb;
+}
+
+.event-list-meta .event-time-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #0284c7;
+  background: #f0f9ff;
+}
+
+.event-list-row .event-location-line {
+  min-height: 0;
+  font-size: 0.875rem;
+}
+
+.event-list-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.event-capacity {
+  min-width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  color: #059669;
+}
+
+.event-capacity strong {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.event-capacity span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #047857;
+  background: #ecfdf5;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.event-capacity.is-low {
+  color: #d97706;
+}
+
+.event-capacity.is-low span {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.event-capacity.is-full {
+  color: #ef4444;
+}
+
+.event-capacity.is-full span {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.events-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.event-showcase-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-showcase-card:hover {
+  transform: translateY(-2px);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.09);
+}
+
+.event-showcase-media {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+}
+
+.event-showcase-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.event-showcase-card:hover .event-showcase-media img {
+  transform: scale(1.035);
+}
+
+.event-date-pill {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #1e3a8a;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.event-showcase-body {
+  padding: 16px;
+}
+
+.event-showcase-body h3 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.event-location-line {
+  min-height: 40px;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.event-location-line svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ef4444;
+}
+
+.event-showcase-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.event-availability {
+  color: #15803d;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.event-availability.is-full {
+  color: #64748b;
+}
+
+.event-primary-link,
+.event-disabled-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.event-primary-link {
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.event-primary-link:hover {
+  background: #1d4ed8;
+}
+
+.event-disabled-link {
+  color: #94a3b8;
+  background: #f1f5f9;
 }
 
 .events-grid-layout {
@@ -909,6 +1379,10 @@ onBeforeUnmount(() => {
   grid-template-columns: 280px 200px 1fr;
   gap: 28px;
   align-items: center;
+}
+
+.events-left-col {
+  padding: 12px 16px 12px 32px;
 }
 
 .events-badge-pill {
@@ -956,10 +1430,11 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 220px;
 }
 
 .megaphone-img {
-  width: 170px;
+  width: 150px;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.12));
@@ -1137,12 +1612,17 @@ onBeforeUnmount(() => {
 
 /* ระยะห่างระหว่าง 3 ส่วนหลัก (Banner / อีเวนต์ / ตลาด) บนจอเล็ก */
 @media (max-width: 768px) {
+  .homepage-container {
+    --hero-to-events-gap: 48px;
+    --events-to-markets-gap: 72px;
+  }
+
   .hero-banner-wrapper {
-    margin-bottom: 40px;
+    margin-bottom: var(--hero-to-events-gap);
   }
 
   .events-card-wrapper {
-    margin-bottom: 52px;
+    margin-bottom: var(--events-to-markets-gap);
   }
 }
 
@@ -1437,6 +1917,76 @@ onBeforeUnmount(() => {
   transform: translateY(-4px);
   box-shadow: 0 16px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
   border-color: #cbd5e1;
+}
+
+.market-skeleton-card {
+  pointer-events: none;
+}
+
+.market-skeleton-shape {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #eef2f7;
+  border-radius: 8px;
+}
+
+.market-skeleton-shape::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  animation: marketSkeletonShimmer 1.35s ease-in-out infinite;
+}
+
+.market-skeleton-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+}
+
+.market-skeleton-body {
+  gap: 10px;
+}
+
+.market-skeleton-title { width: 48%; height: 25px; }
+.market-skeleton-address { width: 92%; height: 14px; }
+.market-skeleton-address.is-short { width: 62%; }
+
+.market-skeleton-availability {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 18px 20px;
+  margin-top: 10px;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.market-skeleton-label { width: 136px; height: 15px; }
+.market-skeleton-count { width: 84px; height: 20px; justify-self: end; }
+.market-skeleton-progress { grid-column: 1 / -1; width: 100%; height: 10px; border-radius: 999px; }
+
+.market-skeleton-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+.market-skeleton-price-label { width: 52px; height: 16px; }
+.market-skeleton-price { width: 126px; height: 38px; }
+.market-skeleton-button { width: 100%; height: 48px; border-radius: 12px; }
+
+@keyframes marketSkeletonShimmer {
+  to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-skeleton-shape::after { animation: none; }
 }
 
 .market-img-container {
@@ -1763,6 +2313,27 @@ onBeforeUnmount(() => {
 
 /* Responsive adjustments */
 @media (max-width: 1100px) {
+  .events-promo-header {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 24px;
+    padding-inline: 44px;
+  }
+  .events-list-panel {
+    max-width: 840px;
+    width: calc(100% - 48px);
+    margin: 40px auto 0;
+  }
+  .event-list-row {
+    grid-template-columns: 96px minmax(0, 1fr) 200px;
+    gap: 16px;
+  }
+  .event-list-image {
+    width: 96px;
+    height: 76px;
+  }
+  .events-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .market-cards-3col-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1777,9 +2348,10 @@ onBeforeUnmount(() => {
 @media (max-width: 768px) {
   .hero-banner-card {
     flex-direction: column;
+    height: auto;
   }
   .hero-left-media {
-    min-height: 180px;
+    height: 230px;
   }
   .hero-right-content {
     padding: 24px 20px;
@@ -1790,8 +2362,108 @@ onBeforeUnmount(() => {
   .events-grid-layout {
     grid-template-columns: 1fr;
   }
+  .events-card-wrapper {
+    padding: 0;
+  }
+  .events-promo-header {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr) 210px;
+    gap: 16px;
+    padding: 26px 24px;
+  }
+  .events-promo-image {
+    width: 210px;
+    max-height: 195px;
+  }
+  .events-period-tabs {
+    width: calc(100% - 40px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .events-period-tabs button {
+    padding-inline: 8px;
+  }
+  .events-list {
+    margin-top: 16px;
+    padding: 0 20px 18px;
+  }
+  .event-list-row {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px 0;
+  }
+  .event-list-image {
+    width: 88px;
+    height: 76px;
+  }
+  .event-list-action {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-left: 102px;
+  }
+  .event-capacity {
+    min-width: 0;
+    flex-direction: row;
+    gap: 7px;
+  }
+  .event-capacity strong {
+    font-size: 1.4rem;
+  }
+  .events-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .events-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .event-showcase-media {
+    height: 190px;
+  }
   .market-cards-3col-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .events-promo-header {
+    display: block;
+    padding: 24px 20px;
+  }
+  .events-promo-copy .events-desc-text {
+    margin-bottom: 16px;
+  }
+  .events-promo-image {
+    display: none;
+  }
+  .events-list {
+    padding-inline: 16px;
+  }
+  .events-list-panel {
+    width: calc(100% - 20px);
+    margin: 20px auto 0;
+    border-radius: 14px;
+  }
+  .event-list-row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .event-list-image {
+    width: 76px;
+    height: 70px;
+  }
+  .event-list-content h3 {
+    font-size: 1rem;
+  }
+  .event-list-meta {
+    gap: 6px;
+  }
+  .event-list-action {
+    padding-left: 88px;
+  }
+  .event-primary-link,
+  .event-disabled-link {
+    min-height: 38px;
+    padding-inline: 10px;
+    font-size: 0.8125rem;
   }
 }
 </style>

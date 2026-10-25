@@ -273,7 +273,7 @@
                     "
                     @click="goToStep(2)"
                   >
-                    <span>{{ currentSelectionStatus === 'reserved' ? 'จองคิวสำรอง' : 'จองแผงนี้' }} ({{ selectedStalls.length }})</span>
+                    <span>{{ currentSelectionStatus === 'reserved' ? 'จองคิวสำรองแผงนี้' : 'จองแผงนี้' }}</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                       <polyline points="12 5 19 12 12 19"></polyline>
@@ -840,7 +840,7 @@
             <!-- Sub-card Header -->
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
               <span style="background: #2563eb; color: #ffffff; font-weight: 700; font-size: 0.85rem; padding: 4px 14px; border-radius: 6px;">
-                แผงที่ {{ idx + 1 }}
+                แผง {{ stallItem.code }}
               </span>
               <span
                 v-if="stallItem.status === 'available'"
@@ -1018,14 +1018,14 @@
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="10" y1="2" x2="10" y2="22"></line>
               </svg>
-              <span style="font-size: 1rem; font-weight: 700; color: #0f172a;">ตารางประมาณการค่าใช้จ่ายแบบโปร่งใส (ประมาณการวันทำสัญญา รวม {{ selectedStalls.length }} แผง)</span>
+              <span style="font-size: 1rem; font-weight: 700; color: #0f172a;">ตารางประมาณการค่าใช้จ่ายแบบโปร่งใส (ประมาณการวันทำสัญญา)</span>
             </div>
             <span class="badge" style="background: #ecfdf5; color: #059669; font-weight: 600;">ไม่มีค่าใช้จ่ายแอบแฝง</span>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem;">
             <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0;">
-              <span style="color: #475569;">1. ค่าธรรมเนียมสิทธิแรกเข้า (รวม {{ selectedStalls.length }} แผง - ชำระครั้งแรกครั้งเดียว)</span>
+              <span style="color: #475569;">1. ค่าธรรมเนียมสิทธิแรกเข้า (ชำระครั้งแรกครั้งเดียว)</span>
               <strong style="color: #0f172a;">฿{{ totalEntryFee.toLocaleString() }}</strong>
             </div>
             <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0;">
@@ -1038,7 +1038,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: #475569;">3. เงินประกันความเสียหายการเช่า (รวม {{ selectedStalls.length }} แผง)</span>
+                <span style="color: #475569;">3. เงินประกันความเสียหายการเช่า</span>
                 <span class="badge" style="background: #eff6ff; color: #2563eb; font-size: 0.72rem; padding: 1px 6px;">* คืนเงิน 100% เมื่อสิ้นสุดสัญญา</span>
               </div>
               <strong style="color: #0f172a;">฿{{ totalDepositFee.toLocaleString() }}</strong>
@@ -1783,11 +1783,13 @@ const getBackendStallIdent = (stall: BackendStallRecord): string => (
 
 const normalizeBackendStallStatus = (status?: string): StallModel['status'] => {
   if (status === 'available' || status === 'reserved' || status === 'occupied') return status
-  return 'occupied'
+  return 'available'
 }
 
 const getBackendRecordStatus = (stall?: BackendStallRecord): string | undefined => (
-  stall?.status || stall?.stall_status
+  // `status` is the lifecycle flag for the database row (normally "A").
+  // Availability is carried by `stall_status`, which changes on booking.
+  stall?.stall_status || stall?.status
 )
 
 const stallStatusOverrides = computed<Record<string, StallModel['status']>>(() => {
@@ -1838,7 +1840,21 @@ const passDisplayStalls = computed<StallModel[]>(() => (
   selectedStalls.value.length > 0 ? selectedStalls.value : confirmedPassStalls.value
 ))
 
-const getDuplicateBookingStatusLabel = (status?: string): string => {
+const isQueueBookingRecord = (b?: any): boolean => {
+  if (!b) return false
+  if (['rejected', 'cancelled', 'not_interested', 'no_show', 'lease_applied', 'completed', 'terminated'].includes(b.status)) {
+    return false
+  }
+  return b.status === 'waiting_queue' || (!b.holding_stall && Number(b.queue_position || b.queue_number) > 0)
+}
+
+const getDuplicateBookingStatusLabel = (status?: string, existingBooking?: any): string => {
+  if (isQueueBookingRecord(existingBooking)) {
+    const qPos = Number(existingBooking?.queue_position || existingBooking?.queue_number) || 1
+    return status === 'approved'
+      ? `คิวสำรองที่ ${qPos} • นัดหมายสำเร็จ`
+      : `คิวสำรองที่ ${qPos} • รอเจ้าหน้าที่อนุมัติวันนัด`
+  }
   switch (status) {
     case 'waiting_queue': return 'อยู่ในคิวสำรอง'
     case 'pending_approval':
@@ -1855,7 +1871,7 @@ const getDuplicateBookingStatusLabel = (status?: string): string => {
 
 const showDuplicateBookingWarning = (stallCode: string, existingBooking?: any) => {
   const bNo = existingBooking?.booking_number || existingBooking?.booking_no || ''
-  const statusLabel = getDuplicateBookingStatusLabel(existingBooking?.status)
+  const statusLabel = getDuplicateBookingStatusLabel(existingBooking?.status, existingBooking)
   const refSuffix = bNo ? ` (รหัสการจอง ${bNo} • สถานะ: ${statusLabel})` : ` (${statusLabel})`
   showWarning(
     `คุณได้ทำการจองหรืออยู่ในคิวสำรองของแผง ${stallCode} ไว้แล้ว${refSuffix} ไม่สามารถทำรายการจองแผงเดิมซ้ำได้ กรุณาตรวจสอบที่หน้า "รายการจองของฉัน"`,
@@ -1875,8 +1891,9 @@ const refreshMyActiveBookings = async (): Promise<void> => {
     // shared by every tenant without exposing another tenant's booking details.
     let scheduleBookings = list
     try {
+      const targetMarket = currentMarket.value?.id ? String(currentMarket.value.id) : (currentMarketId.value || '1')
       const capacityResponse = await get<any>(
-        `/bookings/visit-capacity?market_id=${encodeURIComponent(currentMarketId.value)}`
+        `/bookings/visit-capacity?market_id=${encodeURIComponent(targetMarket)}&market=${encodeURIComponent(currentMarketId.value)}`
       )
       const capacityItems: any[] = Array.isArray(capacityResponse)
         ? capacityResponse
@@ -1886,7 +1903,7 @@ const refreshMyActiveBookings = async (): Promise<void> => {
         ...capacityItems.flatMap((item) => {
           const bookedCount = Math.max(0, Number(item?.booked_count) || 0)
           return Array.from({ length: bookedCount }, () => ({
-            market_id: item.market_id || currentMarketId.value,
+            market_id: item.market_id || targetMarket,
             market_name: item.market_name || currentMarketName.value,
             visit_date: item.visit_date,
             visit_time_slot: item.visit_time_slot,
@@ -2003,19 +2020,23 @@ const fetchWaitingQueueForStall = async (stallCode: string) => {
   if (stallWaitingQueueCache.value[stallCode]) return
   loadingWaitingQueue.value = true
   try {
-    const data = await get<WaitingQueueData>(`/bookings/waiting-queue/${encodeURIComponent(stallCode)}`)
+    const rawRes = await get<any>(`/bookings/waiting-queue/${encodeURIComponent(stallCode)}`)
+    const data = rawRes?.data || rawRes
     if (data) {
-      const currentBooker = data.current_booker || ((data as any).masked_current_booker ? {
-        masked_name: (data as any).masked_current_booker,
-        masked_phone: (data as any).masked_booker_phone || '',
-        status: (data as any).status || 'reserved',
+      const maskedName = data.current_booker?.masked_name || data.masked_current_booker
+      const currentBooker = (maskedName && maskedName !== '-') ? {
+        masked_name: maskedName,
+        masked_phone: data.current_booker?.masked_phone || data.masked_booker_phone || '',
+        status: data.current_booker?.status || data.status || 'reserved',
         status_label: 'ติดจอง',
         days_left_estimate: 0
-      } : null)
+      } : (data.current_booker || null)
+
       stallWaitingQueueCache.value[stallCode] = {
-        ...data,
-        total_waiting_count: Number(data.total_waiting_count ?? (data as any).queue_count ?? 0),
-        next_queue_number: Number(data.next_queue_number ?? (data as any).current_position ?? 1),
+        stall_number: data.stall_number || data.stall_ident || stallCode,
+        total_waiting_count: Number(data.total_waiting_count ?? data.queue_count ?? 0),
+        next_queue_number: Number(data.next_queue_number ?? data.current_position ?? 1),
+        has_waiting_list: Boolean(data.has_waiting_list ?? ((data.queue_count ?? 0) > 0)),
         current_booker: currentBooker,
         queues: data.queues || []
       }
@@ -2751,12 +2772,9 @@ const submitBooking = async () => {
     const createdBookingNumbers: string[] = []
     const succeededStalls: StallModel[] = []
     const failedBookings: Array<{ stall: StallModel; error: any }> = []
-    const appointmentGroupId = `APT-${Date.now()}`
-    let primaryGroupBookingNumber = ''
 
-    // Each stall is recorded independently under a shared appointment_group_id.
-    // Keep failed items selected so a partial API failure cannot cause successful bookings to be submitted twice.
-    for (const stallItem of selectedStalls.value) {
+    // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด)
+    for (const stallItem of selectedStalls.value.slice(0, 1)) {
       try {
         const backendStall = backendStallsByIdent.value[stallItem.code]
         const stallId = stallItem.backendId || backendStall?.id
@@ -2776,8 +2794,8 @@ const submitBooking = async () => {
         const contactPhone = (bookingForm.value.phone || '081-234-5678').trim()
         const contactEmail = (bookingForm.value.email || '').trim()
         const idCard = (bookingForm.value.idCard || '1-1004-00234-56-7').trim()
-        const visitDate = isQueue ? '' : (bookingForm.value.visitDate || new Date().toISOString().split('T')[0])
-        const visitTime = isQueue ? '' : (bookingForm.value.visitSlot || '13:00 - 14:00')
+        const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
+        const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
 
         const res = await post('/bookings', {
           // Standard Go backend fields (CreateBookingRequest)
@@ -2803,15 +2821,12 @@ const submitBooking = async () => {
           tenant_id_card: idCard,
           intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
           visit_time_slot: visitTime,
-          is_queue: isQueue,
-          appointment_group_id: appointmentGroupId,
-          group_booking_number: primaryGroupBookingNumber || undefined
+          is_queue: isQueue
         })
 
         const createdRecord = res?.data || res
         const bNo = createdRecord?.booking_no || createdRecord?.booking_number || res?.booking_no || res?.booking_number
         if (bNo) {
-          if (!primaryGroupBookingNumber) primaryGroupBookingNumber = bNo
           if (!createdBookingNumbers.includes(bNo)) createdBookingNumbers.push(bNo)
         }
         succeededStalls.push(stallItem)
@@ -2819,8 +2834,9 @@ const submitBooking = async () => {
           ...(createdRecord || {}),
           stall_number: stallItem.code,
           booking_number: bNo,
-          appointment_group_id: appointmentGroupId,
-          status: createdRecord?.status || (isQueue ? 'waiting_queue' : 'pending_approval')
+          holding_stall: createdRecord?.holding_stall ?? !isQueue,
+          queue_position: createdRecord?.queue_position ?? (isQueue ? 1 : 0),
+          status: createdRecord?.status || 'pending_approval'
         }
         delete stallWaitingQueueCache.value[stallItem.code]
       } catch (error: any) {

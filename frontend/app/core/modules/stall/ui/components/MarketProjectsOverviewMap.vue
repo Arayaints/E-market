@@ -593,7 +593,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
 import type { ProjectZone, ProjectFloor } from '../../data/market_gis_types'
-import { getProjectStallLayout, getAllFloorLayoutsForProject, isOverviewBoundaryProject, type MapStall, type ProjectStallLayout } from '../../data/market_stall_layout'
+import { getProjectStallLayout, getAllFloorLayoutsForProject, isOverviewBoundaryProject, clearLayoutCache, type MapStall, type ProjectStallLayout } from '../../data/market_stall_layout'
 import { getMarketGisConfig, type MarketGisConfig } from '../../data/markets_registry'
 import { loadMarketGisJson } from '../../data/market_loader'
 
@@ -813,7 +813,14 @@ const projectFootprintArea = (project: ProjectZone): number => {
 
 const syncMarketJson = async (idOrSlug?: string | number) => {
   const data = await loadMarketGisJson(idOrSlug)
-  if (data) currentMarket.value = data
+  if (data) {
+    clearLayoutCache()
+    currentMarket.value = data
+    if (map) {
+      refreshSources()
+      renderZoneLabels()
+    }
+  }
 }
 
 // Extract categories dynamically from the current market's projects
@@ -827,18 +834,50 @@ const categories = computed(() => {
   return Array.from(uniqueCats.entries()).map(([name, color]) => ({ name, color }))
 })
 
+// Helper to match stall status override with robust normalization
+const findStallStatusOverride = (stallCode: string): 'available' | 'reserved' | 'occupied' | undefined => {
+  if (!props.stallStatusOverrides) return undefined
+  if (props.stallStatusOverrides[stallCode]) {
+    return props.stallStatusOverrides[stallCode]
+  }
+  const cleanCode = stallCode.toUpperCase().trim()
+  if (props.stallStatusOverrides[cleanCode]) {
+    return props.stallStatusOverrides[cleanCode]
+  }
+  // Try case-insensitive matching
+  for (const [k, v] of Object.entries(props.stallStatusOverrides)) {
+    const cleanK = k.toUpperCase().trim()
+    if (cleanK === cleanCode) return v
+  }
+  // Fallback: match by number/identifier if project/zone is aligned (e.g. PRA-10-004 vs 10-A04 or PRA-10-4)
+  const codeDigits = cleanCode.replace(/[^0-9]/g, '')
+  if (codeDigits) {
+    for (const [k, v] of Object.entries(props.stallStatusOverrides)) {
+      const kDigits = k.toUpperCase().trim().replace(/[^0-9]/g, '')
+      if (kDigits && kDigits === codeDigits) return v
+      const kNorm = kDigits.replace(/^0+/, '')
+      const codeNorm = codeDigits.replace(/^0+/, '')
+      if (kNorm && codeNorm && kNorm === codeNorm) return v
+    }
+  }
+  return undefined
+}
+
 // Apply the authoritative market-level state before any counter, color,
 // filter, tooltip or click handler consumes a stall layout.
 const applyMarketStatus = (layout: ProjectStallLayout): ProjectStallLayout => {
   if (!props.marketFull && Object.keys(props.stallStatusOverrides).length === 0) {
     return layout
   }
-  const stalls = layout.stalls.map(stall => ({
-    ...stall,
-    status: props.marketFull
-      ? 'occupied' as const
-      : (props.stallStatusOverrides[stall.code] || 'available')
-  }))
+  const stalls = layout.stalls.map(stall => {
+    const override = findStallStatusOverride(stall.code)
+    return {
+      ...stall,
+      status: props.marketFull
+        ? ('occupied' as const)
+        : (override || stall.status || 'available')
+    }
+  })
   const available = stalls.filter(stall => stall.status === 'available').length
   const reserved = stalls.filter(stall => stall.status === 'reserved').length
   return {
@@ -860,7 +899,39 @@ const getEffectiveFloorLayoutsForProject = (project: ProjectZone): Map<string, P
 
 // Sub-stall layouts generated for each project/zone in the active market
 const layouts = computed(() => {
-  return new Map(currentMarket.value.projects.map(p => [p.id, applyMarketStatus(getProjectStallLayout(p))]))
+  const map = new Map<string, ProjectStallLayout>()
+  currentMarket.value.projects.forEach(p => {
+    if (p.floors && p.floors.length > 1) {
+      const floorLayouts = getAllFloorLayoutsForProject(p)
+      const allStalls: MapStall[] = []
+      let total = 0
+      let available = 0
+      let reserved = 0
+      let occupied = 0
+      floorLayouts.forEach(fl => {
+        const eff = applyMarketStatus(fl)
+        allStalls.push(...eff.stalls)
+        total += eff.total
+        available += eff.available
+        reserved += eff.reserved
+        occupied += eff.occupied
+      })
+      const defaultFloorLayout = getProjectStallLayout(p)
+      map.set(p.id, {
+        stalls: allStalls,
+        labelPoint: defaultFloorLayout.labelPoint,
+        total,
+        available,
+        reserved,
+        occupied,
+        floorId: 'all',
+        floorName: `รวมทุกชั้น (${p.floors.length} ชั้น)`
+      })
+    } else {
+      map.set(p.id, applyMarketStatus(getProjectStallLayout(p)))
+    }
+  })
+  return map
 })
 
 const projects = computed<ProjectZone[]>(() => {
@@ -2464,6 +2535,11 @@ watch(() => props.marketFull, () => {
   renderSelectedStallPins()
 })
 
+watch(() => props.stallStatusOverrides, () => {
+  refreshSources()
+  renderZoneLabels()
+}, { deep: true })
+
 // Parent may switch project externally (e.g. deep-link); follow it if different
 watch(() => props.selectedProjectId, (newId) => {
   if (!map || !newId || newId === activeProjectId.value) return
@@ -2515,6 +2591,7 @@ onMounted(async () => {
   if (process.client) {
     canTeleportToolbar.value = Boolean(document.getElementById('step1-map-toolbar'))
     window.addEventListener('resize', handleWindowResize)
+    await syncMarketJson(props.marketId)
     const ml = await import('maplibre-gl')
     if (isUnmounted) return
     maplibregl = ml.default || ml

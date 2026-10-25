@@ -36,6 +36,20 @@
           </div>
 
           <div class="hero-actions">
+            <span
+              v-if="isQueueBooking(booking)"
+              class="status-badge tone-warning"
+              title="ลำดับคิวสำรอง"
+            >
+              คิวสำรองที่ {{ booking.queue_position || booking.queue_number || 1 }}
+            </span>
+            <span
+              v-else-if="booking.holding_stall && !['cancelled', 'rejected', 'not_interested', 'no_show', 'lease_applied', 'completed'].includes(booking.status)"
+              class="status-badge tone-blue"
+              title="ผู้จองหลัก (ถือสิทธิ์แผงค้า)"
+            >
+              ผู้จองหลัก (ตัวจริง)
+            </span>
             <span class="status-badge" :class="statusToneClass">{{ statusLabel }}</span>
           </div>
         </section>
@@ -102,7 +116,7 @@
             <!-- OFFICER ROLE ACTION BUTTONS (ตามหน้ารายการจอง 100%)          -->
             <!-- ============================================================ -->
             <template v-if="currentRole === 'officer'">
-              <!-- 1. รอเจ้าหน้าที่อนุมัติ: อนุมัตินัด + ยกเลิก -->
+              <!-- 1. รอเจ้าหน้าที่อนุมัติ: อนุมัตินัด + ยกเลิก/ยกเลิกคิว -->
               <template v-if="booking.status === 'pending_approval' || booking.status === 'pending'">
                 <AppButton
                   variant="primary"
@@ -120,19 +134,20 @@
                   variant="danger-outline"
                   size="base"
                   :disabled="actionLoading"
-                  @click="openRejectModal"
-                  title="ปฏิเสธ/ยกเลิกคำขอนัดหมาย"
+                  @click="isQueueBooking(booking) ? handleOfficerCancel() : openRejectModal()"
+                  :title="isQueueBooking(booking) ? 'ยกเลิกการต่อคิว' : 'ปฏิเสธ/ยกเลิกคำขอนัดหมาย'"
                 >
                   <template #prefix>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </template>
-                  <span>ยกเลิก</span>
+                  <span>{{ isQueueBooking(booking) ? 'ยกเลิกคิว' : 'ยกเลิก' }}</span>
                 </AppButton>
               </template>
 
-              <!-- 2. นัดหมายสำเร็จ: ยืนยันการเช่า + ยกเลิก -->
+              <!-- 2. นัดหมายสำเร็จ: ยืนยันการเช่า (เฉพาะผู้จองหลัก) + ยกเลิก/ยกเลิกคิว -->
               <template v-else-if="booking.status === 'approved'">
                 <AppButton
+                  v-if="!isQueueBooking(booking)"
                   variant="success"
                   size="base"
                   :disabled="actionLoading"
@@ -149,12 +164,12 @@
                   size="base"
                   :disabled="actionLoading"
                   @click="handleOfficerCancel"
-                  title="ยกเลิกนัดหมายนี้"
+                  :title="isQueueBooking(booking) ? 'ยกเลิกการต่อคิว' : 'ยกเลิกนัดหมายนี้'"
                 >
                   <template #prefix>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </template>
-                  <span>ยกเลิก</span>
+                  <span>{{ isQueueBooking(booking) ? 'ยกเลิกคิว' : 'ยกเลิก' }}</span>
                 </AppButton>
               </template>
 
@@ -211,21 +226,7 @@
             <template v-else>
               <!-- 1. ปุ่มยกเลิก / สละสิทธิ์ -->
               <AppButton
-                v-if="['pending_approval', 'pending', 'pending_slot', 'approved', 'interested', 'pending_decision'].includes(booking.status)"
-                variant="danger-outline"
-                size="base"
-                :disabled="actionLoading"
-                @click="handleTenantCancel('ผู้เช่าขอยกเลิกการจอง')"
-                title="ยกเลิกคำขอจอง"
-              >
-                <template #prefix>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </template>
-                <span>ยกเลิก</span>
-              </AppButton>
-
-              <AppButton
-                v-else-if="booking.status === 'waiting_queue'"
+                v-if="isQueueBooking(booking) && ['pending_approval', 'pending', 'approved', 'waiting_queue'].includes(booking.status)"
                 variant="danger-outline"
                 size="base"
                 :disabled="actionLoading"
@@ -236,6 +237,20 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </template>
                 <span>สละสิทธิ์</span>
+              </AppButton>
+
+              <AppButton
+                v-else-if="['pending_approval', 'pending', 'pending_slot', 'approved', 'interested', 'pending_decision'].includes(booking.status)"
+                variant="danger-outline"
+                size="base"
+                :disabled="actionLoading"
+                @click="handleTenantCancel('ผู้เช่าขอยกเลิกการจอง')"
+                title="ยกเลิกคำขอจอง"
+              >
+                <template #prefix>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </template>
+                <span>ยกเลิก</span>
               </AppButton>
 
               <!-- 2. ปุ่ม Primary Action ตามสถานะ -->
@@ -277,6 +292,41 @@
                 </template>
               </AppButton>
             </template>
+          </div>
+        </section>
+
+        <!-- Waiting Queue Context Banner (แสดงข้อมูลผู้จองหลักและเงื่อนไขคิวสำรองทั้งฝั่งผู้เช่าและเจ้าหน้าที่) -->
+        <section v-if="isQueueBooking(booking)" class="queue-context-banner" aria-label="ข้อมูลลำดับคิวสำรอง">
+          <div class="qcb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <div class="qcb-body">
+            <div class="qcb-header">
+              <strong>{{ currentRole === 'officer' ? `รายการนี้อยู่ในคิวสำรองลำดับที่ ${booking.queue_position || booking.queue_number || 1} ของแผง ${booking.stall_number}` : `คุณอยู่ในคิวสำรองลำดับที่ ${booking.queue_position || booking.queue_number || 1} ของแผง ${booking.stall_number}` }}</strong>
+              <span class="qcb-pill">คิวสำรองที่ {{ booking.queue_position || booking.queue_number || 1 }}</span>
+            </div>
+            <div class="qcb-details">
+              <div v-if="currentRole === 'officer' && activeHolder" class="qcb-detail-row">
+                <span class="qcb-dot is-holder"></span>
+                <span>ผู้ถือสิทธิ์หลักปัจจุบัน (ตัวจริง): <strong>{{ activeHolder.tenant_name }} ({{ formatBookingNumber(activeHolder.booking_number) }})</strong> — สถานะ: <strong>{{ getStatusLabelByCode(activeHolder.status) }}</strong></span>
+              </div>
+              <div v-else-if="activeHolderMaskedName" class="qcb-detail-row">
+                <span class="qcb-dot is-holder"></span>
+                <span>ผู้ถือสิทธิ์หลักปัจจุบัน: <strong>{{ activeHolderMaskedName }}</strong> <span class="qcb-pdpa">(ปิดบังข้อมูลบางส่วนตาม PDPA)</span> — สถานะ: <strong>{{ getStatusLabelByCode(activeHolderStatus) }}</strong></span>
+              </div>
+              <div v-if="(booking.queue_position || booking.queue_number || 1) > 1" class="qcb-detail-row">
+                <span class="qcb-dot is-queue"></span>
+                <span>มีคิวสำรองก่อนหน้าอีกลำดับละ <strong>{{ (booking.queue_position || booking.queue_number || 1) - 1 }} ราย</strong></span>
+              </div>
+            </div>
+            <p class="qcb-note">
+              <template v-if="currentRole === 'officer'">
+                คิวสำรองสามารถกดอนุมัตินัดหมายเข้าชมแผงได้ตามปกติ • ปุ่มยืนยันการเช่าจะเปิดให้กดอัตโนมัติทันทีเมื่อผู้จองหลักสละสิทธิ์
+              </template>
+              <template v-else>
+                คุณสามารถเข้าชมแผงตามวันนัดหมายที่ได้รับอนุมัติได้ตามปกติ • ทันทีที่ผู้จองคิวหลักสละสิทธิ์ ระบบจะเลื่อนคิวของคุณขึ้นเป็นผู้จองหลักและเจ้าหน้าที่จะติดต่อคุณทันที
+              </template>
+            </p>
           </div>
         </section>
 
@@ -555,6 +605,7 @@ const loading = ref(true)
 const booking = ref<any | null>(null)
 const allBookings = ref<any[]>([])
 const siblingBookings = ref<any[]>([])
+const stallWaitingQueueInfo = ref<any | null>(null)
 const leaseModalTargetBooking = ref<any | null>(null)
 const showTimeline = ref(false)
 const showLeaseModal = ref(false)
@@ -623,6 +674,14 @@ watch(slotDate, () => {
   }
 })
 
+const isQueueBooking = (b: any): boolean => {
+  if (!b) return false
+  if (['rejected', 'cancelled', 'not_interested', 'no_show', 'lease_applied', 'completed', 'terminated'].includes(b.status)) {
+    return false
+  }
+  return b.status === 'waiting_queue' || (!b.holding_stall && Number(b.queue_position || b.queue_number) > 0)
+}
+
 const currentRole = computed<'tenant' | 'officer'>(() => {
   const r = String(user.value?.role || (authRole as any)?.value || authRole || '').toLowerCase()
   const isOfficer = r === 'admin' || r === 'staff' || r === 'officer'
@@ -659,21 +718,59 @@ const currentStep = computed(() => {
   return 1
 })
 
+const getStatusLabelByCode = (status?: string) => {
+  const s = status || 'pending_approval'
+  const labels: Record<string, string> = {
+    pending: 'รอเจ้าหน้าที่อนุมัติ',
+    pending_approval: 'รอเจ้าหน้าที่อนุมัติ',
+    pending_slot: 'รอเลือกวันนัดชม',
+    waiting_queue: 'รอคิว',
+    approved: 'นัดหมายสำเร็จ',
+    interested: 'รอผู้เช่ายื่นคำร้อง',
+    pending_decision: 'รอผู้เช่ายื่นคำร้อง',
+    lease_applied: 'ยื่นคำร้องสำเร็จ',
+    completed: 'ยื่นคำร้องสำเร็จ',
+    cancelled: 'ยกเลิก',
+    rejected: 'ยกเลิก',
+    not_interested: 'สละสิทธิ์',
+    no_show: 'ไม่มาตามนัด',
+    terminated: 'สิ้นสุดสัญญาเช่า'
+  }
+  return labels[s] || s
+}
+
+const activeHolder = computed(() => {
+  const stallNo = booking.value?.stall_number
+  if (!stallNo) return null
+  return allBookings.value.find(
+    b => b.stall_number === stallNo && b.holding_stall && !isQueueBooking(b) && !['rejected', 'cancelled', 'not_interested', 'no_show', 'terminated'].includes(b.status)
+  ) || null
+})
+
+const activeHolderMaskedName = computed(() => {
+  if (activeHolder.value?.tenant_name) {
+    const clean = String(activeHolder.value.tenant_name).trim().replace(/^(นาย|นางสาว|นาง|น\.ส\.|คุณ)\s*/, '')
+    const parts = clean.split(/\s+/).filter(Boolean)
+    if (parts.length > 1) return `คุณ${parts[0]} ${parts[1].charAt(0)}.***`
+    if (parts.length === 1) return `คุณ${parts[0].slice(0, 3)}***`
+  }
+  const masked = stallWaitingQueueInfo.value?.masked_current_booker
+  if (masked && masked !== '-') return masked
+  return 'ผู้จองคิวหลัก'
+})
+
+const activeHolderStatus = computed(() => {
+  return activeHolder.value?.status || stallWaitingQueueInfo.value?.active_holder_status || 'pending_approval'
+})
+
 const statusLabel = computed(() => {
   const status = booking.value?.status
-  const labels: Record<string, string> = {
-    pending: 'รอเจ้าหน้าที่อนุมัติ', pending_approval: 'รอเจ้าหน้าที่อนุมัติ', pending_slot: 'รอเลือกวันนัดชม',
-    waiting_queue: `คิวสำรองที่ ${booking.value?.queue_position || 1}`,
-    approved: 'นัดหมายสำเร็จ', interested: 'รอผู้เช่ายื่นคำร้อง', pending_decision: 'รอผู้เช่ายื่นคำร้อง',
-    lease_applied: 'ยื่นคำร้องสำเร็จ', completed: 'ยื่นคำร้องสำเร็จ', cancelled: 'ยกเลิก', rejected: 'ยกเลิก',
-    not_interested: 'สละสิทธิ์', no_show: 'ไม่มาตามนัด'
-  }
-  return labels[status] || status || '-'
+  return getStatusLabelByCode(status)
 })
 
 const statusToneClass = computed(() => {
   const status = booking.value?.status
-  if (['cancelled', 'rejected', 'not_interested', 'no_show'].includes(status)) return 'tone-muted'
+  if (['cancelled', 'rejected', 'not_interested', 'no_show', 'terminated'].includes(status)) return 'tone-muted'
   if (['approved', 'interested'].includes(status)) return 'tone-success'
   if (['lease_applied', 'completed'].includes(status)) return 'tone-purple'
   if (status === 'waiting_queue') return 'tone-blue'
@@ -719,22 +816,42 @@ const nextAction = computed(() => {
   const status = item?.status
   const isOfficer = currentRole.value === 'officer'
 
-  if (['cancelled', 'rejected', 'not_interested', 'no_show'].includes(status)) {
+  if (['cancelled', 'rejected', 'not_interested', 'no_show', 'terminated'].includes(status)) {
     return { tone: 'complete', owner: 'รายการสิ้นสุดแล้ว', title: 'ไม่มีขั้นตอนที่ต้องดำเนินการต่อ', description: cancellationReason.value || 'รายการนี้ถูกปิดและไม่มีผลต่อสิทธิ์การจองแล้ว' }
   }
   if (['lease_applied', 'completed'].includes(status)) {
     return { tone: 'complete', owner: 'ดำเนินการแล้ว', title: 'ยื่นคำร้องขอเช่าเรียบร้อย', description: isOfficer ? 'รอตรวจสอบคำร้องในขั้นตอนจัดการคำร้องเช่า' : 'ติดตามผลการพิจารณาได้ที่หน้าคำร้องของฉัน' }
   }
-  if (status === 'waiting_queue') {
-    const position = item?.queue_position || 1
-    return {
-      tone: 'waiting',
-      owner: 'ระบบดำเนินการ',
-      title: isOfficer ? `รอผู้จองก่อนหน้า — คิวสำรองลำดับที่ ${position}` : 'คุณยังไม่ต้องดำเนินการ',
-      description: isOfficer
-        ? 'เมื่อผู้จองก่อนหน้าสละสิทธิ์ ระบบจะเลื่อนคิวนี้ขึ้นโดยอัตโนมัติ'
-        : `ขณะนี้คุณอยู่คิวสำรองลำดับที่ ${position} ระบบจะแจ้งและเลื่อนสิทธิ์ให้อัตโนมัติเมื่อถึงคิว`
+  if (isQueueBooking(item)) {
+    const position = item?.queue_position || item?.queue_number || 1
+    if (status === 'approved') {
+      return isOfficer
+        ? {
+            tone: 'waiting',
+            owner: `คิวสำรองที่ ${position}`,
+            title: `คิวสำรองที่ ${position} • รอผลจากผู้จองหลัก (ปุ่มยืนยันการเช่าจะเปิดให้กดเมื่อผู้จองหลักสละสิทธิ์)`,
+            description: `${formatVisitDate(item)} · ${getVisitSlot(item)}`
+          }
+        : {
+            tone: 'waiting',
+            owner: `คิวสำรองที่ ${position}`,
+            title: 'เข้าชมแผงตามนัด • หากเข้าชมแล้ว กรุณารอผลจากผู้จองคิวหลัก',
+            description: 'หากคิวหลักสละสิทธิ์ เจ้าหน้าที่จะติดต่อคุณและเปิดสิทธิ์ให้ยื่นคำร้องทันที'
+          }
     }
+    return isOfficer
+      ? {
+          tone: 'action',
+          owner: 'เจ้าหน้าที่ต้องทำ',
+          title: `คิวสำรองที่ ${position} • รอเจ้าหน้าที่กดอนุมัติวันเวลานัดชมแผง`,
+          description: `${formatVisitDate(item)} · ${getVisitSlot(item)}`
+        }
+      : {
+          tone: 'waiting',
+          owner: `คิวสำรองที่ ${position}`,
+          title: `คิวสำรองที่ ${position} • รอเจ้าหน้าที่อนุมัติวันและเวลานัดชมแผง`,
+          description: `${formatVisitDate(item)} · ${getVisitSlot(item)}`
+        }
   }
   if (['pending', 'pending_approval'].includes(status)) {
     return isOfficer
@@ -772,18 +889,23 @@ const loadBooking = async () => {
       return matchesRoute && isBookingOwnedByCurrentTenant(item)
     }) || null
     if (found) {
-      if (found.appointment_group_id) {
-        const groupSiblings = items.filter(
-          item => item.appointment_group_id === found.appointment_group_id && item.status === found.status && isBookingOwnedByCurrentTenant(item)
-        )
-        siblingBookings.value = groupSiblings.length > 0 ? groupSiblings : [found]
-      } else {
-        siblingBookings.value = [found]
-      }
+      // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด)
+      siblingBookings.value = [found]
       booking.value = found
+      if (isQueueBooking(found) && found.stall_number) {
+        try {
+          const qRes: any = await get(`/bookings/waiting-queue/${encodeURIComponent(found.stall_number)}`)
+          stallWaitingQueueInfo.value = qRes?.data || qRes || null
+        } catch {
+          stallWaitingQueueInfo.value = null
+        }
+      } else {
+        stallWaitingQueueInfo.value = null
+      }
     } else {
       siblingBookings.value = []
       booking.value = null
+      stallWaitingQueueInfo.value = null
     }
     await fetchNotifications()
   } catch (error) {
@@ -832,13 +954,16 @@ const openApproveModal = () => {
 
 const confirmApprove = async () => {
   if (!booking.value) return
+  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    await post(`/bookings/${booking.value.id}/approve`, {
-      meeting_point: approveMeetingPoint.value,
-      escort_officer: approveEscortOfficer.value,
-      officer_notes: officerNotes.value
-    })
+    for (const item of targets) {
+      await post(`/bookings/${item.id}/approve`, {
+        meeting_point: approveMeetingPoint.value,
+        escort_officer: approveEscortOfficer.value,
+        officer_notes: officerNotes.value
+      })
+    }
     showApproveModal.value = false
     await loadBooking()
     await showSuccess('อนุมัตินัดหมายการเข้าชมเรียบร้อยแล้ว', 'อนุมัติสำเร็จ')
@@ -858,12 +983,15 @@ const openRejectModal = () => {
 
 const confirmReject = async () => {
   if (!booking.value) return
+  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    await post(`/bookings/${booking.value.id}/reject`, {
-      rejection_reason: rejectReasonDropdown.value,
-      officer_notes: rejectionReasonText.value
-    })
+    for (const item of targets) {
+      await post(`/bookings/${item.id}/reject`, {
+        rejection_reason: rejectReasonDropdown.value,
+        officer_notes: rejectionReasonText.value
+      })
+    }
     showRejectModal.value = false
     await loadBooking()
     await showSuccess('ปฏิเสธการนัดหมายและเลื่อนลำดับคิวเรียบร้อย', 'สำเร็จ')
@@ -878,6 +1006,7 @@ const confirmReject = async () => {
 const handleMarkVisited = async () => {
   if (!booking.value) return
   const b = booking.value
+  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
   const confirmed = await showConfirm(
     `ยืนยันว่าคุณ ${b.tenant_name} เข้าชมแผง ${appointmentStallSummary.value} เรียบร้อยแล้วใช่หรือไม่?\n(ระบบจะเปลี่ยนสถานะเป็น "รอผู้เช่ายื่นคำร้อง" เพื่อให้ผู้เช่ายื่นคำร้องขอเช่าแผงนี้ได้ทันที)`,
     {
@@ -890,9 +1019,11 @@ const handleMarkVisited = async () => {
   if (!confirmed) return
   actionLoading.value = true
   try {
-    await post(`/bookings/${b.id}/mark-visited`, {
-      officer_notes: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย รอผู้เช่ายื่นคำร้อง'
-    })
+    for (const item of targets) {
+      await post(`/bookings/${item.id}/mark-visited`, {
+        officer_notes: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย รอผู้เช่ายื่นคำร้อง'
+      })
+    }
     await loadBooking()
     await showSuccess('ยืนยันการเช่าเรียบร้อยแล้ว สถานะเปลี่ยนเป็น "รอผู้เช่ายื่นคำร้อง"', 'สำเร็จ')
   } catch (err: any) {
@@ -906,12 +1037,12 @@ const handleMarkVisited = async () => {
 const handleOfficerCancel = async () => {
   if (!booking.value) return
   const b = booking.value
-  const isQueue = b.status === 'waiting_queue'
+  const isQueue = isQueueBooking(b)
   const isInterested = b.status === 'interested' || b.status === 'pending_decision'
   const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
   const title = isQueue ? 'ยืนยันยกเลิกการต่อคิว' : isInterested ? 'ยืนยันยกเลิกการจอง' : 'ยืนยันยกเลิกนัดหมาย'
   const message = isQueue
-    ? `คุณต้องการ "ยกเลิกการต่อคิว" ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value} คิวที่ ${b.queue_position || 1}) ใช่หรือไม่?\n(ระบบจะนำชื่อออกจากคิวและปรับลำดับคิวข้างหลังขึ้นมาแทน)`
+    ? `คุณต้องการ "ยกเลิกการต่อคิว" ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value} คิวสำรองที่ ${b.queue_position || b.queue_number || 1}) ใช่หรือไม่?\n(ระบบจะนำชื่อออกจากคิวและปรับลำดับคิวข้างหลังขึ้นมาแทน)`
     : isInterested
       ? `คุณต้องการยกเลิกการจอง / บันทึกการสละสิทธิ์ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value}) ใช่หรือไม่?\n(ระบบจะปล่อยสิทธิ์แผงค้าและปรับลำดับคิวให้คิวถัดไปทันที)`
       : `คุณต้องการ "ยกเลิกนัดหมาย" ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value}) ใช่หรือไม่?\n(ระบบจะบันทึกยกเลิกและปล่อยสิทธิ์ให้คิวถัดไป)`
@@ -956,19 +1087,19 @@ const handleOfficerCancel = async () => {
 const handleTenantCancel = async (reason: string) => {
   if (!booking.value) return
   const b = booking.value
-  const isQueue = b.status === 'waiting_queue'
+  const isQueue = isQueueBooking(b)
   const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
   const isMultiStall = targets.length > 1
   const confirmed = await showConfirm(
     isQueue
-      ? `คุณต้องการยกเลิกการต่อคิวแผง ${b.stall_number} (คิวที่ ${b.queue_position || 1}) หรือไม่?\n(หากยกเลิก คิวจะถูกปล่อยและไม่สามารถกู้คืนได้)`
+      ? `คุณต้องการสละสิทธิ์การต่อคิวแผง ${b.stall_number} (คิวสำรองที่ ${b.queue_position || b.queue_number || 1}) หรือไม่?\n(หากสละสิทธิ์ คิวจะถูกปล่อยและไม่สามารถกู้คืนได้)`
       : isMultiStall
         ? `คุณต้องการยกเลิกนัดหมายรหัส ${formatBookingNumber(b.booking_number)} ทั้งหมด ${targets.length} แผง (${appointmentStallSummary.value}) หรือไม่?\n(หากต้องการสละสิทธิ์เฉพาะบางแผง สามารถกดปุ่มสละสิทธิ์แยกรายแผงในการ์ดได้)`
         : `คุณต้องการยกเลิกรายการนี้หรือไม่? ${b.holding_stall ? '(หากยกเลิก แผงจะถูกส่งต่อให้คิวถัดไปทันที)' : ''}`,
     {
-      title: isMultiStall ? `ยืนยันยกเลิกนัดหมาย (${targets.length} แผง)` : 'ยืนยันยกเลิกการจอง',
+      title: isQueue ? 'ยืนยันสละสิทธิ์คิวสำรอง' : isMultiStall ? `ยืนยันยกเลิกนัดหมาย (${targets.length} แผง)` : 'ยืนยันยกเลิกการจอง',
       type: 'warning',
-      confirmText: 'ยืนยันยกเลิก',
+      confirmText: isQueue ? 'ยืนยันสละสิทธิ์' : 'ยืนยันยกเลิก',
       cancelText: 'ย้อนกลับ'
     }
   )
@@ -1013,12 +1144,15 @@ const openSelectSlotModal = () => {
 
 const confirmSelectSlot = async () => {
   if (!booking.value) return
+  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    await post(`/bookings/${booking.value.id}/select-slot`, {
-      visit_date: slotDate.value,
-      visit_time_slot: slotTime.value
-    })
+    for (const item of targets) {
+      await post(`/bookings/${item.id}/select-slot`, {
+        visit_date: slotDate.value,
+        visit_time_slot: slotTime.value
+      })
+    }
     showSelectSlotModal.value = false
     await loadBooking()
     await showSuccess('บันทึกวันนัดหมายใหม่เรียบร้อยแล้ว', 'สำเร็จ')
@@ -1092,6 +1226,19 @@ watch(() => route.params.id, loadBooking)
 .next-action-copy { flex: 1; min-width: 0; }.next-action-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; color: #64748b; font-size: .75rem; font-weight: 650; }.next-action-owner { padding: 2px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; }.next-action-copy h2 { margin: 0; color: #0f172a; font-size: 1rem; line-height: 1.35; }.next-action-copy p { margin: 3px 0 0; color: #64748b; font-size: .8rem; line-height: 1.45; }.next-action-buttons { flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
 .next-action-waiting { border-color: #bae6fd; border-left-color: #0ea5e9; }.next-action-waiting .next-action-icon { background: #f0f9ff; color: #0284c7; }.next-action-waiting .next-action-owner { background: #e0f2fe; color: #0369a1; }
 .next-action-complete { border-color: #e2e8f0; border-left-color: #94a3b8; }.next-action-complete .next-action-icon { background: #f1f5f9; color: #64748b; }.next-action-complete .next-action-owner { background: #f1f5f9; color: #64748b; }
+.queue-context-banner { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; margin-bottom: 16px; border: 1px solid #fde68a; border-left: 4px solid #d97706; border-radius: 14px; background: #fffbeb; color: #78350f; }
+.qcb-icon { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border-radius: 10px; background: #fef3c7; color: #d97706; }
+.qcb-body { flex: 1; min-width: 0; }
+.qcb-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.qcb-header strong { font-size: 0.9375rem; font-weight: 700; color: #92400e; }
+.qcb-pill { padding: 3px 10px; border-radius: 999px; background: #fef3c7; border: 1px solid #fcd34d; color: #b45309; font-size: 0.75rem; font-weight: 700; }
+.qcb-details { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; font-size: 0.84rem; color: #78350f; }
+.qcb-detail-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qcb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.qcb-dot.is-holder { background: #10b981; }
+.qcb-dot.is-queue { background: #d97706; }
+.qcb-pdpa { font-size: 0.78rem; color: #92400e; }
+.qcb-note { margin: 0; padding-top: 6px; border-top: 1px dashed #fcd34d; font-size: 0.8125rem; color: #92400e; line-height: 1.45; }
 .summary-shell { padding: 24px; }
 .summary-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; padding: 0 2px 18px; margin-bottom: 20px; border-bottom: 1px solid #eef2f6; }.summary-heading h2 { margin: 0; font-size: 1.18rem; }.summary-heading p { margin: 6px 0 0; color: #64748b; font-size: .8rem; }.summary-market { color: #475569; font-size: .84rem; font-weight: 600; }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; gap: 16px; }
