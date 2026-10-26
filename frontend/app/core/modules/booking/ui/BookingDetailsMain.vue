@@ -349,41 +349,60 @@
               </div>
               <dl class="detail-list">
                 <div><dt>ตลาด</dt><dd>{{ booking.market_name || '-' }}</dd></div>
-                <div><dt>โครงการ</dt><dd>{{ booking.project_name || '-' }}</dd></div>
+                <div><dt>โครงการ</dt><dd>{{ bookingProjectsSummary }}</dd></div>
                 <div>
-                  <dt>หมายเลขแผง</dt>
+                  <dt>แผงค้าที่คงเหลือ</dt>
                   <dd class="primary-value">
                     {{ appointmentStallSummary }}
                   </dd>
                 </div>
-                <div><dt>โซนตลาด</dt><dd>{{ booking.stall_zone_name || '-' }}</dd></div>
-                <div><dt>อัตราค่าเช่า</dt><dd class="money-value">฿{{ Number(appointmentTotalMonthlyRate || 0).toLocaleString() }}/เดือน</dd></div>
+                <div><dt>โซนตลาด</dt><dd>{{ booking.stall_zone_name || bookingProjectsSummary }}</dd></div>
+                <div><dt>ยอดค่าเช่ารวม (แผงที่เหลือ)</dt><dd class="money-value">฿{{ Number(appointmentTotalMonthlyRate || 0).toLocaleString() }}/เดือน</dd></div>
+                <div><dt>เงินประกันรวม (แผงที่เหลือ)</dt><dd class="money-value">฿{{ Number(appointmentTotalDeposit || 0).toLocaleString() }}</dd></div>
               </dl>
 
               <!-- Multi-stall breakdown inside Booking Details -->
-              <div v-if="siblingBookings.length > 1" class="detail-multi-stalls">
-                <div class="dms-title">รายการแผงค้าในรอบนัดหมายนี้ ({{ siblingBookings.length }} แผง)</div>
-                <div v-for="sub in siblingBookings" :key="sub.id" class="dms-row">
-                  <div class="dms-left">
-                    <strong>แผง {{ sub.stall_number }}</strong>
-                    <span>฿{{ Number(sub.stall_monthly_rate || 0).toLocaleString() }}/เดือน</span>
-                  </div>
-                  <div v-if="currentRole === 'tenant'" class="dms-actions">
-                    <AppButton
-                      v-if="sub.status === 'interested'"
-                      variant="outline"
-                      size="sm"
-                      @click="openLeaseForSubBooking(sub)"
+              <div class="detail-multi-stalls" style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <div class="dms-title" style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 10px;">
+                  รายการแผงย่อยในใบจอง ({{ activeSiblingBookings.length > 0 && activeSiblingBookings.length < siblingBookings.length ? `${activeSiblingBookings.length}/${siblingBookings.length} แผงปกติ` : `${siblingBookings.length} แผง` }})
+                </div>
+                <div
+                  v-for="sub in siblingBookings"
+                  :key="sub.id || sub.stall_number"
+                  class="dms-row"
+                  :style="isTerminalStallStatus(sub.status) ? 'opacity: 0.65; background: #f8fafc;' : ''"
+                  style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px; flex-wrap: wrap;"
+                >
+                  <div class="dms-left" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <strong style="font-size: 0.9rem; color: #0f172a;">แผง {{ sub.stall_number }}</strong>
+                    <span
+                      v-if="getSubStallProjectName(sub)"
+                      style="font-size: 0.78rem; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 6px; font-weight: 600;"
                     >
-                      ยื่นคำร้องแผงนี้
-                    </AppButton>
+                      {{ getSubStallProjectName(sub) }}
+                    </span>
+                    <span class="status-badge" :class="getSubStatusToneClass(sub.status)" style="font-size: 0.75rem; padding: 2px 9px;">
+                      {{ getStatusLabelByCode(sub.status) }}
+                    </span>
+                    <span style="font-size: 0.82rem; color: #334155; font-weight: 600;">
+                      ค่าเช่า ฿{{ Number(sub.monthly_rent || sub.stall_monthly_rate || 0).toLocaleString() }}/ด. • มัดจำ ฿{{ Number(sub.deposit || sub.deposit_fee || sub.monthly_rent || sub.stall_monthly_rate || 0).toLocaleString() }}
+                    </span>
+                    <span
+                      v-if="Number(sub.waitlist_count || 0) > 0"
+                      style="display: inline-flex; align-items: center; gap: 4px; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600;"
+                    >
+                      คิวรอ {{ sub.waitlist_count }}
+                    </span>
+                  </div>
+                  <div class="dms-actions" style="display: flex; align-items: center; gap: 6px;">
                     <AppButton
-                      v-if="['pending', 'pending_approval', 'approved', 'interested'].includes(sub.status)"
+                      v-if="!isTerminalStallStatus(sub.status) && !['lease_applied', 'completed'].includes(sub.status)"
                       variant="danger-outline"
                       size="sm"
+                      :disabled="actionLoading"
                       @click="handleCancelSubBooking(sub)"
                     >
-                      {{ sub.status === 'interested' ? 'สละสิทธิ์แผงนี้' : 'ยกเลิกแผงนี้' }}
+                      ยกเลิกแผงนี้
                     </AppButton>
                   </div>
                 </div>
@@ -690,19 +709,177 @@ const currentRole = computed<'tenant' | 'officer'>(() => {
   return isOfficer ? 'officer' : 'tenant'
 })
 
+const isTerminalStallStatus = (status?: string) => {
+  return ['cancelled', 'rejected', 'not_interested', 'no_show', 'terminated'].includes(String(status || ''))
+}
+
+const getSubStatusToneClass = (status?: string) => {
+  if (isTerminalStallStatus(status)) return 'tone-muted'
+  if (['approved', 'interested'].includes(String(status || ''))) return 'tone-success'
+  if (['lease_applied', 'completed'].includes(String(status || ''))) return 'tone-purple'
+  return 'tone-warning'
+}
+
+const activeSiblingBookings = computed(() => {
+  return siblingBookings.value.filter(s => !isTerminalStallStatus(s.status))
+})
+
+const STALL_PREFIX_PROJECT_MAP: Record<string, string> = {
+  'BKA-01': 'โครงการ 01 (แผงร้านค้า)',
+  'BKA-02': 'โครงการ 02 (อาคารพาณิชย์)',
+  'BKA-03': 'โครงการ 03 (พื้นที่ด้านซอย 127)',
+  'BKA-04': 'โครงการ 04 (พื้นที่ด้านซอย 125)',
+  'BKH-01': 'โครงการ 01 (5 เบ็ดเตล็ด)',
+  'BKH-02': 'โครงการ 02 (4 เบ็ดเตล็ด)',
+  'BKH-03': 'โครงการ 03 (3 อาหารสำเร็จรูป)',
+  'BKH-04': 'โครงการ 04 (6 เนื้อสัตว์ อาหารทะเล)',
+  'BKH-05': 'โครงการ 05 (1 ผัก-ผลไม้)',
+  'BKH-06': 'โครงการ 06 (2 อาหารปรุงและอาหารสำเร็จรูป)',
+  'JJ-1': 'โครงการที่ 1',
+  'JJ-3': 'โครงการที่ 3',
+  'JJ-4': 'โครงการที่ 4',
+  'JJ-5': 'โครงการที่ 5',
+  'JJ-6': 'โครงการที่ 6',
+  'JJ-7': 'โครงการที่ 7',
+  'JJ-8': 'โครงการที่ 8',
+  'JJ-9': 'โครงการที่ 9',
+  'JJ-10': 'โครงการที่ 10',
+  'JJ-11': 'โครงการที่ 11',
+  'JJ-12': 'โครงการที่ 12',
+  'JJ-13': 'โครงการที่ 13',
+  'JJ-14': 'โครงการที่ 14',
+  'JJ-15': 'โครงการที่ 15',
+  'JJ-16': 'โครงการที่ 16',
+  'JJ-17': 'โครงการที่ 17',
+  'JJ-18': 'โครงการที่ 18',
+  'JJ-19': 'โครงการที่ 19',
+  'JJ-20': 'โครงการที่ 20/2',
+  'JJ-21': 'โครงการที่ 21',
+  'JJ-22': 'โครงการที่ 22',
+  'JJ-23': 'โครงการที่ 23',
+  'JJ-24': 'โครงการที่ 24',
+  'JJ-25': 'โครงการที่ 25',
+  'JJ-26': 'โครงการที่ 26',
+  'JJ-27': 'โครงการที่ 27',
+  'JJ-28': 'โครงการที่ 28',
+  'JJ-29': 'โครงการที่ 29/2',
+  'MIN-01': 'โครงการ 01 (โซนหลัก (ชั้นล่าง))',
+  'MIN-02': 'โครงการ 02 (แผงค้าเบ็ดเตล็ด (ชั้นบน))',
+  'MIN-03': 'โครงการ 03 (โครงการที่ 3 (ชั้นล่าง))',
+  'MIN-04': 'โครงการ 04 (โครงการที่ 2 (ชั้นล่าง))',
+  'MIN-05': 'โครงการ 05 (โครงการที่ 4 (ชั้นล่าง))',
+  'MIN-06': 'โครงการ 06 (โครงการที่ 1 (ชั้นล่าง))',
+  'MIN-07': 'โครงการ 07 (โครงการที่ 7 (ชั้นล่าง))',
+  'MIN-08': 'โครงการ 08 (โครงการที่ 6 (ชั้นล่าง))',
+  'MIN-09': 'โครงการ 09 (โครงการที่ 8 (ชั้นล่าง))',
+  'MIN-10': 'โครงการ 10 (โครงการที่ 5 (ชั้นล่าง))',
+  'MIN-11': 'โครงการ 11 (แผงค้าต้นไม้ (ชั้นบน))',
+  'MIN-12': 'โครงการ 12 (โซนหลัก (ชั้นบน))',
+  'NON-01': 'โครงการ 01 (ด้านใน)',
+  'NON-02': 'โครงการ 02 (โซนหลัก)',
+  'NON-03': 'โครงการ 03 (ด้านนอก)',
+  'NON-04': 'โครงการ 04 (นอกตลาด)',
+  'PRA-01': 'โครงการ 01 (D)',
+  'PRA-02': 'โครงการ 02 (F)',
+  'PRA-03': 'โครงการ 03 (C)',
+  'PRA-04': 'โครงการ 04 (A)',
+  'PRA-05': 'โครงการ 05 (8)',
+  'PRA-06': 'โครงการ 06 (6)',
+  'PRA-07': 'โครงการ 07 (4)',
+  'PRA-08': 'โครงการ 08 (2)',
+  'PRA-09': 'โครงการ 09 (E)',
+  'PRA-10': 'โครงการ 10 (9)',
+  'PRA-11': 'โครงการ 11 (7)',
+  'PRA-12': 'โครงการ 12 (5)',
+  'PRA-13': 'โครงการ 13 (3)',
+  'PRA-14': 'โครงการ 14 (1)',
+  'PRA-15': 'โครงการ 15 (โซนหลัก)',
+  'PRA-16': 'โครงการ 16 (G)',
+  'RBU-01': 'โครงการ 01 (อาคารตลาดราษฎร์บูรณะ)',
+  'RDP-01': 'โครงการ 01 (M)',
+  'RDP-02': 'โครงการ 02 (B)',
+  'RDP-03': 'โครงการ 03 (D)',
+  'RDP-04': 'โครงการ 04 (F)',
+  'RDP-05': 'โครงการ 05 (E)',
+  'RDP-06': 'โครงการ 06 (C)',
+  'RDP-07': 'โครงการ 07 (A)',
+  'RDP-08': 'โครงการ 08 (G)',
+  'RDP-09': 'โครงการ 09 (H)',
+  'RDP-10': 'โครงการ 10 (โซนหลัก)',
+  'SIN-01': 'โครงการ 01',
+  'THO-01': 'โครงการ 01 (4)',
+  'THO-02': 'โครงการ 02 (3)',
+  'THO-03': 'โครงการ 03 (1)',
+  'THO-04': 'โครงการ 04 (11)',
+  'THO-05': 'โครงการ 05 (2)',
+  'THO-06': 'โครงการ 06 (6)',
+  'THO-07': 'โครงการ 07 (7)',
+  'THO-08': 'โครงการ 08 (8)',
+  'THO-09': 'โครงการ 09 (โซนหลัก)',
+  'THO-10': 'โครงการ 10 (5)',
+  'THO-11': 'โครงการ 11 (9)',
+  'THO-12': 'โครงการ 12 (1-2)',
+  'THO-13': 'โครงการ 13 (ด้านนอก)',
+  'TWR-01': 'โซน 1 (อาคารตลาดสดด้านใน)',
+  'TWR-02': 'โซน 2 (อาคารตลาดสดรอบนอก)',
+  'TWR-03': 'โซน 3 (ศูนย์อาหารเทเวศร์)',
+  'TWR-04': 'โซน 4 (ลานต้นโพธิ์)',
+  'WON-01': 'โครงการ 01 (ฉ)',
+  'WON-02': 'โครงการ 02 (ง)',
+  'WON-03': 'โครงการ 03 (จ)',
+  'WON-04': 'โครงการ 04 (ก)',
+  'WON-05': 'โครงการ 05 (ข)',
+  'WON-06': 'โครงการ 06 (ค)',
+  'WON-07': 'โครงการ 07 (โซนหลัก)'
+}
+
+const getSubStallProjectName = (sub: any): string => {
+  const rawCode = String(sub?.stall_number || sub?.stall_ident || '').split(',')[0].trim().toUpperCase()
+  const parts = rawCode.split('-')
+  if (parts.length >= 2) {
+    const prefix = `${parts[0]}-${parts[1]}`
+    if (STALL_PREFIX_PROJECT_MAP[prefix]) {
+      return STALL_PREFIX_PROJECT_MAP[prefix]
+    }
+  }
+  return sub?.project_name || sub?.stall_project_name || sub?.stall_zone_name || booking.value?.project_name || ''
+}
+
+const bookingProjectsSummary = computed(() => {
+  const source = activeSiblingBookings.value.length > 0 ? activeSiblingBookings.value : siblingBookings.value
+  if (source.length > 0) {
+    const uniqueProjs = Array.from(new Set(source.map(s => getSubStallProjectName(s)?.trim()).filter(Boolean)))
+    if (uniqueProjs.length > 0) return uniqueProjs.join(', ')
+  }
+  return booking.value?.project_name || '-'
+})
+
 const appointmentStallSummary = computed(() => {
-  if (siblingBookings.value.length > 1) {
-    const codes = siblingBookings.value.map(s => s.stall_number).filter(Boolean).join(', ')
-    return `${codes} (${siblingBookings.value.length} แผง)`
+  const source = activeSiblingBookings.value.length > 0 ? activeSiblingBookings.value : siblingBookings.value
+  if (source.length > 1) {
+    const codes = source.map(s => s.stall_number).filter(Boolean).join(', ')
+    return `${codes} (${source.length} แผง)`
+  }
+  if (source.length === 1) {
+    return source[0].stall_number || booking.value?.stall_number || '-'
   }
   return booking.value?.stall_number || '-'
 })
 
 const appointmentTotalMonthlyRate = computed(() => {
-  if (siblingBookings.value.length > 1) {
-    return siblingBookings.value.reduce((sum, s) => sum + (Number(s.stall_monthly_rate) || 0), 0)
+  const source = activeSiblingBookings.value.length > 0 ? activeSiblingBookings.value : siblingBookings.value
+  if (source.length > 0) {
+    return source.reduce((sum, s) => sum + (Number(s.monthly_rent || s.stall_monthly_rate) || 0), 0)
   }
-  return Number(booking.value?.stall_monthly_rate || 0)
+  return Number(booking.value?.total_monthly_rent || booking.value?.monthly_rent || booking.value?.stall_monthly_rate || 0)
+})
+
+const appointmentTotalDeposit = computed(() => {
+  const source = activeSiblingBookings.value.length > 0 ? activeSiblingBookings.value : siblingBookings.value
+  if (source.length > 0) {
+    return source.reduce((sum, s) => sum + (Number(s.deposit || s.deposit_fee || s.monthly_rent || s.stall_monthly_rate) || 0), 0)
+  }
+  return Number(booking.value?.total_deposit || booking.value?.deposit || booking.value?.deposit_fee || appointmentTotalMonthlyRate.value)
 })
 
 const steps = [
@@ -794,7 +971,7 @@ const isBookingOwnedByCurrentTenant = (item: any) => {
   const bookingName = normalizeBookingOwnerName(item?.tenant_name || item?.applicant_name)
   const currentName = normalizeBookingOwnerName(currentUser?.full_name)
   if (bookingName && currentName && bookingName === currentName) return true
-  const demoOwnerNames: Record<string, string> = { tenant: 'สมชาย ใจดี', tenant2: 'นภาพร รัตนศิลป์' }
+  const demoOwnerNames: Record<string, string> = { tenant: 'สมชาย ใจดี', tenant2: 'นภาพร รัตนศิลป์', tenant3: 'วิชัย เจริญทรัพย์' }
   return bookingName === normalizeBookingOwnerName(demoOwnerNames[String(currentUser?.username || '')])
 }
 const actionableStatuses = ['pending', 'pending_approval', 'pending_slot', 'waiting_queue', 'approved', 'interested', 'pending_decision', 'lease_applied', 'completed']
@@ -869,9 +1046,21 @@ const nextAction = computed(() => {
       : { tone: 'action', owner: 'คุณต้องทำ', title: 'ไปตามวัน เวลา และจุดนัดหมาย', description: `${formatVisitDate(item)} · ${getVisitSlot(item)} · ${item?.meeting_point || 'จุดนัดพบตามที่เจ้าหน้าที่แจ้ง'}` }
   }
   if (['interested', 'pending_decision'].includes(status)) {
+    const days = Number(item?.application_deadline_days || 3)
+    let deadlineNote = `ภายใน ${days} วัน`
+    if (item?.expires_at) {
+      const exp = new Date(item.expires_at)
+      if (!isNaN(exp.getTime())) {
+        const diffHours = Math.max(1, Math.ceil((exp.getTime() - Date.now()) / 3600000))
+        const diffDays = Math.ceil(diffHours / 24)
+        const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+        const dStr = `${exp.getDate()} ${thaiMonthsShort[exp.getMonth()]} ${exp.getFullYear() + 543}`
+        deadlineNote = `ภายใน ${days} วัน • ครบกำหนด ${dStr} (${diffHours < 24 ? `เหลืออีก ${diffHours} ชม.` : `เหลืออีก ${diffDays} วัน`})`
+      }
+    }
     return isOfficer
-      ? { tone: 'waiting', owner: 'ผู้จองต้องทำ', title: 'ยืนยันการเช่าแล้ว รอผู้เช่ากรอกและส่งคำร้องขอเช่าแผงค้า', description: 'เมื่อผู้เช่าส่งคำร้องแล้ว สถานะจะเปลี่ยนเป็น "ยื่นคำร้องสำเร็จ"' }
-      : { tone: 'action', owner: 'คุณต้องทำ', title: 'ยื่นคำร้องขอเช่าแผงนี้', description: 'กรอกคำร้องและส่งเอกสารเพื่อดำเนินการเช่าในขั้นตอนสุดท้าย' }
+      ? { tone: 'waiting', owner: 'ผู้จองต้องทำ', title: `ยืนยันการเช่าแล้ว รอผู้เช่ายื่นคำร้องขอเช่าแผงค้า (${deadlineNote})`, description: 'เมื่อผู้เช่าส่งคำร้องแล้ว สถานะจะเปลี่ยนเป็น "ยื่นคำร้องสำเร็จ" หากเกินกำหนดระบบจะตัดสิทธิ์และเลื่อนคิวอัตโนมัติ' }
+      : { tone: 'action', owner: 'คุณต้องทำ', title: `ยื่นคำร้องขอเช่าแผงนี้ (${deadlineNote})`, description: 'กรอกคำร้องและส่งเอกสารภายในระยะเวลาที่กำหนด หากเกินกำหนดระบบจะตัดสิทธิ์และเลื่อนคิวให้ลำดับถัดไปอัตโนมัติ' }
   }
   return { tone: 'waiting', owner: 'ระบบกำลังตรวจสอบ', title: 'ติดตามสถานะจากหน้านี้', description: 'ยังไม่มีขั้นตอนที่คุณต้องดำเนินการในขณะนี้' }
 })
@@ -885,12 +1074,12 @@ const loadBooking = async () => {
     setCachedScheduleBookings(items)
     const key = String(route.params.id || '')
     const found = items.find(item => {
-      const matchesRoute = String(item.id) === key || String(item.booking_number).replace(/^#/, '') === key.replace(/^#/, '')
-      return matchesRoute && isBookingOwnedByCurrentTenant(item)
+      const matchesParent = String(item.id) === key || String(item.booking_number).replace(/^#/, '') === key.replace(/^#/, '')
+      const matchesSub = Array.isArray(item.sub_bookings) && item.sub_bookings.some((s: any) => String(s.id) === key)
+      return (matchesParent || matchesSub) && isBookingOwnedByCurrentTenant(item)
     }) || null
     if (found) {
-      // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด)
-      siblingBookings.value = [found]
+      siblingBookings.value = Array.isArray(found.sub_bookings) && found.sub_bookings.length > 0 ? found.sub_bookings : [found]
       booking.value = found
       if (isQueueBooking(found) && found.stall_number) {
         try {
@@ -924,18 +1113,20 @@ const openLeaseForSubBooking = (sub: any) => {
 
 const handleCancelSubBooking = async (sub: any) => {
   const confirmed = await showConfirm(
-    `คุณต้องการสละสิทธิ์/ยกเลิกเฉพาะแผง ${sub.stall_number} ใช่หรือไม่?\n(ระบบจะปล่อยสิทธิ์เฉพาะแผง ${sub.stall_number} ให้คิวถัดไป ส่วนแผงอื่นในนัดหมายนี้ยังคงอยู่ตามปกติ)`,
-    { title: `ยืนยันสละสิทธิ์แผง ${sub.stall_number}`, type: 'warning', confirmText: 'ยืนยันเฉพาะแผงนี้', cancelText: 'ย้อนกลับ' }
+    `คุณต้องการยกเลิก/สละสิทธิ์เฉพาะแผง ${sub.stall_number} ใช่หรือไม่?\n(ระบบจะปล่อยสิทธิ์เฉพาะแผง ${sub.stall_number} ให้ผู้รอคิวลำดับแรกหรือปล่อยว่าง ส่วนแผงอื่นในใบจองนี้ยังคงอยู่ตามปกติ)`,
+    { title: `ยืนยันยกเลิกเฉพาะแผง ${sub.stall_number}`, type: 'warning', confirmText: 'ยืนยันยกเลิกแผงนี้', cancelText: 'ย้อนกลับ' }
   )
   if (!confirmed) return
   actionLoading.value = true
   try {
     await post(`/bookings/${sub.id}/cancel`, {
-      reason: 'ผู้เช่าขอสละสิทธิ์เฉพาะแผงนี้',
+      reason: currentRole.value === 'officer' ? 'เจ้าหน้าที่ยกเลิกเฉพาะแผงนี้' : 'ผู้เช่าขอยกเลิกเฉพาะแผงนี้',
+      stall_ident: sub.stall_number,
+      cancel_all: false,
       by_officer: currentRole.value === 'officer'
     })
     await loadBooking()
-    await showSuccess(`สละสิทธิ์เฉพาะแผง ${sub.stall_number} เรียบร้อยแล้ว`, 'สำเร็จ')
+    await showSuccess(`ยกเลิกเฉพาะแผง ${sub.stall_number} เรียบร้อยแล้ว ยอดเงินและมัดจำคำนวณจากแผงที่เหลือโดยอัตโนมัติ`, 'สำเร็จ')
   } catch (error: any) {
     await showError(error?.data?.detail || 'ไม่สามารถดำเนินการได้', 'ข้อผิดพลาด')
   } finally {
@@ -954,16 +1145,13 @@ const openApproveModal = () => {
 
 const confirmApprove = async () => {
   if (!booking.value) return
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/approve`, {
-        meeting_point: approveMeetingPoint.value,
-        escort_officer: approveEscortOfficer.value,
-        officer_notes: officerNotes.value
-      })
-    }
+    await post(`/bookings/${booking.value.id}/approve`, {
+      meeting_point: approveMeetingPoint.value,
+      escort_officer: approveEscortOfficer.value,
+      officer_notes: officerNotes.value
+    })
     showApproveModal.value = false
     await loadBooking()
     await showSuccess('อนุมัตินัดหมายการเข้าชมเรียบร้อยแล้ว', 'อนุมัติสำเร็จ')
@@ -983,15 +1171,12 @@ const openRejectModal = () => {
 
 const confirmReject = async () => {
   if (!booking.value) return
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/reject`, {
-        rejection_reason: rejectReasonDropdown.value,
-        officer_notes: rejectionReasonText.value
-      })
-    }
+    await post(`/bookings/${booking.value.id}/reject`, {
+      rejection_reason: rejectReasonDropdown.value,
+      officer_notes: rejectionReasonText.value
+    })
     showRejectModal.value = false
     await loadBooking()
     await showSuccess('ปฏิเสธการนัดหมายและเลื่อนลำดับคิวเรียบร้อย', 'สำเร็จ')
@@ -1006,9 +1191,8 @@ const confirmReject = async () => {
 const handleMarkVisited = async () => {
   if (!booking.value) return
   const b = booking.value
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
   const confirmed = await showConfirm(
-    `ยืนยันว่าคุณ ${b.tenant_name} เข้าชมแผง ${appointmentStallSummary.value} เรียบร้อยแล้วใช่หรือไม่?\n(ระบบจะเปลี่ยนสถานะเป็น "รอผู้เช่ายื่นคำร้อง" เพื่อให้ผู้เช่ายื่นคำร้องขอเช่าแผงนี้ได้ทันที)`,
+    `ยืนยันว่าคุณ ${b.tenant_name} เข้าชมแผง ${appointmentStallSummary.value} เรียบร้อยแล้วใช่หรือไม่?\n(ระบบจะเปลี่ยนสถานะเป็น "รอผู้เช่ายื่นคำร้อง" เพื่อให้ผู้เช่ายื่นคำร้องขอเช่าแผงที่คงเหลือในใบจองนี้ได้ทันที)`,
     {
       title: 'ยืนยันการเช่า',
       type: 'info',
@@ -1019,11 +1203,9 @@ const handleMarkVisited = async () => {
   if (!confirmed) return
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/mark-visited`, {
-        officer_notes: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย รอผู้เช่ายื่นคำร้อง'
-      })
-    }
+    await post(`/bookings/${b.id}/mark-visited`, {
+      officer_notes: 'เจ้าหน้าที่ยืนยันการเช่าเรียบร้อย รอผู้เช่ายื่นคำร้อง'
+    })
     await loadBooking()
     await showSuccess('ยืนยันการเช่าเรียบร้อยแล้ว สถานะเปลี่ยนเป็น "รอผู้เช่ายื่นคำร้อง"', 'สำเร็จ')
   } catch (err: any) {
@@ -1039,13 +1221,13 @@ const handleOfficerCancel = async () => {
   const b = booking.value
   const isQueue = isQueueBooking(b)
   const isInterested = b.status === 'interested' || b.status === 'pending_decision'
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
-  const title = isQueue ? 'ยืนยันยกเลิกการต่อคิว' : isInterested ? 'ยืนยันยกเลิกการจอง' : 'ยืนยันยกเลิกนัดหมาย'
+  const activeCount = activeSiblingBookings.value.length
+  const title = isQueue ? 'ยืนยันยกเลิกการต่อคิว' : isInterested ? 'ยืนยันยกเลิกใบจองทั้งใบ' : 'ยืนยันยกเลิกนัดหมายทั้งใบ'
   const message = isQueue
     ? `คุณต้องการ "ยกเลิกการต่อคิว" ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value} คิวสำรองที่ ${b.queue_position || b.queue_number || 1}) ใช่หรือไม่?\n(ระบบจะนำชื่อออกจากคิวและปรับลำดับคิวข้างหลังขึ้นมาแทน)`
     : isInterested
-      ? `คุณต้องการยกเลิกการจอง / บันทึกการสละสิทธิ์ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value}) ใช่หรือไม่?\n(ระบบจะปล่อยสิทธิ์แผงค้าและปรับลำดับคิวให้คิวถัดไปทันที)`
-      : `คุณต้องการ "ยกเลิกนัดหมาย" ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value}) ใช่หรือไม่?\n(ระบบจะบันทึกยกเลิกและปล่อยสิทธิ์ให้คิวถัดไป)`
+      ? `คุณต้องการยกเลิกใบจอง / บันทึกการสละสิทธิ์ของคุณ ${b.tenant_name} (แผง ${appointmentStallSummary.value}) ใช่หรือไม่?\n(หากต้องการยกเลิกเฉพาะบางแผง สามารถกดปุ่ม "ยกเลิกแผงนี้" แยกรายแผงด้านล่างได้)`
+      : `คุณต้องการ "ยกเลิกนัดหมายทั้งใบจอง" ของคุณ ${b.tenant_name} (${activeCount > 1 ? `รวม ${activeCount} แผง: ` : 'แผง '}${appointmentStallSummary.value}) ใช่หรือไม่?\n(หากต้องการยกเลิกเฉพาะบางแผง สามารถกดปุ่ม "ยกเลิกแผงนี้" แยกรายแผงด้านล่างได้)`
 
   const confirmed = await showConfirm(message, {
     title,
@@ -1057,16 +1239,15 @@ const handleOfficerCancel = async () => {
 
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/cancel`, {
-        reason: isQueue
-          ? 'เจ้าหน้าที่ยกเลิกการต่อคิวตามคำขอของผู้เช่า'
-          : isInterested
-            ? 'เจ้าหน้าที่บันทึกยกเลิกสิทธิ์ / ผู้เช่าแจ้งสละสิทธิ์ไม่ยื่นคำร้อง'
-            : 'เจ้าหน้าที่ยกเลิกการนัดหมาย / ผู้เช่าไม่มาตามนัด',
-        by_officer: true
-      })
-    }
+    await post(`/bookings/${b.id}/cancel`, {
+      reason: isQueue
+        ? 'เจ้าหน้าที่ยกเลิกการต่อคิวตามคำขอของผู้เช่า'
+        : isInterested
+          ? 'เจ้าหน้าที่บันทึกยกเลิกสิทธิ์ / ผู้เช่าแจ้งสละสิทธิ์ไม่ยื่นคำร้อง'
+          : 'เจ้าหน้าที่ยกเลิกการนัดหมาย / ผู้เช่าไม่มาตามนัด',
+      cancel_all: true,
+      by_officer: true
+    })
     await loadBooking()
     await showSuccess(
       isQueue
@@ -1088,16 +1269,16 @@ const handleTenantCancel = async (reason: string) => {
   if (!booking.value) return
   const b = booking.value
   const isQueue = isQueueBooking(b)
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [b]
-  const isMultiStall = targets.length > 1
+  const activeCount = activeSiblingBookings.value.length
+  const isMultiStall = activeCount > 1
   const confirmed = await showConfirm(
     isQueue
       ? `คุณต้องการสละสิทธิ์การต่อคิวแผง ${b.stall_number} (คิวสำรองที่ ${b.queue_position || b.queue_number || 1}) หรือไม่?\n(หากสละสิทธิ์ คิวจะถูกปล่อยและไม่สามารถกู้คืนได้)`
       : isMultiStall
-        ? `คุณต้องการยกเลิกนัดหมายรหัส ${formatBookingNumber(b.booking_number)} ทั้งหมด ${targets.length} แผง (${appointmentStallSummary.value}) หรือไม่?\n(หากต้องการสละสิทธิ์เฉพาะบางแผง สามารถกดปุ่มสละสิทธิ์แยกรายแผงในการ์ดได้)`
+        ? `คุณต้องการยกเลิกใบจองรหัส ${formatBookingNumber(b.booking_number)} ทั้งหมด ${activeCount} แผงที่เหลือ (${appointmentStallSummary.value}) หรือไม่?\n(หากต้องการยกเลิกเฉพาะบางแผง สามารถกดปุ่ม "ยกเลิกแผงนี้" แยกรายแผงด้านล่างได้)`
         : `คุณต้องการยกเลิกรายการนี้หรือไม่? ${b.holding_stall ? '(หากยกเลิก แผงจะถูกส่งต่อให้คิวถัดไปทันที)' : ''}`,
     {
-      title: isQueue ? 'ยืนยันสละสิทธิ์คิวสำรอง' : isMultiStall ? `ยืนยันยกเลิกนัดหมาย (${targets.length} แผง)` : 'ยืนยันยกเลิกการจอง',
+      title: isQueue ? 'ยืนยันสละสิทธิ์คิวสำรอง' : isMultiStall ? `ยืนยันยกเลิกใบจองทั้งใบ (${activeCount} แผง)` : 'ยืนยันยกเลิกการจอง',
       type: 'warning',
       confirmText: isQueue ? 'ยืนยันสละสิทธิ์' : 'ยืนยันยกเลิก',
       cancelText: 'ย้อนกลับ'
@@ -1107,12 +1288,11 @@ const handleTenantCancel = async (reason: string) => {
 
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/cancel`, {
-        reason,
-        by_officer: false
-      })
-    }
+    await post(`/bookings/${b.id}/cancel`, {
+      reason,
+      cancel_all: true,
+      by_officer: false
+    })
     await loadBooking()
     await showSuccess('ยกเลิกรายการเรียบร้อยแล้ว', 'สำเร็จ')
   } catch (err: any) {
@@ -1144,15 +1324,12 @@ const openSelectSlotModal = () => {
 
 const confirmSelectSlot = async () => {
   if (!booking.value) return
-  const targets = siblingBookings.value.length > 1 ? siblingBookings.value : [booking.value]
   actionLoading.value = true
   try {
-    for (const item of targets) {
-      await post(`/bookings/${item.id}/select-slot`, {
-        visit_date: slotDate.value,
-        visit_time_slot: slotTime.value
-      })
-    }
+    await post(`/bookings/${booking.value.id}/select-slot`, {
+      visit_date: slotDate.value,
+      visit_time_slot: slotTime.value
+    })
     showSelectSlotModal.value = false
     await loadBooking()
     await showSuccess('บันทึกวันนัดหมายใหม่เรียบร้อยแล้ว', 'สำเร็จ')

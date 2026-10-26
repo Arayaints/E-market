@@ -102,6 +102,12 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 	if strings.TrimSpace(req.StallIdent) == "" {
 		req.StallIdent = strings.TrimSpace(req.StallNumber)
 	}
+	if strings.TrimSpace(req.StallIdent) == "" && len(req.Stalls) > 0 {
+		req.StallIdent = strings.TrimSpace(req.Stalls[0].StallIdent)
+		if req.StallIdent == "" {
+			req.StallIdent = strings.TrimSpace(req.Stalls[0].StallNumber)
+		}
+	}
 	if strings.TrimSpace(req.ApplicantName) == "" {
 		req.ApplicantName = strings.TrimSpace(req.TenantName)
 	}
@@ -118,8 +124,8 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 			req.BusinessType = strings.TrimSpace(req.ProductType)
 		}
 	}
-	if req.StallIdent == "" || req.ApplicantName == "" || req.ApplicantPhone == "" {
-		respondError(c, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาระบุรหัสแผง ชื่อผู้จอง และเบอร์โทรศัพท์ให้ครบถ้วน"))
+	if req.StallIdent == "" && len(req.Stalls) == 0 {
+		respondError(c, responses.NewAppErr(http.StatusUnprocessableEntity, "กรุณาเลือกแผงที่ต้องการจองอย่างน้อย 1 แผง"))
 		return
 	}
 
@@ -129,6 +135,121 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, responses.SuccessResponse(res, http.StatusCreated))
+}
+
+// CreateWaitlist registers interest only. It must never create a booking or
+// appointment because the current holder still owns the stall.
+func (h *Handler) CreateWaitlist(c *gin.Context) {
+	if middlewares.GetUserRole(c) != "tenant" {
+		respondError(c, responses.NewAppErr(http.StatusForbidden, "เฉพาะบัญชีผู้เช่าเท่านั้นที่เข้าคิวแผงได้"))
+		return
+	}
+	var req requests.CreateWaitlistRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondError(c, err)
+		return
+	}
+	res, err := h.useCase.CreateWaitlist(middlewares.GetUserID(c), req)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, responses.SuccessResponse(res, http.StatusCreated))
+}
+
+func (h *Handler) GetMyWaitlist(c *gin.Context) {
+	role := middlewares.GetUserRole(c)
+	userID := middlewares.GetUserID(c)
+	if role == "admin" || role == "staff" {
+		userID = 0
+	}
+	res, err := h.useCase.GetMyWaitlist(userID)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) WithdrawWaitlist(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	if err := h.useCase.WithdrawWaitlist(id, middlewares.GetUserID(c), middlewares.GetUserRole(c)); err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"id": id, "status": "withdrawn"}, http.StatusOK))
+}
+
+func (h *Handler) DeclineWaitlist(c *gin.Context) {
+	h.WithdrawWaitlist(c)
+}
+
+func (h *Handler) GetWaitlistByStall(c *gin.Context) {
+	ident := strings.TrimSpace(c.Param("ident"))
+	if ident == "" {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "กรุณาระบุรหัสแผง"))
+		return
+	}
+	res, err := h.useCase.GetWaitlistByStall(ident, middlewares.GetUserID(c), middlewares.GetUserRole(c))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) AdvanceWaitlistByStall(c *gin.Context) {
+	ident := strings.TrimSpace(c.Param("ident"))
+	if ident == "" {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "กรุณาระบุรหัสแผง"))
+		return
+	}
+	res, err := h.useCase.AdvanceWaitlistByStall(ident, middlewares.GetUserID(c), middlewares.GetUserRole(c))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) CancelBookingStall(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	ident := strings.TrimSpace(c.Param("ident"))
+	var body struct {
+		Reason          string `json:"reason"`
+		RejectionReason string `json:"rejection_reason"`
+		OfficerNotes    string `json:"officer_notes"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	reason := strings.TrimSpace(body.Reason)
+	if reason == "" {
+		reason = strings.TrimSpace(body.RejectionReason)
+	}
+	if reason == "" {
+		reason = strings.TrimSpace(body.OfficerNotes)
+	}
+	role := middlewares.GetUserRole(c)
+	userID := middlewares.GetUserID(c)
+	if role != "admin" && role != "staff" {
+		if _, err := h.useCase.GetBookingByID(id, userID, role); err != nil {
+			respondError(c, err)
+			return
+		}
+	}
+	res, err := h.useCase.CancelBookingStall(id, ident, userID, role, reason)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
 
 // UpdateBookingStatus godoc
@@ -159,6 +280,8 @@ func (h *Handler) UpdateBookingStatus(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, responses.ValidateResponse(helpers.ConverstError(err)))
 		return
 	}
+	req.ActorRole = middlewares.GetUserRole(c)
+	req.ByOfficer = req.ByOfficer || req.ActorRole == "admin" || req.ActorRole == "staff"
 
 	res, err := h.useCase.UpdateStatus(id, userID, req)
 	if err != nil {
@@ -192,6 +315,8 @@ func (h *Handler) transition(c *gin.Context, status string, officerOnly bool) {
 		EscortOfficer   string `json:"escort_officer"`
 		OfficerNotes    string `json:"officer_notes"`
 		ByOfficer       bool   `json:"by_officer"`
+		StallIdent      string `json:"stall_ident"`
+		CancelAll       bool   `json:"cancel_all"`
 	}
 	_ = c.ShouldBindJSON(&body)
 	reason := body.Reason
@@ -209,6 +334,8 @@ func (h *Handler) transition(c *gin.Context, status string, officerOnly bool) {
 		EscortOfficer:   body.EscortOfficer,
 		OfficerNotes:    body.OfficerNotes,
 		ByOfficer:       body.ByOfficer || role == "admin" || role == "staff",
+		StallIdent:      body.StallIdent,
+		CancelAll:       body.CancelAll,
 		ActorRole:       role,
 	})
 	if err != nil {
@@ -395,6 +522,44 @@ func (h *Handler) SelectSlot(c *gin.Context) {
 		return
 	}
 	res, err := h.useCase.UpdateVisit(id, middlewares.GetUserID(c), middlewares.GetUserRole(c), body.VisitDate, body.VisitTimeSlot)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) GetPolicySettings(c *gin.Context) {
+	marketID, _ := strconv.Atoi(strings.TrimSpace(c.Query("market_id")))
+	marketName := strings.TrimSpace(c.Query("market_name"))
+	if marketName == "" {
+		marketName = strings.TrimSpace(c.Query("market"))
+	}
+	if marketID == 0 && marketName != "" {
+		if id, ok := marketSlugToID[strings.ToLower(marketName)]; ok {
+			marketID = id
+		}
+	}
+	res, err := h.useCase.GetPolicySettings(marketID, marketName)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) UpdatePolicySettings(c *gin.Context) {
+	var req requests.UpdateBookingPolicySettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondError(c, err)
+		return
+	}
+	if req.MarketID == 0 && req.MarketName != "" {
+		if id, ok := marketSlugToID[strings.ToLower(strings.TrimSpace(req.MarketName))]; ok {
+			req.MarketID = id
+		}
+	}
+	res, err := h.useCase.UpdatePolicySettings(middlewares.GetUserRole(c), req)
 	if err != nil {
 		respondError(c, err)
 		return

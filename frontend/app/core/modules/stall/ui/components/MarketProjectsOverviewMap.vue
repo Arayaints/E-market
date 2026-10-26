@@ -217,7 +217,7 @@
       </div>
 
       <div
-        v-if="managementMode && !activeProject && !isDrawingZone && !isDrawingStall && !isAddingFacility && !isDeletingStall && !isPolygonEditMode && !isStallPolygonEditMode && marketFloors.length <= 1"
+        v-if="managementMode && !activeProject && !isDrawingZone && !isDrawingStall && !isAddingFacility && !isDeletingStall && !isPolygonEditMode && !isStallPolygonEditMode"
         class="map-project-guidance map-staff-guidance"
         role="status"
       >
@@ -497,9 +497,10 @@
       </transition>
 
       <!-- Floating Return to Booked Stalls Button (แสดงเมื่อคลิกดูโครงการอื่นใน Step 3) -->
+      <!-- Return to booked project floating CTA (ทั้ง Step 1 และ Step 3) -->
       <transition name="fade">
         <button
-          v-if="previewMode && isNotViewingBookedProject"
+          v-if="isNotViewingBookedProject && (selectedStallCodes.length > 0 || previewMode)"
           type="button"
           class="map-floating-return-btn"
           @click="focusBookedStalls"
@@ -744,7 +745,7 @@
 
       <!-- First-visit guidance: disappears as soon as a project is selected. -->
       <transition name="fade">
-        <div v-if="!previewMode && !managementMode && !activeProject && marketFloors.length <= 1" class="map-project-guidance" aria-live="polite">
+        <div v-if="!previewMode && !managementMode && !activeProject" class="map-project-guidance" aria-live="polite">
           <span class="map-project-guidance-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5l7-3 7 3v16"></path><path d="M9 9h1M14 9h1M9 13h1M14 13h1"></path></svg>
           </span>
@@ -1458,14 +1459,26 @@ watch(() => props.selectedProjectId, (newId) => {
   if (newId) initialBookedProjectId.value = newId
 }, { immediate: true })
 
-const bookedProjectId = computed(() => initialBookedProjectId.value || props.selectedProjectId || null)
+const bookedProjectId = computed(() => {
+  if (props.selectedProjectId) return props.selectedProjectId
+  if (props.selectedStallCodes && props.selectedStallCodes.length > 0) {
+    for (const p of projects.value) {
+      const allLayouts = getAllFloorLayoutsForProject(p)
+      for (const layout of allLayouts.values()) {
+        if (layout.stalls.some(s => props.selectedStallCodes.includes(s.code) || props.selectedStallCodes.includes(s.selectionId || ''))) {
+          return p.id
+        }
+      }
+    }
+  }
+  return initialBookedProjectId.value || null
+})
 const bookedProject = computed(() => {
   const id = bookedProjectId.value
   return (id ? projects.value.find(p => p.id === id) : null) || activeProject.value
 })
 
 const isNotViewingBookedProject = computed(() => {
-  if (!props.previewMode) return false
   const targetId = bookedProjectId.value
   if (!targetId) return false
   return activeProjectId.value !== targetId
@@ -2018,7 +2031,10 @@ const filteredStalls = computed(() => {
 const getStallSelectionKey = (stall: MapStall): string => stall.selectionId || stall.code
 const isStallSelected = (stall: MapStall): boolean => {
   const selectedKeys = props.selectedStallKeys?.length ? props.selectedStallKeys : props.selectedStallCodes
-  return (selectedKeys || []).includes(getStallSelectionKey(stall))
+  const normalizedSelectedKeys = new Set((selectedKeys || []).map(key => String(key).trim().toUpperCase()))
+  return [stall.selectionId, stall.code]
+    .filter(Boolean)
+    .some(key => normalizedSelectedKeys.has(String(key).trim().toUpperCase()))
 }
 
 const setHoveredStall = (stall: MapStall | null): boolean => {
@@ -2217,9 +2233,9 @@ const getStyleConfig = (styleName?: string) => {
 // ใช้ vector tiles ของ OpenFreeMap (OpenMapTiles schema, ไม่ต้องใช้ API key)
 const BUILDINGS_SOURCE_ID = 'openfreemap'
 const BUILDINGS_LAYER_ID = '3d-buildings'
-const DEFAULT_PITCH = 50
-const DEFAULT_BEARING = -17
-const DRILL_PITCH = 40
+const DEFAULT_PITCH = 0
+const DEFAULT_BEARING = 0
+const DRILL_PITCH = 0
 const BUILDINGS_OPACITY = 0.85
 const BUILDINGS_OPACITY_DRILL = 0.25
 
@@ -2303,7 +2319,7 @@ const initMap = () => {
     minZoom: 13.0,
     maxZoom: 21,
     maxPitch: 65,
-    pitch: props.previewMode ? 35 : currentMarketPitch.value,
+    pitch: currentMarketPitch.value,
     bearing: currentMarketBearing.value,
     canvasContextAttributes: { antialias: true }
   })
@@ -2328,11 +2344,19 @@ const initMap = () => {
     layersInitialized = true
     setupProjectLayers()
     renderFacilityMarkers()
-    if (props.selectedProjectId) {
-      const found = projects.value.find(p => p.id === props.selectedProjectId)
-      if (found) {
-        enterProject(found)
+    const targetProject = bookedProject.value || (props.selectedProjectId ? projects.value.find(p => p.id === props.selectedProjectId) : null)
+    if (targetProject) {
+      let targetFloorId: string | undefined
+      if (targetProject.floors && targetProject.floors.length > 0 && props.selectedStallCodes?.length) {
+        for (const fl of targetProject.floors) {
+          const flLayout = applyMarketStatus(getProjectStallLayout(targetProject, fl.id))
+          if (flLayout.stalls.some(isStallSelected)) {
+            targetFloorId = fl.id
+            break
+          }
+        }
       }
+      enterProject(targetProject, targetFloorId)
     }
     renderSelectedStallPins()
 
@@ -2424,7 +2448,7 @@ const getStallsGeoJson = () => {
 const setupProjectLayers = () => {
   if (!map) return
 
-  ;['zone-drawing-points', 'zone-drawing-line', 'zone-drawing-fill', 'facilities-label', 'facilities-circle', 'projects-hover-outline', 'projects-hover-casing', 'projects-active-outline', 'stalls-selected-stroke', 'stalls-hover-stroke', 'stalls-hover-casing', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
+  ;['zone-drawing-points', 'zone-drawing-line', 'zone-drawing-fill', 'facilities-label', 'facilities-circle', 'projects-hover-outline', 'projects-hover-casing', 'projects-active-outline', 'stalls-selected-stroke', 'stalls-selected-casing', 'stalls-hover-stroke', 'stalls-hover-casing', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id)
   })
   ;['projects-polygons', 'project-stalls', 'market-facilities', 'zone-drawing'].forEach(id => {
@@ -2582,6 +2606,29 @@ const setupProjectLayers = () => {
         20, 3
       ],
       'line-opacity': ['case', ['boolean', ['feature-state', 'isHovered'], false], 1, 0]
+    }
+  })
+
+  // ขอบสีขาวรองใต้กรอบแผงที่เลือก เพื่อให้ยังเห็นตำแหน่งชัดบนทุกสีของผัง
+  map.addLayer({
+    id: 'stalls-selected-casing',
+    type: 'line',
+    source: 'project-stalls',
+    filter: ['boolean', ['get', 'isSelected'], false],
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        14, 4.8,
+        16, 6.2,
+        18, 8,
+        20, 10
+      ],
+      'line-opacity': 1
     }
   })
 
@@ -3425,118 +3472,8 @@ const getStallDisplayPhoto = (s: MapStall): string => {
   return stallPhotoSamples[Math.abs(hash) % stallPhotoSamples.length]
 }
 
-const showPopupForStall = (s: MapStall) => {
-  if (!map || !hoverPopup) return
-  if (isAnyEditingToolActive.value) {
-    hoverPopup.remove()
-    return
-  }
-  const meta = statusMeta[s.status]
-  const selected = isStallSelected(s)
-  const isMyBooked = !props.previewMode && (props.myBookedStallCodes || []).includes(s.code)
-  const isReserved = s.status === 'reserved'
-  const photoUrl = getStallDisplayPhoto(s)
-
-  const statusLabel = selected
-    ? 'เลือกแล้ว'
-    : isMyBooked
-      ? 'คุณจองแผงนี้แล้ว'
-      : isReserved
-        ? 'ติดจอง'
-        : meta.label
-
-  const accent = selected
-    ? '#2563eb'
-    : isMyBooked
-      ? '#dc2626'
-      : s.status === 'available'
-        ? '#10b981'
-        : isReserved
-          ? '#f59e0b'
-          : '#cbd5e1'
-
-  const ctaText = props.managementMode
-    ? (props.inspectOnly
-        ? 'คลิกเพื่อดูข้อมูลแผง สัญญาเช่า และประวัติ'
-        : 'คลิกเพื่อตั้งค่าหรือแก้ไขข้อมูลแผงนี้')
-    : s.status === 'occupied'
-      ? 'แผงนี้มีผู้เช่าแล้ว ไม่สามารถเลือกได้'
-      : isMyBooked
-        ? 'คุณมีรายการจอง/คิวสำรองในแผงนี้แล้ว ไม่สามารถจองซ้ำได้'
-        : selected
-          ? 'คลิกอีกครั้งเพื่อยกเลิกการเลือก'
-          : isReserved
-            ? 'คลิกเพื่อลงทะเบียนคิวสำรองแผงนี้'
-            : 'คลิกเพื่อเลือกแผงนี้'
-
-  hoverPopup.setLngLat(s.center).setHTML(`
-    <div class="mlp" style="--mlp-accent:${accent}">
-      <div class="mlp-photo-wrap">
-        <img src="${photoUrl}" alt="แผง ${s.code}" class="mlp-photo-img" />
-        <div class="mlp-photo-overlay">
-          <span class="mlp-photo-badge">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-              <circle cx="9" cy="9" r="2"></circle>
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-            </svg>
-            ภาพแผงจริง
-          </span>
-        </div>
-      </div>
-      <div class="mlp-body">
-        <div class="mlp-project-context">
-          <span>${activeProject.value?.name || s.zone || 'โครงการ'}</span>
-          ${s.floorName ? `<i>•</i><span>${s.floorName}</span>` : ''}
-        </div>
-        <div class="mlp-head">
-          <div class="mlp-title">
-            <span class="mlp-stall-heading">
-              <span class="mlp-dot"></span>
-              <strong>แผง ${s.code}</strong>
-            </span>
-          </div>
-          <span class="mlp-pill ${isReserved ? 'is-reserved' : ''}" style="background:${selected ? '#eff6ff' : isMyBooked ? '#fee2e2' : meta.bg};color:${selected ? '#2563eb' : isMyBooked ? '#dc2626' : meta.fg}">
-            ${statusLabel}
-          </span>
-        </div>
-
-        <div class="mlp-tiles">
-          <div class="mlp-tile">
-            <span class="mlp-tile-label">${ICONS.ruler}ขนาด</span>
-            <b class="mlp-tile-value">${s.widthM} × ${s.depthM} <small>ม.</small></b>
-            <small class="mlp-tile-note">${s.size} ตร.ม.</small>
-          </div>
-          <div class="mlp-tile">
-            <span class="mlp-tile-label">${ICONS.tag}ประเภท</span>
-            <b class="mlp-tile-value">${s.areaType}</b>
-          </div>
-          <div class="mlp-tile">
-            <span class="mlp-tile-label">${ICONS.wallet}ค่าเช่า</span>
-            <b class="mlp-tile-value is-money">฿${s.monthlyRent.toLocaleString()}</b>
-            <small class="mlp-tile-note">ต่อเดือน</small>
-          </div>
-          <div class="mlp-tile">
-            <span class="mlp-tile-label">${ICONS.key}ค่าแรกเข้า</span>
-            <b class="mlp-tile-value">฿${s.entryFee.toLocaleString()}</b>
-          </div>
-        </div>
-
-        ${!props.managementMode && isReserved ? `
-          <div class="mlp-queue-box">
-            <div class="mlp-queue-icon">${ICONS.clock}</div>
-            <div class="mlp-queue-content">
-              <div class="mlp-queue-title">แผงนี้อยู่ระหว่างการจอง</div>
-              <div class="mlp-queue-desc">คุณสามารถลงทะเบียนคิวสำรองได้ หากผู้จองหลักสละสิทธิ์</div>
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="mlp-hint ${isReserved ? 'is-reserved' : ''}">${ctaText}</div>
-      </div>
-    </div>
-  `).addTo(map)
-  hoverPopup.getElement()?.classList.remove('is-interactive')
+const showPopupForStall = (_s: MapStall) => {
+  hoverPopup?.remove()
 }
 
 // ---------------- Drill-down actions ----------------
@@ -3578,20 +3515,24 @@ const renderSelectedStallPins = () => {
   }
 }
 
-const focusBookedStalls = () => {
+const focusSelectedStalls = (): boolean => {
   const targetProject = bookedProject.value
-  if (!targetProject) return
+  if (!targetProject) return false
+  let targetFloorId: string | undefined
   if (targetProject.floors && targetProject.floors.length > 0 && props.selectedStallCodes?.length) {
     for (const fl of targetProject.floors) {
       const flLayout = applyMarketStatus(getProjectStallLayout(targetProject, fl.id))
       if (flLayout.stalls.some(isStallSelected)) {
-        currentFloorId.value = fl.id
+        targetFloorId = fl.id
         break
       }
     }
   }
-  enterProject(targetProject)
+  enterProject(targetProject, targetFloorId)
+  return true
 }
+
+const focusBookedStalls = focusSelectedStalls
 
 const recenterMapView = () => {
   if (!map) return
@@ -3607,7 +3548,7 @@ const recenterMapView = () => {
         ? { top: 60, bottom: 60, left: 60, right: 60 }
         : { top: 70, bottom: 50, left: 320, right: 380 },
       maxZoom: 20.6,
-      pitch: props.previewMode ? 35 : DRILL_PITCH,
+      pitch: DRILL_PITCH,
       bearing: currentMarketBearing.value,
       duration: 800
     })
@@ -3690,7 +3631,7 @@ const enterProject = (p: ProjectZone, directToFloor?: string) => {
       ? { top: 60, bottom: 60, left: 60, right: 60 }
       : { top: 70, bottom: 50, left: 320, right: 380 },
     maxZoom: 20.6,
-    pitch: props.previewMode ? 35 : DRILL_PITCH,
+    pitch: DRILL_PITCH,
     bearing: map.getBearing(),
     duration: 800
   })
@@ -4220,7 +4161,7 @@ const finishActiveTools = () => {
   refreshSources()
 }
 
-defineExpose({ enterProject, exitProject, resize, finishActiveTools })
+defineExpose({ enterProject, exitProject, resize, finishActiveTools, focusSelectedStalls, focusBookedStalls })
 
 const canTeleportToolbar = ref(false)
 let isUnmounted = false

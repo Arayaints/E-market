@@ -84,7 +84,7 @@ export const useNotifications = () => {
       return String(item.recipient_user_id) === String(currentUser.id)
     }
     const currentName = normalizeOwnerName(currentUser?.full_name)
-    const demoOwnerNames: Record<string, string> = { tenant: 'สมชาย ใจดี', tenant2: 'นภาพร รัตนศิลป์' }
+    const demoOwnerNames: Record<string, string> = { tenant: 'สมชาย ใจดี', tenant2: 'นภาพร รัตนศิลป์', tenant3: 'วิชัย เจริญทรัพย์' }
     const fallbackName = normalizeOwnerName(demoOwnerNames[String(currentUser?.username || '')])
     const recipientName = normalizeOwnerName(item.recipient_name)
     return Boolean(recipientName && (recipientName === currentName || recipientName === fallbackName))

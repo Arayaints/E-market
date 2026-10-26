@@ -5,15 +5,47 @@
 
     <div class="content-body market-detail-page">
       <!-- Breadcrumb -->
-      <div class="md-breadcrumb-row">
-        <AppBreadcrumb v-if="!isStaff" :current="currentMarket.name" backTo="/" />
-        <nav v-if="isOfficer" class="md-market-actions" aria-label="เครื่องมือจัดการตลาด">
-          <AppButton :to="editMarketLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></template>แก้ไขข้อมูล</AppButton>
-          <AppButton :to="visitManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg></template>จัดการรอบเข้าชม</AppButton>
-          <AppButton :to="stallManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"></path></svg></template>จัดการแผง</AppButton>
-          <AppButton :to="stallInspectLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></template>ดูข้อมูลแผง</AppButton>
-        </nav>
+      <div v-if="!isStaff" class="md-breadcrumb-row">
+        <AppBreadcrumb :current="currentMarket.name" backTo="/" />
       </div>
+
+      <header class="md-page-heading">
+        <div>
+          <h2>รายละเอียดตลาด</h2>
+          <p>ตรวจสอบข้อมูลสำคัญและอัปเดตรายละเอียดตลาดเมื่อมีการเปลี่ยนแปลง</p>
+        </div>
+        <div v-if="isOfficer" class="md-page-actions">
+          <AppButton v-if="isAdmin" :to="gisManageLink" variant="outline" size="md" title="จัดการผังและตำแหน่งแผงค้า GIS">
+            <template #prefix>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18-6 3V5l6-3 6 3 6-3v12"></path>
+                <path d="M9 2v16"></path>
+                <path d="M15 5v6"></path>
+                <path d="m14 18 6.5-6.5a1.7 1.7 0 0 0-2.4-2.4L11.6 15.6 11 19z"></path>
+              </svg>
+            </template>
+            จัดการผัง GIS
+          </AppButton>
+          <AppButton v-if="isAdmin" :to="visitScheduleLink" variant="outline" size="md" title="จัดการรอบเวลาเข้าชมแผง">
+            <template #prefix>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5l3 2"></path>
+              </svg>
+            </template>
+            จัดการรอบเข้าชม
+          </AppButton>
+          <AppButton :to="editMarketLink" variant="outline" size="md" title="แก้ไขข้อมูลตลาด">
+            <template #prefix>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+              </svg>
+            </template>
+            แก้ไขข้อมูล
+          </AppButton>
+        </div>
+      </header>
 
       <!-- 1. Header Card: Real Market Photo Backdrop + Modern Glassmorphic Hero -->
       <section class="md-card md-header-card">
@@ -424,6 +456,7 @@ const { role } = useAuth()
 const { applyMarketOverride, getMarketOverride } = useMarketOverrides()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 const isStaff = computed(() => role.value === 'staff')
+const isAdmin = computed(() => role.value === 'admin')
 
 const buildInitialMarket = (queryVal?: any) => {
   const cfg = getMarketGisConfig(String(queryVal || '1'))
@@ -592,10 +625,9 @@ const initMap = () => {
 const bookLink = computed(() => isOfficer.value
   ? `/stalls/manage?market=${currentMarket.value.id || 1}`
   : `/stalls/book?market=${currentMarket.value.id || 1}`)
+const gisManageLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}`)
+const visitScheduleLink = computed(() => `/stalls/visit-schedule?market=${currentMarket.value.id || route.query.market || 1}`)
 const editMarketLink = computed(() => `/markets/${currentMarket.value.id || route.query.market || 1}/edit`)
-const visitManagementLink = computed(() => `/stalls/visit-schedule?market=${currentMarket.value.id || route.query.market || 1}`)
-const stallManagementLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}`)
-const stallInspectLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}&mode=inspect`)
 
 // แยก "เสาร์ - อาทิตย์ 09:00 - 18:00 น." เป็นวัน / เวลา
 const operatingDays = computed(() => {
@@ -777,34 +809,34 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 
-.md-edit-market-btn {
-  display: inline-flex;
+.md-page-heading {
+  display: flex;
   align-items: center;
-  gap: 7px;
-  flex-shrink: 0;
-  padding: 9px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #334155;
-  font-size: .84rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: border-color .2s ease, color .2s ease, background .2s ease;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 8px 0 -8px;
 }
 
-.md-market-actions {
-  display: inline-flex;
+.md-page-heading h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.md-page-heading p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.md-page-actions {
+  display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.md-edit-market-btn:hover {
-  border-color: #93c5fd;
-  background: #eff6ff;
-  color: #2563eb;
 }
 
 .md-card {
@@ -1095,8 +1127,10 @@ onBeforeUnmount(() => {
 .md-header-right {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   justify-content: center;
+  gap: 10px;
   position: relative;
   z-index: 1;
   padding: 0;
@@ -2117,6 +2151,8 @@ onBeforeUnmount(() => {
 
   .md-header-right {
     width: 100%;
+    flex-direction: column;
+    align-items: center;
   }
 
   .md-booking-quick-card {
@@ -2136,6 +2172,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .md-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .md-header-card {
     align-items: flex-start;
     padding: 24px 20px;

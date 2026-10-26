@@ -141,7 +141,23 @@
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                   </div>
-                  <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 2px;">{{ selectedProject?.name || selectedStall?.zone }}</div>
+                  <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 2px;">{{ selectedProjectsSummary }}</div>
+                </div>
+
+                <div v-if="activeWaitlistOffer" class="waitlist-claim-notice is-map-drawer" role="status">
+                  <div class="waitlist-claim-icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="9"></circle>
+                      <path d="m8.5 12 2.25 2.25L15.5 9.5"></path>
+                    </svg>
+                  </div>
+                  <div class="waitlist-claim-content">
+                    <div class="waitlist-claim-title-row">
+                      <strong>ถึงคิวของคุณแล้ว</strong>
+                      <span class="waitlist-claim-badge">ได้รับสิทธิ์</span>
+                    </div>
+                    <span>แผง {{ activeWaitlistOffer.stall_number || activeWaitlistOffer.stall_ident }} ถูกกันไว้ให้คุณ{{ waitlistOfferDeadlineText }}</span>
+                  </div>
                 </div>
 
                 <!-- 2. Scrollable Middle Body (Stalls List & Queue Info) -->
@@ -160,7 +176,7 @@
                 >
                   <!-- Per-stall cards: แยกกล่องทีละแผง โดยแต่ละแผงใช้ UI รูปภาพบน + กล่อง 3 คอลัมน์ด้านล่าง -->
                   <div class="sel-stall-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div v-for="s in selectedStalls" :key="stallSelectionKey(s)" class="sel-stall-card">
+                    <div v-for="s in selectedStalls" :key="stallSelectionKey(s)" class="sel-stall-card" @click="focusClaimedStallOnMap()" style="cursor: pointer;" title="คลิกเพื่อดูตำแหน่งแผงนี้บนแผนที่">
                       <div class="ssc-head">
                         <div class="ssc-title">
                           <div class="ssc-title-main">
@@ -169,7 +185,7 @@
                               {{ s.status === 'available' ? 'แผงว่าง' : 'ติดจอง' }}
                             </span>
                           </div>
-                          <span v-if="s.floorName" class="ssc-floor-name" :title="s.floorName">{{ s.floorName }}</span>
+                          <span v-if="s.zone || s.floorName" class="ssc-floor-name" :title="s.zone || s.floorName">{{ s.zone }}<template v-if="s.zone && s.floorName && s.floorName !== s.zone"> • {{ s.floorName }}</template><template v-else-if="!s.zone">{{ s.floorName }}</template></span>
                         </div>
                         <button type="button" class="ssc-remove" @click.stop="removeStall(s)" title="นำแผงนี้ออก" aria-label="ลบแผง">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -217,10 +233,10 @@
                     <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px;">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <span style="font-size: 0.78rem; font-weight: 800; color: #92400e;">
-                          เมื่อลงทะเบียน คุณจะได้
+                          {{ selectedWaitingEntry ? 'สถานะคิวของคุณ' : 'เมื่อลงทะเบียน คุณจะได้' }}
                         </span>
                         <span class="badge" style="background: #d97706; color: #ffffff; font-weight: 800; font-size: 0.74rem; padding: 2px 8px;">
-                          คิวสำรองที่ {{ currentWaitingInfo.next_queue_number }}
+                          คิวสำรองที่ {{ selectedWaitingEntry?.position || currentWaitingInfo.next_queue_number }}
                         </span>
                       </div>
                       <div style="font-size: 0.75rem; color: #78350f; display: flex; justify-content: space-between; border-top: 1px dashed #fcd34d; padding-top: 6px; margin-top: 4px;">
@@ -260,6 +276,7 @@
                   <button
                     type="button"
                     class="btn btn-primary"
+                    :disabled="currentSelectionStatus === 'reserved' && myWaitlistByStall[selectedStalls[0]?.code || '']?.status === 'waiting'"
                     style="
                       width: 100%;
                       padding: 11px 16px;
@@ -273,10 +290,19 @@
                       gap: 8px;
                       cursor: pointer;
                     "
-                    @click="goToStep(2)"
+                    :style="currentSelectionStatus === 'reserved' && myWaitlistByStall[selectedStalls[0]?.code || '']?.status === 'waiting' ? 'background: #94a3b8; border-color: #94a3b8; box-shadow: none; cursor: default;' : ''"
+                    @click="handleNextFromStep1"
                   >
-                    <span>{{ currentSelectionStatus === 'reserved' ? 'จองคิวสำรองแผงนี้' : 'จองแผงนี้' }}</span>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <span>
+                      {{
+                        currentSelectionStatus === 'reserved'
+                          ? (myWaitlistByStall[selectedStalls[0]?.code || '']?.status === 'waiting'
+                              ? `อยู่ในคิวสำรองลำดับที่ ${myWaitlistByStall[selectedStalls[0]?.code || '']?.position || 1} แล้ว`
+                              : 'รอคิวแผงนี้')
+                          : 'จองแผงที่เลือก'
+                      }}
+                    </span>
+                    <svg v-if="!(currentSelectionStatus === 'reserved' && myWaitlistByStall[selectedStalls[0]?.code || '']?.status === 'waiting')" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                       <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
@@ -862,7 +888,7 @@
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 20px; font-size: 0.88rem; margin-bottom: 18px;">
               <div>
                 <div style="color: #64748b; font-size: 0.8rem; margin-bottom: 4px;">โซน</div>
-                <div style="color: #1e293b; font-size: 0.95rem; font-weight: 600;">{{ selectedProject?.name || stallItem.zone }}</div>
+                <div style="color: #1e293b; font-size: 0.95rem; font-weight: 600;">{{ stallItem.zone || selectedProject?.name }}</div>
               </div>
               <div>
                 <div style="color: #64748b; font-size: 0.8rem; margin-bottom: 4px;">หมายเลขแผง</div>
@@ -1361,6 +1387,20 @@ const { fetchNotifications } = useNotifications()
 
 const overviewMapRef = ref<any>(null)
 
+const focusClaimedStallOnMap = (): void => {
+  if (!selectedStalls.value.length) return
+  nextTick(() => {
+    overviewMapRef.value?.resize?.()
+    const focused = overviewMapRef.value?.focusSelectedStalls?.()
+    if (!focused) {
+      window.setTimeout(() => {
+        overviewMapRef.value?.resize?.()
+        overviewMapRef.value?.focusSelectedStalls?.()
+      }, 250)
+    }
+  })
+}
+
 const businessOptions = [
   { value: 'เสื้อผ้าแฟชั่น', label: 'เสื้อผ้าแฟชั่นและเครื่องประดับ' },
   { value: 'อาหารปรุงสุก', label: 'อาหารปรุงสุกและเครื่องดื่ม' },
@@ -1565,7 +1605,8 @@ const isBookingOwnedByCurrentTenant = (b: any): boolean => {
 
   const demoOwnerNames: Record<string, string> = {
     tenant: 'สมชาย ใจดี',
-    tenant2: 'นภาพร รัตนศิลป์'
+    tenant2: 'นภาพร รัตนศิลป์',
+    tenant3: 'วิชัย เจริญทรัพย์'
   }
   const demoName = normalizePersonName(demoOwnerNames[String(currentUser?.username || '')])
   const bName = normalizePersonName(b.tenant_name || b.applicant_name)
@@ -1773,17 +1814,53 @@ interface BackendStallRecord {
   ident?: string
   stall_ident?: string
   stall_number?: string
+  project_name?: string
+  monthly_rent?: number
   status?: string
   stall_status?: string
+  waitlist_count?: number
+  offered_to_tenant_id?: number
+  offered_expires_at?: string
 }
 
 const backendStallsByIdent = ref<Record<string, BackendStallRecord>>({})
+const myWaitlistByStall = ref<Record<string, any>>({})
+
+const activeWaitlistOffer = computed<any | null>(() => {
+  const targetCode = String(selectedStalls.value[0]?.code || route.query.stall || '').trim()
+  if (!targetCode) return null
+  const item = myWaitlistByStall.value[targetCode]
+  return item?.status === 'offered' ? item : null
+})
+
+const waitlistOfferDeadlineText = computed(() => {
+  const raw = activeWaitlistOffer.value?.expires_at || activeWaitlistOffer.value?.offered_expires_at
+  if (!raw) return ''
+  const expiresAt = new Date(raw)
+  if (Number.isNaN(expiresAt.getTime())) return ''
+  return `ถึงวันที่ ${expiresAt.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} เวลา ${expiresAt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`
+})
 
 const getBackendStallIdent = (stall: BackendStallRecord): string => (
   String(stall.ident || stall.stall_ident || stall.stall_number || '').trim()
 )
 
-const normalizeBackendStallStatus = (status?: string): StallModel['status'] => {
+const isStallOfferedToMe = (ident?: string, stall?: BackendStallRecord): boolean => {
+  const currentUserId = Number((user.value as any)?.id || 0)
+  if (currentUserId > 0 && stall?.offered_to_tenant_id && Number(stall.offered_to_tenant_id) === currentUserId) {
+    return true
+  }
+  if (ident && myWaitlistByStall.value[ident]?.status === 'offered') {
+    return true
+  }
+  return false
+}
+
+const normalizeBackendStallStatus = (status?: string, stall?: BackendStallRecord): StallModel['status'] => {
+  const ident = stall ? getBackendStallIdent(stall) : ''
+  if (status === 'offered') {
+    return isStallOfferedToMe(ident, stall) ? 'available' : 'reserved'
+  }
   if (status === 'available' || status === 'reserved' || status === 'occupied') return status
   return 'available'
 }
@@ -1799,9 +1876,7 @@ const stallStatusOverrides = computed<Record<string, StallModel['status']>>(() =
   Object.entries(backendStallsByIdent.value).forEach(([ident, stall]) => {
     const rawStatus = getBackendRecordStatus(stall)
     if (!rawStatus) return
-    const status = normalizeBackendStallStatus(rawStatus)
-    // GIS layouts now default to available, so sending thousands of identical
-    // available overrides only increases Vue reactivity and map clone work.
+    const status = normalizeBackendStallStatus(rawStatus, stall)
     if (status !== 'available') statuses[ident] = status
   })
   return statuses
@@ -1811,7 +1886,20 @@ const refreshBackendStalls = async (): Promise<void> => {
   try {
     const marketParam = currentMarket.value?.slug || currentMarketId.value
     const url = marketParam ? `/stalls?market=${encodeURIComponent(marketParam)}` : '/stalls'
-    const response = await get<any>(url)
+    const [response, waitlistRes] = await Promise.all([
+      get<any>(url),
+      get<any>('/bookings/waitlist/mine').catch(() => null)
+    ])
+    const waitListItems: any[] = Array.isArray(waitlistRes)
+      ? waitlistRes
+      : (Array.isArray(waitlistRes?.data) ? waitlistRes.data : [])
+    const wMap: Record<string, any> = {}
+    waitListItems.forEach((w: any) => {
+      const code = String(w.stall_number || w.stall_ident || '').trim()
+      if (code) wMap[code] = w
+    })
+    myWaitlistByStall.value = wMap
+
     const list: BackendStallRecord[] = Array.isArray(response)
       ? response
       : (Array.isArray(response?.data) ? response.data : [])
@@ -1820,7 +1908,7 @@ const refreshBackendStalls = async (): Promise<void> => {
       const ident = getBackendStallIdent(stall)
       const rawStatus = getBackendRecordStatus(stall)
       if (!ident || !rawStatus) return
-      if (normalizeBackendStallStatus(rawStatus) !== 'available') records[ident] = stall
+      records[ident] = stall
     })
     backendStallsByIdent.value = records
   } catch (error) {
@@ -1969,12 +2057,24 @@ const lowerHallStalls = ref<StallModel[]>([])
 // Multi-Stall Selection & Status Handling (BA & QA Requirement)
 const selectedStalls = ref<StallModel[]>([])
 const selectedStall = computed(() => selectedStalls.value[0] || null)
+const selectedProjectsSummary = computed(() => {
+  const uniqueZones = Array.from(new Set(selectedStalls.value.map(s => s.zone?.trim()).filter(Boolean)))
+  if (uniqueZones.length > 0) return uniqueZones.join(', ')
+  return selectedProject.value?.name || ''
+})
 const stallSelectionKey = (stall: StallModel): string => stall.selectionId || stall.code
 
 // Current Selection Status ('available' or 'reserved')
 const currentSelectionStatus = computed<'available' | 'reserved' | null>(() => {
   if (selectedStalls.value.length === 0) return null
   return selectedStalls.value[0].status === 'reserved' ? 'reserved' : 'available'
+})
+
+const selectedWaitingEntry = computed<any | null>(() => {
+  const code = selectedStalls.value[0]?.code
+  if (!code) return null
+  const item = myWaitlistByStall.value[code]
+  return item?.status === 'waiting' ? item : null
 })
 
 // Status Conflict Warning Modal State
@@ -2253,9 +2353,10 @@ const handleExitProject = () => {
 // Stall clicked inside a project polygon on the GIS map
 const handleMapStallSelect = (stall: StallModel) => {
   const backendStall = backendStallsByIdent.value[stall.code]
-  const effectiveStatus = backendStall ? normalizeBackendStallStatus(getBackendRecordStatus(backendStall)) : stall.status
+  const effectiveStatus = backendStall ? normalizeBackendStallStatus(getBackendRecordStatus(backendStall), backendStall) : stall.status
   const resolvedProjectId = stall.projectId || selectedProject.value?.id || bookedProject.value?.id
-  selectStall({ ...stall, projectId: resolvedProjectId, status: effectiveStatus, backendId: backendStall?.id })
+  const resolvedZone = stall.zone || backendStall?.project_name || selectedProject.value?.name || bookedProject.value?.name || ''
+  selectStall({ ...stall, zone: resolvedZone, projectId: resolvedProjectId, status: effectiveStatus, backendId: backendStall?.id })
 }
 
 const handleNextFromStep1 = () => {
@@ -2265,6 +2366,11 @@ const handleNextFromStep1 = () => {
   }
   if (selectedStalls.value.length === 0) {
     showWarning('กรุณาคลิกเลือกโครงการบนแผนที่ แล้วเลือกแผงย่อยที่ต้องการก่อนไปขั้นตอนถัดไป', 'แจ้งเตือนการเลือกแผง')
+    return
+  }
+
+  if (currentSelectionStatus.value === 'reserved') {
+    void joinSelectedWaitlists()
     return
   }
   const duplicateStall = selectedStalls.value.find(s => Boolean(myActiveBookingsByStall.value[s.code]))
@@ -2508,20 +2614,78 @@ const selectStall = (s: StallModel) => {
     return
   }
 
-  // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด):
-  // Clicking another stall switches the current selection to that stall immediately
+  const existingWaitlist = myWaitlistByStall.value[s.code]
+  if (existingWaitlist && existingWaitlist.status === 'waiting') {
+    // Selecting an already-waitlisted stall is a read-only preview action.
+    // Keep duplicate queue submission disabled in the drawer CTA instead of
+    // interrupting the user with a modal.
+    if (!s.projectId && selectedProject.value?.id) {
+      s.projectId = selectedProject.value.id
+    }
+    if (selectedProject.value) {
+      bookedProject.value = selectedProject.value
+    }
+    selectedStalls.value = [{ ...s, status: 'reserved' }]
+    activeWaitingStallCode.value = s.code
+    void fetchWaitingQueueForStall(s.code)
+    return
+  }
+
+  // Rule 1 & 2: แผงติดจองไม่สามารถเพิ่มเข้าใบจองได้ และ Waiting list ผูกกับแผงรายแผง ไม่ใช่ตะกร้าหลายแผง
+  if (currentSelectionStatus.value && s.status !== currentSelectionStatus.value) {
+    if (s.status === 'reserved') {
+      showWarning('แผงติดจองไม่สามารถเพิ่มเข้าใบจองได้ กรุณาดำเนินการจองแผงว่างที่เลือกไว้ให้เสร็จสิ้นหรือล้างรายการเดิมก่อน', 'ไม่สามารถเพิ่มแผงติดจองเข้าใบจองได้')
+    } else {
+      showWarning('ไม่สามารถเลือกแผงว่างปนกับแผงที่กำลังจะเข้าคิวรอได้ กรุณากดรอคิวแผงนี้หรือนำแผงติดจองออกก่อน', 'สถานะแผงไม่ตรงกัน')
+    }
+    return
+  }
   if (!s.projectId && selectedProject.value?.id) {
     s.projectId = selectedProject.value.id
   }
   if (selectedProject.value) {
     bookedProject.value = selectedProject.value
   }
-  selectedStalls.value = [s]
   if (s.status === 'reserved') {
+    // Waiting list ผูกกับแผงรายแผง ไม่ใช่ตะกร้าหลายแผง
+    selectedStalls.value = [s]
     activeWaitingStallCode.value = s.code
     fetchWaitingQueueForStall(s.code)
   } else {
+    selectedStalls.value.push(s)
     activeWaitingStallCode.value = ''
+  }
+}
+
+const joinSelectedWaitlists = async () => {
+  if (selectedStalls.value.length === 0 || currentSelectionStatus.value !== 'reserved') return
+  const stall = selectedStalls.value[0]!
+  const fullName = `${bookingForm.value.firstName || ''} ${bookingForm.value.lastName || ''}`.trim() || 'ผู้เช่า'
+  const phone = String(bookingForm.value.phone || '').trim()
+  try {
+    const rawRes: any = await post('/bookings/waitlist', {
+      stall_id: stall.backendId,
+      stall_ident: stall.code,
+      market_id: Number(currentMarket.value?.id) || undefined,
+      market_name: currentMarketName.value,
+      project_name: stall.zone || selectedProject.value?.name || '',
+      tenant_name: fullName,
+      tenant_phone: phone
+    })
+    const created = rawRes?.data || rawRes
+    const pos = Number(created?.position) || 1
+    selectedStalls.value = []
+    bookedProject.value = null
+    activeWaitingStallCode.value = ''
+    delete stallWaitingQueueCache.value[stall.code]
+    await Promise.all([refreshBackendStalls(), refreshMyActiveBookings(), fetchNotifications()])
+    await showSuccess(
+      `ลงชื่อรอคิวแผง ${stall.code} สำเร็จ (ลำดับคิวที่ ${pos}) ระบบจะแจ้งเตือนทันทีเมื่อแผงว่างลง คุณสามารถดูสถานะและออกจากคิวได้ที่แท็บ "แผงที่สนใจ"`,
+      'รอคิวแผงนี้สำเร็จ'
+    )
+  } catch (error: any) {
+    const message = error?.data?.detail || error?.data?.error?.message || error?.data?.message || 'ไม่สามารถเข้าคิวรอแผงนี้ได้'
+    await showWarning(message, 'ไม่สามารถเข้าคิวได้')
   }
 }
 
@@ -2737,6 +2901,9 @@ watch(currentStep, (newStep) => {
   if (newStep === 1 || newStep === 3) {
     nextTick(() => {
       window.dispatchEvent(new Event('resize'))
+      if (newStep === 1 && selectedStalls.value.length > 0) {
+        focusClaimedStallOnMap()
+      }
     })
   }
 })
@@ -2776,7 +2943,7 @@ const submitBooking = async () => {
     const refreshedSelection = selectedStalls.value.map(stall => {
       const backendStall = backendStallsByIdent.value[stall.code]
       return backendStall
-        ? { ...stall, status: normalizeBackendStallStatus(getBackendRecordStatus(backendStall)), backendId: backendStall.id }
+        ? { ...stall, status: normalizeBackendStallStatus(getBackendRecordStatus(backendStall), backendStall), backendId: backendStall.id }
         : stall
     })
     const statusChanged = refreshedSelection.some((stall, index) => stall.status !== selectedStalls.value[index]?.status)
@@ -2794,111 +2961,81 @@ const submitBooking = async () => {
       return
     }
 
-    const createdBookingNumbers: string[] = []
-    const succeededStalls: StallModel[] = []
-    const failedBookings: Array<{ stall: StallModel; error: any }> = []
+    const appointmentGroupId = `BKG-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const resolvedMarketNumericId = Number(
+      currentMarket.value?.id ||
+      getMarketGisConfig(currentMarketId.value)?.id ||
+      currentMarketId.value
+    )
+    const numericMarketId = Number.isInteger(resolvedMarketNumericId) && resolvedMarketNumericId > 0
+      ? resolvedMarketNumericId
+      : 1
+    const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
+    const contactPhone = (bookingForm.value.phone || '081-234-5678').trim()
+    const contactEmail = (bookingForm.value.email || '').trim()
+    const idCard = (bookingForm.value.idCard || '1-1004-00234-56-7').trim()
+    const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
+    const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
+    const firstStall = selectedStalls.value[0]!
 
-    // Single-Stall per Booking Rule (1 การจอง = 1 แผง = 1 การ์ด)
-    for (const stallItem of selectedStalls.value.slice(0, 1)) {
-      try {
-        const backendStall = backendStallsByIdent.value[stallItem.code]
-        const stallId = stallItem.backendId || backendStall?.id
-        const numericStallId = typeof stallId === 'number' && Number.isInteger(stallId)
-          ? stallId
-          : (typeof stallId === 'string' && /^\d+$/.test(stallId) ? Number(stallId) : undefined)
-        const resolvedMarketNumericId = Number(
-          currentMarket.value?.id ||
-          getMarketGisConfig(currentMarketId.value)?.id ||
-          currentMarketId.value
-        )
-        const numericMarketId = Number.isInteger(resolvedMarketNumericId) && resolvedMarketNumericId > 0
-          ? resolvedMarketNumericId
-          : 1
-        const isQueue = stallItem.status === 'reserved'
-        const fullName = `${bookingForm.value.firstName || 'สมชาย'} ${bookingForm.value.lastName || 'ใจดี'}`.trim()
-        const contactPhone = (bookingForm.value.phone || '081-234-5678').trim()
-        const contactEmail = (bookingForm.value.email || '').trim()
-        const idCard = (bookingForm.value.idCard || '1-1004-00234-56-7').trim()
-        const visitDate = bookingForm.value.visitDate || new Date().toISOString().split('T')[0]
-        const visitTime = bookingForm.value.visitSlot || '13:00 - 14:00'
-
-        const res = await post('/bookings', {
-          // Standard Go backend fields (CreateBookingRequest)
-          stall_ident: stallItem.code,
-          applicant_name: fullName,
-          applicant_phone: contactPhone,
-          applicant_email: contactEmail,
-          business_type: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
-          visit_date: visitDate,
-          visit_time: visitTime,
-          note: bookingForm.value.notes || '',
-
-          // Backward compatibility & client-side metadata fields
-          stall_id: numericStallId,
-          stall_number: stallItem.code,
-          market_id: numericMarketId,
-          project_name: selectedProject.value?.name || stallItem.zone || 'โครงการ 01',
-          market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
-          tenant_name: fullName,
-          tenant_user_id: (user.value as any)?.id || undefined,
-          tenant_phone: contactPhone,
-          tenant_email: contactEmail || null,
-          tenant_id_card: idCard,
-          intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
-          visit_time_slot: visitTime,
-          is_queue: isQueue
-        })
-
-        const createdRecord = res?.data || res
-        const bNo = createdRecord?.booking_no || createdRecord?.booking_number || res?.booking_no || res?.booking_number
-        if (bNo) {
-          if (!createdBookingNumbers.includes(bNo)) createdBookingNumbers.push(bNo)
-        }
-        succeededStalls.push(stallItem)
-        sessionBookedStallMap.value[stallItem.code] = {
-          ...(createdRecord || {}),
-          stall_number: stallItem.code,
-          booking_number: bNo,
-          holding_stall: createdRecord?.holding_stall ?? !isQueue,
-          queue_position: createdRecord?.queue_position ?? (isQueue ? 1 : 0),
-          status: createdRecord?.status || 'pending_approval'
-        }
-        delete stallWaitingQueueCache.value[stallItem.code]
-      } catch (error: any) {
-        failedBookings.push({ stall: stallItem, error })
+    const stallsPayload = selectedStalls.value.map((stallItem) => {
+      const backendStall = backendStallsByIdent.value[stallItem.code]
+      const stallId = stallItem.backendId || backendStall?.id
+      const numericStallId = typeof stallId === 'number' && Number.isInteger(stallId)
+        ? stallId
+        : (typeof stallId === 'string' && /^\d+$/.test(stallId) ? Number(stallId) : undefined)
+      return {
+        stall_id: numericStallId,
+        stall_ident: stallItem.code,
+        stall_number: stallItem.code,
+        project_name: stallItem.zone || backendStall?.project_name || selectedProject.value?.name || 'โครงการ 01',
+        monthly_rent: Number(stallItem.monthlyRent || 1800),
+        deposit_fee: Number(stallItem.depositFee || stallItem.monthlyRent || 1800)
       }
-    }
+    })
+    const uniqueProjectNames = Array.from(new Set(stallsPayload.map(s => s.project_name).filter(Boolean)))
+
+    const res: any = await post('/bookings', {
+      stalls: stallsPayload,
+      stall_ident: firstStall.code,
+      stall_number: firstStall.code,
+      applicant_name: fullName,
+      applicant_phone: contactPhone,
+      applicant_email: contactEmail,
+      business_type: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+      visit_date: visitDate,
+      visit_time: visitTime,
+      note: bookingForm.value.notes || '',
+      market_id: numericMarketId,
+      project_name: uniqueProjectNames.join(', ') || firstStall.zone || selectedProject.value?.name || 'โครงการ 01',
+      market_name: currentMarketName.value || 'ตลาดนัดจตุจักร',
+      tenant_name: fullName,
+      tenant_user_id: (user.value as any)?.id || undefined,
+      tenant_phone: contactPhone,
+      tenant_email: contactEmail || null,
+      tenant_id_card: idCard,
+      intended_business: bookingForm.value.business || 'อาหารและเครื่องดื่ม',
+      visit_time_slot: visitTime,
+      is_queue: false,
+      appointment_group_id: appointmentGroupId
+    })
+
+    const createdRecord = res?.data || res
+    const bNo = createdRecord?.booking_no || createdRecord?.booking_number || res?.booking_no || res?.booking_number
+    const succeededStalls = [...selectedStalls.value]
+    succeededStalls.forEach((stallItem) => {
+      sessionBookedStallMap.value[stallItem.code] = {
+        ...(createdRecord || {}),
+        stall_number: stallItem.code,
+        booking_number: bNo,
+        holding_stall: true,
+        queue_position: 0,
+        status: createdRecord?.status || 'pending_approval'
+      }
+      delete stallWaitingQueueCache.value[stallItem.code]
+    })
 
     await Promise.all([refreshBackendStalls(), refreshMyActiveBookings(), fetchNotifications()])
-
-    if (failedBookings.length > 0) {
-      // Remove stalls that failed with 409 Conflict (already booked) from selection so user doesn't retry a duplicate
-      selectedStalls.value = failedBookings
-        .filter(item => item.error?.status !== 409 && item.error?.statusCode !== 409 && item.error?.data?.code !== 409)
-        .map(item => item.stall)
-      if (selectedStalls.value.length === 0) {
-        bookedProject.value = null
-      }
-      if (succeededStalls.length > 0) {
-        bookingRefCode.value = createdBookingNumbers.join(', ')
-        showWarning(
-          `บันทึกสำเร็จ ${succeededStalls.length} แผง และไม่สำเร็จ ${failedBookings.length} แผง ระบบคงไว้เฉพาะรายการที่ยังไม่สำเร็จเพื่อให้ลองใหม่ได้โดยไม่จองซ้ำ`,
-          'บันทึกการจองได้บางรายการ'
-        )
-      } else {
-        const firstError = failedBookings[0]?.error
-        const errMsg = firstError?.data?.detail || firstError?.data?.error?.message || firstError?.data?.message
-        if (firstError?.status === 409 || firstError?.statusCode === 409 || firstError?.data?.code === 409) {
-          showWarning(
-            errMsg || 'คุณได้ทำการจองแผงหรือรอบเวลานี้ไว้แล้ว ไม่สามารถจองซ้ำได้',
-            'ไม่สามารถจองซ้ำได้'
-          )
-        } else {
-          showError(errMsg || 'เกิดข้อผิดพลาดในการบันทึกคำขอจอง กรุณาลองใหม่อีกครั้ง')
-        }
-      }
-      return
-    }
 
     confirmedPassStalls.value = [...succeededStalls]
     selectedStalls.value = []
@@ -2906,9 +3043,7 @@ const submitBooking = async () => {
     activeWaitingStallCode.value = ''
 
     const randomDigits = Math.floor(10000 + Math.random() * 90000)
-    bookingRefCode.value = createdBookingNumbers.length > 0
-      ? createdBookingNumbers.join(', ')
-      : `BMA-JJ-2026-${randomDigits}`
+    bookingRefCode.value = bNo || `BMA-JJ-2026-${randomDigits}`
     showSuccessModal.value = true
     launchConfetti()
   } catch (err: any) {
@@ -2994,7 +3129,8 @@ onMounted(async () => {
   if (user.value) {
     const demoTenantProfiles: Record<string, { phone: string; idCard: string }> = {
       tenant: { phone: '081-234-5678', idCard: '1-1004-99887-12-3' },
-      tenant2: { phone: '089-111-2233', idCard: '1-1005-44221-55-6' }
+      tenant2: { phone: '089-111-2233', idCard: '1-1005-44221-55-6' },
+      tenant3: { phone: '086-778-9900', idCard: '1-1006-88772-33-4' }
     }
     const demoProfile = demoTenantProfiles[String((user.value as any).username || '')]
     if (user.value.full_name) {
@@ -3026,12 +3162,47 @@ onMounted(async () => {
   }
   selectedStalls.value = []
 
-  // If a specific stall was requested via URL query (?stall=20A), select it (only if market not full and not already booked)
+  // If a specific stall was requested via URL query (?stall=20A), select it (including when offered from waitlist!)
   if (route.query.stall && !isMarketFull.value) {
     const targetCode = String(route.query.stall).trim()
+    const backendRec = backendStallsByIdent.value[targetCode]
     const found = upperHallStalls.value.find(s => s.code === targetCode) || lowerHallStalls.value.find(s => s.code === targetCode)
-    if (found && found.status === 'available' && !myActiveBookingsByStall.value[targetCode]) {
-      selectedStalls.value = [found]
+    const effStatus = backendRec
+      ? normalizeBackendStallStatus(getBackendRecordStatus(backendRec), backendRec)
+      : (found?.status || 'available')
+    if (effStatus !== 'occupied' && !myActiveBookingsByStall.value[targetCode]) {
+      const targetStallModel: StallModel = found
+        ? { ...found, status: effStatus, backendId: backendRec?.id || found.backendId }
+        : {
+            code: targetCode,
+            zone: String(route.query.project || backendRec?.project_name || 'โซนแผงค้า'),
+            status: effStatus,
+            areaType: 'ทั่วไป',
+            size: 5,
+            entryFee: 36000,
+            monthlyRent: Number(backendRec?.monthly_rent || 1800),
+            commonFee: 500,
+            depositFee: Number(backendRec?.monthly_rent || 1800),
+            photo: '/images/stall_3d_perspective.jpg',
+            backendId: backendRec?.id
+          }
+      selectedStalls.value = [targetStallModel]
+      if (backendRec?.market_id && String(backendRec.market_id) !== String(route.query.market || '')) {
+        router.replace({
+          query: {
+            ...route.query,
+            market: String(backendRec.market_id)
+          }
+        })
+      }
+      if (targetStallModel.status === 'reserved') {
+        activeWaitingStallCode.value = targetCode
+        fetchWaitingQueueForStall(targetCode)
+      }
+      focusClaimedStallOnMap()
+      if (String(route.query.step || '') === '2' && effStatus === 'available') {
+        currentStep.value = 2
+      }
     }
   }
 
@@ -3053,6 +3224,14 @@ onUnmounted(() => {
 
 .step1-title-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
 .step1-map-toolbar { flex: 0 1 700px; width: min(100%, 700px); margin-left: auto; display: flex; align-items: flex-end; justify-content: flex-end; }
+.waitlist-claim-notice { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: #eff6ff; color: #1e3a8a; }
+.waitlist-claim-notice.is-map-drawer { flex-shrink: 0; border-bottom: 1px solid #bfdbfe; }
+.waitlist-claim-icon { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 9px; background: #dbeafe; color: #2563eb; }
+.waitlist-claim-content { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: 2px; }
+.waitlist-claim-content strong { color: #1e3a8a; font-size: 0.9375rem; font-weight: 700; }
+.waitlist-claim-content span { color: #475569; font-size: 0.8125rem; font-weight: 500; }
+.waitlist-claim-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.waitlist-claim-badge { flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8 !important; font-size: 0.75rem !important; font-weight: 700 !important; }
 @media (max-width: 760px) { .step1-title-bar { align-items: flex-start; flex-direction: column; gap: 12px; } .step1-map-toolbar { width: 100%; max-width: none; } }
 
 .map-selection-empty-drawer {
@@ -3216,7 +3395,8 @@ onUnmounted(() => {
 
 /* Per-stall cards inside selected-stall drawer */
 .sel-stall-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-.sel-stall-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #ffffff; }
+.sel-stall-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #ffffff; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.sel-stall-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08); }
 .ssc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .ssc-title { display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
 .ssc-title-main { display: flex; align-items: center; gap: 7px; min-width: 0; }

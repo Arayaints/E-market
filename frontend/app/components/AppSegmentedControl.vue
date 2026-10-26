@@ -112,6 +112,7 @@ const selectOption = (value: string) => {
 .app-segmented-option.is-active {
   background: #ffffff;
   color: #0f172a;
+  font-weight: 700;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 

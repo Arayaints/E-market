@@ -4,50 +4,22 @@
 
     <main class="content-body visit-page">
       <AppBreadcrumb
+        v-if="!isStaff"
         :market="marketName"
         :marketId="marketId"
         current="จัดการรอบเข้าชมแผง"
         :backTo="`/stalls?market=${marketId}`"
       />
 
+      <!-- Page Heading แบบรูปแรก (Pattern เดียวกันทั้งระบบ) -->
+      <header class="visit-page-heading">
+        <div class="heading-left">
+          <h1 class="page-title">จัดการรอบเข้าชม</h1>
+          <p class="page-desc">กำหนดตารางรอบเวลาเข้าชมแผงค้า และระยะเวลายื่นคำร้องขอเช่า</p>
+        </div>
+      </header>
+
       <section class="schedule-card card glass-card">
-        <!-- Header Section -->
-        <header class="schedule-header">
-          <div class="header-left">
-            <span class="eyebrow">VISIT SCHEDULE MANAGEMENT</span>
-            <h1 class="page-title">จัดการรอบเข้าชมแผง — {{ marketName }}</h1>
-            <p class="page-desc">
-              กำหนดตารางรอบเวลาประจำสัปดาห์ครั้งเดียวเพื่อใช้งานตลอดไป หรือระบุวันหยุดข้อยกเว้นเฉพาะวัน เชื่อมโยงกับขั้นตอนจองแผงเช่า (Step 2) อัตโนมัติ
-            </p>
-          </div>
-          <div class="header-right">
-            <NuxtLink
-              :to="`/stalls/book?market=${marketId}`"
-              class="preview-link-btn"
-              target="_blank"
-              title="เปิดดูหน้าจอผู้เช่า (Step 2)"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              <span>ดูหน้าจอผู้เช่า (Step 2)</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </NuxtLink>
-            <button class="primary-btn" type="button" @click="handleSaveAll">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              <span>บันทึกตารางเวลา</span>
-            </button>
-          </div>
-        </header>
 
         <!-- ======================================================== -->
         <!-- WEEKLY MASTER (ตั้งครั้งเดียว หมุนเวียนใช้ได้ตลอดไป)         -->
@@ -366,32 +338,19 @@
         </div>
 
 
-        <!-- Footer Bar with Save & Reset -->
+        <!-- Footer Bar with Save -->
         <footer class="schedule-footer">
-          <div class="footer-left">
-            <span class="footer-hint">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>ตารางเวลาจะถูกนำไปใช้ในหน้าเลือกวันเข้าชมของผู้เช่า (Step 2) ตลอดไป</span>
-            </span>
-          </div>
-
           <div class="footer-right">
-            <NuxtLink :to="`/stalls/book?market=${marketId}`" class="secondary-btn" target="_blank">
-              <span>ทดลองดูหน้าจองจริง</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </NuxtLink>
-            <button class="primary-btn" type="button" @click="handleSaveAll">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-              </svg>
-              <span>บันทึกตารางเวลาทั้งหมด</span>
-            </button>
+            <AppButton variant="primary" size="md" @click="handleSaveAll">
+              <template #prefix>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </template>
+              บันทึกตารางเวลา
+            </AppButton>
           </div>
         </footer>
       </section>
@@ -474,9 +433,11 @@ import {
 import { getMarketGisConfig } from '../data/markets_registry'
 
 const route = useRoute()
-const { get } = useApi()
-const { showSuccess } = useAppAlert()
+const { get, post } = useApi()
+const { user } = useAuth()
+const { showSuccess, showError } = useAppAlert()
 const { applyMarketOverride } = useMarketOverrides()
+const isStaff = computed(() => user.value?.role === 'staff')
 
 const marketId = computed(() => String(route.query.market || '1'))
 const apiMarketName = ref('')
@@ -845,54 +806,47 @@ watch(marketId, () => {
 }
 
 .schedule-card {
-  margin-top: 20px;
+  margin-top: 0;
   width: 100%;
   box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 28px;
+  padding: 20px 24px 24px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.schedule-header {
+.visit-page-heading {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  margin: 8px 0 16px;
   flex-wrap: wrap;
 }
 
-.header-left {
+.heading-left {
   flex: 1;
   min-width: 280px;
 }
 
-.eyebrow {
-  color: #2563eb;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-title {
-  margin: 4px 0 6px;
-  color: #0f172a;
-  font-size: 1.35rem;
-  font-weight: 700;
-}
-
-.page-desc {
+.visit-page-heading .page-title {
   margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.visit-page-heading .page-desc {
+  margin: 4px 0 0;
   color: #64748b;
-  font-size: 0.88rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   line-height: 1.5;
 }
 
-.header-right {
+.heading-actions {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1034,7 +988,7 @@ watch(marketId, () => {
 
 /* Mode Container */
 .mode-container {
-  padding-top: 18px;
+  padding-top: 0;
 }
 
 /* Standing Schedule Banner */
@@ -2112,7 +2066,7 @@ watch(marketId, () => {
 /* Footer Bar */
 .schedule-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-top: 28px;
   padding-top: 20px;
@@ -2300,8 +2254,9 @@ watch(marketId, () => {
     padding: 18px;
   }
 
-  .schedule-header {
+  .visit-page-heading {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .detail-day-config {

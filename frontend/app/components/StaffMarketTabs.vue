@@ -12,11 +12,11 @@
       </NuxtLink>
       <NuxtLink :to="infoLink" :class="{ active: active === 'info' }">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V5l6-3 6 3v16"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M9 13h.01"/><path d="M15 13h.01"/></svg>
-        ข้อมูลตลาด
+        รายละเอียดตลาด
       </NuxtLink>
       <NuxtLink :to="layoutLink" class="manage-layout-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        จัดการผัง
+        จัดการผัง GIS
       </NuxtLink>
     </nav>
   </section>

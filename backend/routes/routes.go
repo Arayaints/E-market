@@ -129,14 +129,25 @@ func SetupRouter() *gin.Engine {
 		api.GET("/bookings/waiting-queue/:ident", stallHandler.GetWaitingQueue)
 		api.GET("/bookings/stall-queue/:ident", stallHandler.GetWaitingQueue)
 		api.GET("/bookings/visit-capacity", bookingHandler.GetVisitCapacity)
+		api.GET("/bookings/policy-settings", bookingHandler.GetPolicySettings)
 
 		// Booking Routes
 		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT(), middlewares.ScopeMarketQuery(db))
 		{
 			bookingGroup.GET("", bookingHandler.GetBookings)
+			bookingGroup.PUT("/policy-settings", middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdatePolicySettings)
+			bookingGroup.POST("/policy-settings", middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdatePolicySettings)
 			bookingGroup.GET("/:id", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
-			bookingGroup.POST("/clear", middlewares.RequireRoles("admin"), bookingHandler.ClearAll)
+			bookingGroup.POST("/waitlist", bookingHandler.CreateWaitlist)
+			bookingGroup.GET("/waitlist/mine", bookingHandler.GetMyWaitlist)
+			bookingGroup.GET("/waitlist/stall/:ident", bookingHandler.GetWaitlistByStall)
+			bookingGroup.POST("/waitlist/stall/:ident/advance", middlewares.RequireRoles("admin", "staff"), bookingHandler.AdvanceWaitlistByStall)
+			bookingGroup.DELETE("/waitlist/:id", bookingHandler.WithdrawWaitlist)
+			bookingGroup.POST("/waitlist/:id/decline", bookingHandler.DeclineWaitlist)
+			bookingGroup.POST("/clear", middlewares.RequireRoles("admin", "staff"), bookingHandler.ClearAll)
+			bookingGroup.POST("/:id/stalls/:ident/cancel", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.CancelBookingStall)
+			bookingGroup.DELETE("/:id/stalls/:ident", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.CancelBookingStall)
 			bookingGroup.POST("/:id/approve", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Approve)
 			bookingGroup.POST("/:id/reject", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Reject)
 			bookingGroup.POST("/:id/mark-visited", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.MarkVisited)
@@ -164,7 +175,7 @@ func SetupRouter() *gin.Engine {
 			appGroup.GET("/:id", middlewares.RequireResourceAccess(db, "application"), appHandler.GetApplicationByID)
 			appGroup.POST("", middlewares.RequireRoles("tenant"), appHandler.CreateApplication)
 			appGroup.POST("/:id/action", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "application"), appHandler.Action)
-			appGroup.POST("/clear", middlewares.RequireRoles("admin"), func(c *gin.Context) {
+			appGroup.POST("/clear", middlewares.RequireRoles("admin", "staff"), func(c *gin.Context) {
 				c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"cleared": true}, http.StatusOK))
 			})
 			appGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "application"), appHandler.UpdateApplicationStatus)

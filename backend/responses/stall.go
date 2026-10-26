@@ -21,22 +21,47 @@ type StallResponse struct {
 	AreaSqm            float64   `json:"area_sqm"`
 	DailyRent          float64   `json:"daily_rent"`
 	MonthlyRent        float64   `json:"monthly_rent"`
-	Status             string    `json:"status"`
-	StallStatus        string    `json:"stall_status"`
-	Floor              string    `json:"floor"`
-	CoordinatesGeoJSON string    `json:"coordinates_geojson,omitempty"`
-	Published          bool      `json:"published"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	Status             string     `json:"status"`
+	StallStatus        string     `json:"stall_status"`
+	WaitlistCount      int        `json:"waitlist_count"`
+	OfferedToTenantID  int        `json:"offered_to_tenant_id,omitempty"`
+	OfferedExpiresAt   *time.Time `json:"offered_expires_at,omitempty"`
+	Floor              string     `json:"floor"`
+	CoordinatesGeoJSON string     `json:"coordinates_geojson,omitempty"`
+	Published          bool       `json:"published"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+}
+
+type WaitingQueueItem struct {
+	ID               int        `json:"id"`
+	Position         int        `json:"position"`
+	QueueNumber      int        `json:"queue_number"`
+	QueuePosition    int        `json:"queue_position"`
+	TenantID         int        `json:"tenant_id"`
+	TenantName       string     `json:"tenant_name"`
+	MaskedName       string     `json:"masked_name"`
+	TenantPhone      string     `json:"tenant_phone"`
+	MaskedPhone      string     `json:"masked_phone"`
+	Status           string     `json:"status"`
+	OfferedAt        *time.Time `json:"offered_at,omitempty"`
+	ExpiresAt        *time.Time `json:"expires_at,omitempty"`
+	RemainingSeconds int64      `json:"remaining_seconds"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 type WaitingQueueResponse struct {
-	StallIdent          string  `json:"stall_ident"`
-	QueueCount          int     `json:"queue_count"`
-	CurrentPosition     int     `json:"current_position"`
-	MaskedCurrentBooker string  `json:"masked_current_booker"`
-	MaskedBookerPhone   string  `json:"masked_booker_phone"`
-	ActiveHolderStatus  string  `json:"active_holder_status,omitempty"`
-	Status              string  `json:"status"`
-	ExpiresAt           *string `json:"expires_at,omitempty"`
+	StallIdent          string             `json:"stall_ident"`
+	QueueCount          int                `json:"queue_count"`
+	CurrentPosition     int                `json:"current_position"`
+	MaskedCurrentBooker string             `json:"masked_current_booker"`
+	CurrentBookerName   string             `json:"current_booker_name,omitempty"`
+	MaskedBookerPhone   string             `json:"masked_booker_phone"`
+	CurrentBookerPhone  string             `json:"current_booker_phone,omitempty"`
+	ActiveHolderStatus  string             `json:"active_holder_status,omitempty"`
+	Status              string             `json:"status"`
+	OfferedAt           *string            `json:"offered_at,omitempty"`
+	ExpiresAt           *string            `json:"expires_at,omitempty"`
+	RemainingSeconds    int64              `json:"remaining_seconds"`
+	Queues              []WaitingQueueItem `json:"queues"`
 }

@@ -10,7 +10,10 @@
       />
 
       <div class="edit-title-row">
-        <div><span class="eyebrow">MARKET PROFILE</span><h1>แก้ไขข้อมูลตลาด</h1><p>ข้อมูลที่บันทึกจะนำไปแสดงในหน้ารายละเอียดตลาด</p></div>
+        <div>
+          <h1>แก้ไขข้อมูลตลาด</h1>
+          <p>ข้อมูลที่บันทึกจะนำไปแสดงในหน้ารายละเอียดตลาด</p>
+        </div>
         <span v-if="lastUpdated" class="saved-state">บันทึกล่าสุด {{ formatUpdatedAt(lastUpdated) }}</span>
       </div>
 

@@ -74,6 +74,12 @@
               <strong>tenant2</strong> / <span>tenant21234</span>
             </div>
           </button>
+          <button type="button" class="btn-quick" @click="fillCredentials('tenant3', 'tenant31234')">
+            <div class="quick-badge badge-tenant">ผู้เช่าทดสอบ 3 (Tenant)</div>
+            <div class="quick-user-info">
+              <strong>tenant3</strong> / <span>tenant31234</span>
+            </div>
+          </button>
           <button type="button" class="btn-quick" @click="fillCredentials('admin', 'admin1234')">
             <div class="quick-badge badge-admin">ผู้ดูแลระบบ (Admin)</div>
             <div class="quick-user-info">

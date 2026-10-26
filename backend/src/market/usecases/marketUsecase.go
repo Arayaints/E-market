@@ -21,8 +21,8 @@ func resolveMarketJSONPath(slug string) string {
 		slug = "chatuchak"
 	}
 	candidates := []string{
-		filepath.Join("..", "frontend", "public", "data", "markets", slug+".json"),
-		filepath.Join("frontend", "public", "data", "markets", slug+".json"),
+		filepath.Join("data", "markets", slug+".json"),
+		filepath.Join("backend", "data", "markets", slug+".json"),
 	}
 	for _, p := range candidates {
 		if _, err := os.Stat(p); err == nil {
@@ -32,31 +32,37 @@ func resolveMarketJSONPath(slug string) string {
 	return candidates[0]
 }
 
-// syncMarketJSONFile merges incoming projects with the base JSON file in
-// frontend/public/data/markets/<slug>.json and writes the unified file back to disk
-// so all existing and newly drawn zones/stalls live in the same JSON file.
-func syncMarketJSONFile(slug string, incomingProjectsRaw json.RawMessage) json.RawMessage {
+func loadBaseProjectsFromDisk(slug string) json.RawMessage {
 	jsonPath := resolveMarketJSONPath(slug)
 	rawBytes, err := os.ReadFile(jsonPath)
 	if err != nil {
-		return incomingProjectsRaw
+		return json.RawMessage("[]")
 	}
-
 	var marketDoc map[string]interface{}
 	if err := json.Unmarshal(rawBytes, &marketDoc); err != nil {
-		return incomingProjectsRaw
+		return json.RawMessage("[]")
 	}
+	if bpRaw, ok := marketDoc["projects"]; ok {
+		if bpBytes, err := json.Marshal(bpRaw); err == nil && json.Valid(bpBytes) {
+			return json.RawMessage(bpBytes)
+		}
+	}
+	return json.RawMessage("[]")
+}
 
+func mergeProjectsWithBase(baseProjectsRaw json.RawMessage, incomingProjectsRaw json.RawMessage) json.RawMessage {
 	var incomingProjects []map[string]interface{}
-	if err := json.Unmarshal(incomingProjectsRaw, &incomingProjects); err != nil {
-		return incomingProjectsRaw
+	if err := json.Unmarshal(incomingProjectsRaw, &incomingProjects); err != nil || len(incomingProjects) == 0 {
+		if len(baseProjectsRaw) > 2 {
+			return baseProjectsRaw
+		}
+		return json.RawMessage("[]")
 	}
 
 	var baseProjects []map[string]interface{}
-	if bpRaw, ok := marketDoc["projects"]; ok {
-		if bpBytes, err := json.Marshal(bpRaw); err == nil {
-			_ = json.Unmarshal(bpBytes, &baseProjects)
-		}
+	_ = json.Unmarshal(baseProjectsRaw, &baseProjects)
+	if len(baseProjects) == 0 {
+		return incomingProjectsRaw
 	}
 
 	baseIDs := make(map[string]bool)
@@ -85,14 +91,34 @@ func syncMarketJSONFile(slug string, incomingProjectsRaw json.RawMessage) json.R
 		mergedProjects = append(existingNonZone, incomingProjects...)
 	}
 
-	marketDoc["projects"] = mergedProjects
-	if outBytes, err := json.MarshalIndent(marketDoc, "", "  "); err == nil {
-		_ = os.WriteFile(jsonPath, outBytes, 0644)
-	}
 	if mergedBytes, err := json.Marshal(mergedProjects); err == nil {
 		return json.RawMessage(mergedBytes)
 	}
 	return incomingProjectsRaw
+}
+
+// syncMarketJSONFile merges incoming projects with the base JSON file in
+// backend/data/markets/<slug>.json and writes the unified file back to disk
+// so all existing and newly drawn zones/stalls live in the same JSON file.
+func syncMarketJSONFile(slug string, incomingProjectsRaw json.RawMessage) json.RawMessage {
+	jsonPath := resolveMarketJSONPath(slug)
+	baseProjectsRaw := loadBaseProjectsFromDisk(slug)
+	mergedRaw := mergeProjectsWithBase(baseProjectsRaw, incomingProjectsRaw)
+
+	rawBytes, err := os.ReadFile(jsonPath)
+	if err == nil {
+		var marketDoc map[string]interface{}
+		if json.Unmarshal(rawBytes, &marketDoc) == nil {
+			var mergedProjects []map[string]interface{}
+			if json.Unmarshal(mergedRaw, &mergedProjects) == nil {
+				marketDoc["projects"] = mergedProjects
+				if outBytes, err := json.MarshalIndent(marketDoc, "", "  "); err == nil {
+					_ = os.WriteFile(jsonPath, outBytes, 0644)
+				}
+			}
+		}
+	}
+	return mergedRaw
 }
 
 type useCase struct {
@@ -164,18 +190,31 @@ func (u *useCase) GetGISConfig(idOrSlug string, includeDraft bool) (*responses.M
 	if err != nil {
 		return nil, responses.NewAppErr(http.StatusNotFound, "ไม่พบข้อมูลตลาด")
 	}
+	baseProjects := loadBaseProjectsFromDisk(market.Slug)
 	config, err := u.repo.FindGISConfig(market.ID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &responses.MarketGISResponse{MarketID: market.ID, Projects: json.RawMessage("[]"), Facilities: json.RawMessage("[]")}, nil
+		return &responses.MarketGISResponse{
+			MarketID:   market.ID,
+			Projects:   baseProjects,
+			Facilities: json.RawMessage("[]"),
+			Published:  true,
+		}, nil
 	}
 	if err != nil {
 		logs.Error(err)
 		return nil, responses.NewInternalServerError()
 	}
 	if !includeDraft && !config.Published {
-		return &responses.MarketGISResponse{MarketID: market.ID, Projects: json.RawMessage("[]"), Facilities: json.RawMessage("[]")}, nil
+		return &responses.MarketGISResponse{
+			MarketID:   market.ID,
+			Projects:   baseProjects,
+			Facilities: json.RawMessage("[]"),
+			Published:  true,
+		}, nil
 	}
-	return gisResponse(config), nil
+	resp := gisResponse(config)
+	resp.Projects = mergeProjectsWithBase(baseProjects, resp.Projects)
+	return resp, nil
 }
 
 func (u *useCase) SaveGISConfig(idOrSlug string, userID int, req requests.UpdateMarketGISRequest) (*responses.MarketGISResponse, error) {
