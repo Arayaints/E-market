@@ -4,8 +4,11 @@ import { useAuthStore } from "~/core/modules/auth/store/AuthStore"
 export const useAuth = () => {
 	const authStore = useAuthStore()
 
-	const initAuth = () => {
+	const initAuth = async () => {
 		authStore.hydrate()
+		if (authStore.accessToken) {
+			await authStore.refreshProfile()
+		}
 	}
 
 	return {
@@ -21,6 +24,5 @@ export const useAuth = () => {
 		initAuth,
 		login: authStore.login,
 		logout: authStore.logout,
-		switchRole: authStore.switchRole,
 	}
 }

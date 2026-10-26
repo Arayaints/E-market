@@ -99,7 +99,6 @@ func SetupRouter() *gin.Engine {
 		{
 			authGroup.POST("/login", authHandler.Login)
 			authGroup.GET("/me", middlewares.AuthorizeJWT(), authHandler.GetProfile)
-			authGroup.POST("/switch-role", authHandler.SwitchRole)
 			authGroup.POST("/refresh_token", authHandler.RefreshToken)
 		}
 
@@ -107,8 +106,12 @@ func SetupRouter() *gin.Engine {
 		marketGroup := api.Group("/markets")
 		{
 			marketGroup.GET("", marketHandler.GetMarkets)
+			marketGroup.GET("/mine", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), marketHandler.GetMyMarkets)
 			marketGroup.GET("/:id", marketHandler.GetMarketByID)
 			marketGroup.GET("/:id/zones", marketHandler.GetMarketZones)
+			marketGroup.GET("/:id/gis-config", marketHandler.GetGISConfig)
+			marketGroup.GET("/:id/gis-config/draft", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), middlewares.RequireMarketAccess(db, "id"), marketHandler.GetGISDraft)
+			marketGroup.PUT("/:id/gis-config", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), middlewares.RequireMarketAccess(db, "id"), marketHandler.SaveGISConfig)
 		}
 		api.GET("/zones", marketHandler.GetMarketZones)
 
@@ -117,7 +120,9 @@ func SetupRouter() *gin.Engine {
 		{
 			stallGroup.GET("", stallHandler.GetStalls)
 			stallGroup.GET("/:id", stallHandler.GetStallByID)
-			stallGroup.POST("", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), stallHandler.CreateStall)
+			stallGroup.POST("", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), middlewares.RequireBodyMarketAccess(db), stallHandler.CreateStall)
+			stallGroup.PUT("/:id", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), middlewares.RequireStallAccess(db, "id"), stallHandler.UpdateStall)
+			stallGroup.GET("/:id/history", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), middlewares.RequireStallAccess(db, "id"), stallHandler.GetStallHistory)
 		}
 
 		// Public Endpoints (PDPA Masked & Capacity Aggregates)
@@ -126,23 +131,23 @@ func SetupRouter() *gin.Engine {
 		api.GET("/bookings/visit-capacity", bookingHandler.GetVisitCapacity)
 
 		// Booking Routes
-		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT())
+		bookingGroup := api.Group("/bookings", middlewares.AuthorizeJWT(), middlewares.ScopeMarketQuery(db))
 		{
 			bookingGroup.GET("", bookingHandler.GetBookings)
-			bookingGroup.GET("/:id", bookingHandler.GetBookingByID)
+			bookingGroup.GET("/:id", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.GetBookingByID)
 			bookingGroup.POST("", bookingHandler.CreateBooking)
-			bookingGroup.POST("/clear", bookingHandler.ClearAll)
-			bookingGroup.POST("/:id/approve", bookingHandler.Approve)
-			bookingGroup.POST("/:id/reject", bookingHandler.Reject)
-			bookingGroup.POST("/:id/mark-visited", bookingHandler.MarkVisited)
-			bookingGroup.POST("/:id/visited", bookingHandler.MarkVisited)
-			bookingGroup.POST("/:id/no-show", bookingHandler.NoShow)
-			bookingGroup.POST("/:id/noshow", bookingHandler.NoShow)
-			bookingGroup.POST("/:id/decide", bookingHandler.Decide)
-			bookingGroup.POST("/:id/officer-record-proxy", bookingHandler.OfficerRecordProxy)
-			bookingGroup.POST("/:id/cancel", bookingHandler.Cancel)
-			bookingGroup.POST("/:id/select-slot", bookingHandler.SelectSlot)
-			bookingGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), bookingHandler.UpdateBookingStatus)
+			bookingGroup.POST("/clear", middlewares.RequireRoles("admin"), bookingHandler.ClearAll)
+			bookingGroup.POST("/:id/approve", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Approve)
+			bookingGroup.POST("/:id/reject", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Reject)
+			bookingGroup.POST("/:id/mark-visited", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.MarkVisited)
+			bookingGroup.POST("/:id/visited", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.MarkVisited)
+			bookingGroup.POST("/:id/no-show", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.NoShow)
+			bookingGroup.POST("/:id/noshow", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.NoShow)
+			bookingGroup.POST("/:id/decide", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Decide)
+			bookingGroup.POST("/:id/officer-record-proxy", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.OfficerRecordProxy)
+			bookingGroup.POST("/:id/cancel", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.Cancel)
+			bookingGroup.POST("/:id/select-slot", middlewares.RequireResourceAccess(db, "booking"), bookingHandler.SelectSlot)
+			bookingGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "booking"), bookingHandler.UpdateBookingStatus)
 		}
 
 		notificationGroup := api.Group("/notifications", middlewares.AuthorizeJWT())
@@ -153,25 +158,25 @@ func SetupRouter() *gin.Engine {
 		}
 
 		// Application Routes
-		appGroup := api.Group("/applications")
+		appGroup := api.Group("/applications", middlewares.AuthorizeJWT(), middlewares.ScopeMarketQuery(db))
 		{
 			appGroup.GET("", appHandler.GetApplications)
-			appGroup.GET("/:id", appHandler.GetApplicationByID)
-			appGroup.POST("", appHandler.CreateApplication)
-			appGroup.POST("/:id/action", appHandler.Action)
-			appGroup.POST("/clear", func(c *gin.Context) {
+			appGroup.GET("/:id", middlewares.RequireResourceAccess(db, "application"), appHandler.GetApplicationByID)
+			appGroup.POST("", middlewares.RequireRoles("tenant"), appHandler.CreateApplication)
+			appGroup.POST("/:id/action", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "application"), appHandler.Action)
+			appGroup.POST("/clear", middlewares.RequireRoles("admin"), func(c *gin.Context) {
 				c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{"cleared": true}, http.StatusOK))
 			})
-			appGroup.PATCH("/:id/status", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), appHandler.UpdateApplicationStatus)
+			appGroup.PATCH("/:id/status", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "application"), appHandler.UpdateApplicationStatus)
 		}
 
 		// Contract Routes
-		contractGroup := api.Group("/contracts")
+		contractGroup := api.Group("/contracts", middlewares.AuthorizeJWT(), middlewares.ScopeMarketQuery(db))
 		{
 			contractGroup.GET("", contractHandler.GetContracts)
-			contractGroup.GET("/:id", contractHandler.GetContractByID)
-			contractGroup.POST("", middlewares.AuthorizeJWT(), middlewares.RequireRoles("admin", "staff"), contractHandler.CreateContract)
-			contractGroup.POST("/:id/terminate", contractHandler.TerminateContract)
+			contractGroup.GET("/:id", middlewares.RequireResourceAccess(db, "contract"), contractHandler.GetContractByID)
+			contractGroup.POST("", middlewares.RequireRoles("admin", "staff"), middlewares.RequireStallPayloadAccess(db), contractHandler.CreateContract)
+			contractGroup.POST("/:id/terminate", middlewares.RequireRoles("admin", "staff"), middlewares.RequireResourceAccess(db, "contract"), contractHandler.TerminateContract)
 		}
 
 		// Item Routes (Blueprint demonstration module)

@@ -105,6 +105,16 @@ export const useAuthStore = defineStore("auth", {
 			}
 		},
 
+		async refreshProfile() {
+			if (!this.accessToken) return null
+			const res = await new AuthService().getProfile()
+			if (res.status && res.data) {
+				this.setUser(res.data)
+				return res.data
+			}
+			return null
+		},
+
 		setToken(accessToken: string, refreshToken?: string) {
 			this.accessToken = accessToken
 			if (refreshToken) {
@@ -128,55 +138,6 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.setItem("user_info", JSON.stringify(normalized))
 				localStorage.setItem("emarket_user", JSON.stringify(normalized))
 				localStorage.setItem("user_role", this.role)
-			}
-		},
-
-		switchRole(newRole: "tenant" | "admin" | "staff") {
-			const normalized = normalizeRole(newRole) as "tenant" | "admin" | "staff"
-			this.role = normalized
-			if (normalized === "tenant") {
-				this.currentUser = {
-					id: 3,
-					username: "tenant",
-					full_name: "สมชาย ใจดี",
-					role: "tenant",
-					phone: "081-234-5678",
-					email: "tenant@emarket.bma.go.th",
-				}
-			} else {
-				this.currentUser = {
-					id: normalized === "staff" ? 2 : 1,
-					username: normalized === "staff" ? "staff" : "admin",
-					full_name: normalized === "staff" ? "เจ้าหน้าที่ตลาด (Staff)" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
-					role: normalized,
-					phone: "02-123-4567",
-					email: `${normalized}@emarket.bma.go.th`,
-				}
-			}
-			if (typeof window !== "undefined") {
-				localStorage.setItem("user_role", normalized)
-				localStorage.setItem("user_info", JSON.stringify(this.currentUser))
-				localStorage.setItem("emarket_user", JSON.stringify(this.currentUser))
-				let switchUrl = "/api/v1/auth/switch-role"
-				try {
-					const config = useRuntimeConfig()
-					const base = (config.public?.apiUrl || config.public?.apiBase || "/api/v1") as string
-					switchUrl = `${base.replace(/\/+$/, "")}/auth/switch-role`
-				} catch {}
-				fetch(switchUrl, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ role: normalized }),
-				})
-					.then((r) => (r.ok ? r.json() : null))
-					.then((payload) => {
-						const token = payload?.data?.access_token || payload?.access_token
-						const refresh = payload?.data?.refresh_token || payload?.refresh_token
-						if (token) {
-							this.setToken(token, refresh)
-						}
-					})
-					.catch(() => {})
 			}
 		},
 
@@ -218,6 +179,7 @@ export const useAuthStore = defineStore("auth", {
 				localStorage.removeItem("user_role")
 				localStorage.removeItem("emarket_jwt_token")
 				localStorage.removeItem("emarket_user")
+				sessionStorage.removeItem("e-market:market-list-scroll-y")
 			}
 			return navigateTo("/auth/login")
 		},

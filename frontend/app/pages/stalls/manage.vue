@@ -16,6 +16,13 @@ definePageMeta({
     if (import.meta.client && !['admin', 'staff'].includes(authStore.role)) {
       return navigateTo({ path: '/stalls/book', query: to.query }, { replace: true })
     }
+    if (import.meta.client && authStore.role === 'staff') {
+      const assignedId = authStore.currentUser?.assigned_markets?.[0]?.id
+      if (!assignedId) return navigateTo('/staff', { replace: true })
+      if (String(to.query.market || '') !== String(assignedId)) {
+        return navigateTo({ path: '/stalls/manage', query: { market: assignedId, mode: to.query.mode === 'inspect' ? 'inspect' : undefined } }, { replace: true })
+      }
+    }
   }
 })
 </script>

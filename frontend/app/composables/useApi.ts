@@ -20,9 +20,6 @@ export const useApi = () => {
     if (token.value) {
       headers['Authorization'] = `Bearer ${token.value}`
     }
-    if (role.value) {
-      headers['X-Active-Role'] = String(role.value)
-    }
 
     try {
       return await $fetch<T>(url, {

@@ -125,3 +125,40 @@ func (h *Handler) CreateStall(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, responses.SuccessResponse(res, http.StatusCreated))
 }
+
+func (h *Handler) UpdateStall(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	var req requests.UpdateStallRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondError(c, err)
+		return
+	}
+	if err := validator.Validate(req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, responses.ValidateResponse(helpers.ConverstError(err)))
+		return
+	}
+	res, err := h.useCase.UpdateStall(id, middlewares.GetUserID(c), req)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) GetStallHistory(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		respondError(c, responses.NewAppErr(http.StatusBadRequest, "ID ไม่ถูกต้อง"))
+		return
+	}
+	res, err := h.useCase.GetStallHistory(id)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}

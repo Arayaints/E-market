@@ -39,7 +39,7 @@
         <div class="user-info-text">
           <span class="user-name-text">{{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}</span>
           <span class="user-role-text" :style="user?.role === 'tenant' ? 'color: #059669; font-weight: 700;' : 'color: #2563eb; font-weight: 700;'">
-            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'ผู้ดูแลระบบ (Admin)' }}
+            {{ roleLabel }}
           </span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8; margin-left: 2px;">
@@ -49,7 +49,7 @@
         <!-- Dropdown Menu -->
         <div v-if="showDropdown" class="card" style="position: absolute; top: 110%; right: 0; min-width: 190px; padding: 8px; z-index: 50; box-shadow: var(--shadow-lg);">
           <div style="padding: 6px 10px; font-size: 0.76rem; color: #64748b; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
-            บทบาทปัจจุบัน: <strong>{{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'เจ้าหน้าที่แอดมิน' }}</strong>
+            บทบาทปัจจุบัน: <strong>{{ roleLabel }}</strong>
           </div>
           <button class="btn btn-sm btn-outline" style="width: 100%; border: none; justify-content: flex-start; color: #ef4444; display: flex; align-items: center; gap: 8px;" @click="handleLogout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -74,32 +74,17 @@ const props = defineProps<{
 const { user, logout } = useAuth()
 const { isExpanded, toggle: toggleSidebar } = useSidebar()
 const showDropdown = ref(false)
+const roleLabel = computed(() => {
+  if (user.value?.role === 'tenant') return 'ผู้เช่าแผงค้า'
+  if (user.value?.role === 'staff') {
+    const marketName = (user.value as any)?.assigned_markets?.[0]?.name
+    return marketName ? `เจ้าหน้าที่${marketName}` : 'เจ้าหน้าที่ตลาด'
+  }
+  return 'ผู้ดูแลระบบ (Admin)'
+})
 
 const toggleMenu = () => {
   showDropdown.value = !showDropdown.value
-}
-
-const switchRole = (newRole: 'tenant' | 'admin') => {
-  if (newRole === 'tenant') {
-    user.value = {
-      id: 3,
-      username: 'tenant',
-      email: 'somchai@tenant.com',
-      full_name: 'สมชาย ใจดี (ผู้เช่าแผงค้า)',
-      role: 'tenant'
-    }
-  } else {
-    user.value = {
-      id: 1,
-      username: 'admin',
-      email: 'admin@emarket.com',
-      full_name: 'ผู้ดูแลระบบ (System Admin)',
-      role: 'admin'
-    }
-  }
-  if (process.client) {
-    localStorage.setItem('emarket_user', JSON.stringify(user.value))
-  }
 }
 
 const { showConfirm } = useAppAlert()

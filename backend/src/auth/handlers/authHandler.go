@@ -78,57 +78,6 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
 
-// SwitchRole godoc
-// @Summary สลับบทบาทผู้ใช้ (สำหรับ Dev Demo)
-// @Tags Auth
-// @ID auth-switch-role
-// @Accept json
-// @Produce json
-// @Router /auth/switch-role [post]
-func (h *Handler) SwitchRole(c *gin.Context) {
-	var body struct {
-		Role string `json:"role"`
-	}
-	_ = c.ShouldBindJSON(&body)
-
-	role := body.Role
-	if role == "" {
-		role = "tenant"
-	}
-
-	userID := 3
-	username := "tenant"
-	if role == "admin" {
-		userID = 1
-		username = "admin"
-	} else if role == "staff" {
-		userID = 2
-		username = "staff"
-	} else if role == "tenant2" {
-		userID = 4
-		username = "tenant2"
-		role = "tenant"
-	} else if role == "tenant3" {
-		userID = 5
-		username = "tenant3"
-		role = "tenant"
-	}
-
-	token, _ := helpers.GenerateToken(userID, username, role)
-	refreshToken, _ := helpers.GenerateRefreshToken(userID, username, role)
-	if refreshToken == "" {
-		refreshToken = token
-	}
-
-	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{
-		"role":          role,
-		"access_token":  token,
-		"refresh_token": refreshToken,
-		"token_type":    "bearer",
-		"message":       "role switched successfully",
-	}, http.StatusOK))
-}
-
 // RefreshToken godoc
 // @Summary ต่ออายุ JWT Token
 // @Tags Auth
@@ -155,11 +104,14 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 	}
 
 	claims, err := helpers.ValidateToken(tokenToValidate)
-	var newToken string
-	if err == nil && claims != nil {
-		newToken, _ = helpers.GenerateToken(claims.UserID, claims.Username, claims.Role)
-	} else {
-		newToken, _ = helpers.GenerateToken(3, "tenant", "tenant")
+	if err != nil || claims == nil {
+		c.JSON(http.StatusUnauthorized, responses.FailRespone(responses.NewAppErr(http.StatusUnauthorized, "Refresh token ไม่ถูกต้องหรือหมดอายุ")))
+		return
+	}
+	newToken, tokenErr := helpers.GenerateToken(claims.UserID, claims.Username, claims.Role)
+	if tokenErr != nil {
+		c.JSON(http.StatusInternalServerError, responses.FailRespone(responses.NewInternalServerError()))
+		return
 	}
 
 	c.JSON(http.StatusOK, responses.SuccessResponse(gin.H{
@@ -168,4 +120,3 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 		"token_type":    "bearer",
 	}, http.StatusOK))
 }
-

@@ -36,33 +36,11 @@ func AuthorizeJWT() gin.HandlerFunc {
 			return
 		}
 
-		userID := claims.UserID
-		username := claims.Username
-		role := claims.Role
-
-		activeRole := strings.ToLower(strings.TrimSpace(c.GetHeader("X-Active-Role")))
-		if activeRole == "officer" {
-			activeRole = "admin"
-		}
-		if activeRole == "tenant" && role != "tenant" {
-			userID = 3
-			username = "tenant"
-			role = "tenant"
-		} else if (activeRole == "admin" || activeRole == "staff") && role == "tenant" {
-			if activeRole == "staff" {
-				userID = 2
-				username = "staff"
-				role = "staff"
-			} else {
-				userID = 1
-				username = "admin"
-				role = "admin"
-			}
-		}
-
-		c.Set(ContextUserID, userID)
-		c.Set(ContextUsername, username)
-		c.Set(ContextRole, role)
+		// Identity and role always come from the signed token. Client headers must
+		// never be allowed to impersonate another account or elevate privileges.
+		c.Set(ContextUserID, claims.UserID)
+		c.Set(ContextUsername, claims.Username)
+		c.Set(ContextRole, claims.Role)
 		c.Next()
 	}
 }

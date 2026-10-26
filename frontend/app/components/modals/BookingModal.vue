@@ -50,7 +50,7 @@
       </div>
 
       <!-- Form State -->
-      <form v-else @submit.prevent="handleSubmit">
+      <form v-else novalidate @submit.prevent="handleSubmit">
         <div class="modal-body">
           <!-- Queue Mode Notice -->
           <div v-if="isQueueMode" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
@@ -82,25 +82,25 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="b_name">ชื่อ-นามสกุล *</label>
-              <input id="b_name" v-model="form.tenant_name" type="text" required placeholder="เช่น นายสมเกียรติ มั่นคง" class="form-input" />
+              <label class="form-label" for="b_name">ชื่อ-นามสกุล <b class="req-star">*</b></label>
+              <AppInput id="b_name" v-model="form.tenant_name" type="text" placeholder="เช่น นายสมเกียรติ มั่นคง" :error="errors.tenant_name" @blur="validateField('tenant_name')" />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="b_phone">เบอร์โทรศัพท์ติดต่อ *</label>
-              <input id="b_phone" v-model="form.tenant_phone" type="tel" required placeholder="08x-xxx-xxxx" class="form-input" />
+              <label class="form-label" for="b_phone">เบอร์โทรศัพท์ติดต่อ <b class="req-star">*</b></label>
+              <AppInput id="b_phone" v-model="form.tenant_phone" type="tel" placeholder="08x-xxx-xxxx" :error="errors.tenant_phone" @blur="validateField('tenant_phone')" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="b_email">อีเมล</label>
-              <input id="b_email" v-model="form.tenant_email" type="email" placeholder="name@example.com" class="form-input" />
+              <AppInput id="b_email" v-model="form.tenant_email" type="email" placeholder="name@example.com" />
             </div>
 
             <div class="form-group">
               <label class="form-label" for="b_id_card">เลขประจำตัวประชาชน (ถ้ามี)</label>
-              <input id="b_id_card" v-model="form.tenant_id_card" type="text" placeholder="13 หลัก" class="form-input" />
+              <AppInput id="b_id_card" v-model="form.tenant_id_card" type="text" placeholder="13 หลัก" />
             </div>
           </div>
 
@@ -111,24 +111,19 @@
           <!-- Only show date/time selection if NOT queue mode (Page 2 Rule) -->
           <div v-if="!isQueueMode" class="form-row">
             <div class="form-group">
-              <label class="form-label" for="b_date">วันที่ต้องการเข้าชมแผง *</label>
-              <input id="b_date" v-model="form.visit_date" type="date" :min="minDate" required class="form-input" />
+              <label class="form-label" for="b_date">วันที่ต้องการเข้าชมแผง <b class="req-star">*</b></label>
+              <AppInput id="b_date" v-model="form.visit_date" type="date" :min="minDate" :error="errors.visit_date" @blur="validateField('visit_date')" />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="b_time">ช่วงเวลาที่สะดวก *</label>
-              <select id="b_time" v-model="form.visit_time_slot" class="form-select">
-                <option value="09:00 - 10:30">ช่วงเช้า (09:00 - 10:30 น.)</option>
-                <option value="10:30 - 12:00">ช่วงสาย (10:30 - 12:00 น.)</option>
-                <option value="13:30 - 15:00">ช่วงบ่าย (13:30 - 15:00 น.)</option>
-                <option value="15:00 - 16:30">ช่วงบ่ายแก่ (15:00 - 16:30 น.)</option>
-              </select>
+              <label class="form-label" for="b_time">ช่วงเวลาที่สะดวก <b class="req-star">*</b></label>
+              <AppSelect v-model="form.visit_time_slot" :options="visitTimeOptions" />
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="b_business">ประเภทสินค้า / ร้านค้าที่ตั้งใจจะขาย</label>
-            <input id="b_business" v-model="form.intended_business" type="text" placeholder="เช่น ร้านก๋วยเตี๋ยวเรือ, เสื้อผ้าแฟชั่นเกาหลี" class="form-input" />
+            <AppInput id="b_business" v-model="form.intended_business" type="text" placeholder="เช่น ร้านก๋วยเตี๋ยวเรือ, เสื้อผ้าแฟชั่นเกาหลี" />
           </div>
         </div>
 
@@ -170,6 +165,13 @@ const isQueueMode = computed(() => {
 
 const minDate = new Date().toISOString().slice(0, 10)
 
+const visitTimeOptions = [
+  { value: '09:00 - 10:30', label: 'ช่วงเช้า (09:00 - 10:30 น.)' },
+  { value: '10:30 - 12:00', label: 'ช่วงสาย (10:30 - 12:00 น.)' },
+  { value: '13:30 - 15:00', label: 'ช่วงบ่าย (13:30 - 15:00 น.)' },
+  { value: '15:00 - 16:30', label: 'ช่วงบ่ายแก่ (15:00 - 16:30 น.)' }
+]
+
 const form = ref({
   tenant_name: 'คุณสมศักดิ์ ค้าขายดี',
   tenant_phone: '081-999-8877',
@@ -180,9 +182,35 @@ const form = ref({
   intended_business: ''
 })
 
+const errors = reactive({
+  tenant_name: '',
+  tenant_phone: '',
+  visit_date: ''
+})
+
+const validateField = (field: keyof typeof errors) => {
+  if (field === 'tenant_name') {
+    errors.tenant_name = form.value.tenant_name.trim() ? '' : 'กรุณาระบุชื่อ-นามสกุล'
+  } else if (field === 'tenant_phone') {
+    errors.tenant_phone = form.value.tenant_phone.trim() ? '' : 'กรุณาระบุเบอร์โทรศัพท์ติดต่อ'
+  } else if (field === 'visit_date') {
+    errors.visit_date = !isQueueMode.value && !form.value.visit_date ? 'กรุณาเลือกวันที่ต้องการเข้าชมแผง' : ''
+  }
+}
+
+const validateForm = () => {
+  validateField('tenant_name')
+  validateField('tenant_phone')
+  validateField('visit_date')
+  return !errors.tenant_name && !errors.tenant_phone && !errors.visit_date
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) {
     isSuccess.value = false
+    errors.tenant_name = ''
+    errors.tenant_phone = ''
+    errors.visit_date = ''
     const cleanedName = String(user.value?.full_name || 'คุณสมชาย ใจดี').replace(/\([^)]*\)/g, '').trim()
     form.value.tenant_name = cleanedName || 'คุณสมชาย ใจดี'
     form.value.tenant_email = user.value?.email || 'somchai@example.com'
@@ -192,6 +220,7 @@ watch(() => props.show, (newVal) => {
 
 const handleSubmit = async () => {
   if (!props.stall) return
+  if (!validateForm()) return
   submitting.value = true
 
   try {

@@ -7,6 +7,13 @@ export interface IUser {
 	phone?: string
 	citizen_id?: string
 	id_card?: string
+	assigned_markets?: Array<{
+		id: number
+		slug: string
+		code: string
+		name: string
+		district: string
+	}>
 }
 
 export interface IAuthResponse {

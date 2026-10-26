@@ -46,7 +46,7 @@
       </div>
 
       <!-- Form State -->
-      <form v-else @submit.prevent="handleSubmit">
+      <form v-else novalidate @submit.prevent="handleSubmit">
         <div class="modal-body">
           <!-- Stall Selector when Appointment Card contains multiple stalls -->
           <div
@@ -54,7 +54,7 @@
             style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;"
           >
             <label class="form-label" style="color: #1e40af; font-weight: 700; margin-bottom: 6px; display: block;">
-              เลือกแผงค้าในนัดหมายนี้ที่ต้องการยื่นคำร้องขอเช่า *
+              เลือกแผงค้าในนัดหมายนี้ที่ต้องการยื่นคำร้องขอเช่า <b class="req-star">*</b>
             </label>
             <AppSelect
               v-model="selectedSubBookingId"
@@ -69,31 +69,31 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="app_name">ชื่อ-นามสกุล *</label>
-              <input id="app_name" v-model="form.applicant_name" type="text" required class="form-input" />
+              <label class="form-label" for="app_name">ชื่อ-นามสกุล <b class="req-star">*</b></label>
+              <AppInput id="app_name" v-model="form.applicant_name" type="text" :error="errors.applicant_name" @blur="validateField('applicant_name')" />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="app_id">เลขประจำตัวประชาชน (13 หลัก) *</label>
-              <input id="app_id" v-model="form.applicant_id_card" type="text" required placeholder="x-xxxx-xxxxx-xx-x" class="form-input" />
+              <label class="form-label" for="app_id">เลขประจำตัวประชาชน (13 หลัก) <b class="req-star">*</b></label>
+              <AppInput id="app_id" v-model="form.applicant_id_card" type="text" placeholder="x-xxxx-xxxxx-xx-x" :error="errors.applicant_id_card" @blur="validateField('applicant_id_card')" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="app_phone">เบอร์โทรศัพท์ติดต่อ *</label>
-              <input id="app_phone" v-model="form.applicant_phone" type="tel" required class="form-input" />
+              <label class="form-label" for="app_phone">เบอร์โทรศัพท์ติดต่อ <b class="req-star">*</b></label>
+              <AppInput id="app_phone" v-model="form.applicant_phone" type="tel" :error="errors.applicant_phone" @blur="validateField('applicant_phone')" />
             </div>
 
             <div class="form-group">
               <label class="form-label" for="app_email">อีเมล</label>
-              <input id="app_email" v-model="form.applicant_email" type="email" class="form-input" />
+              <AppInput id="app_email" v-model="form.applicant_email" type="email" />
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="app_address">ที่อยู่ตามบัตรประชาชน / ที่อยู่ติดต่อ</label>
-            <textarea id="app_address" v-model="form.applicant_address" rows="2" class="form-textarea" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด"></textarea>
+            <AppInput id="app_address" v-model="form.applicant_address" type="textarea" :rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด" />
           </div>
 
           <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin: 16px 0 12px;">
@@ -102,24 +102,24 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="app_shop">ชื่อร้านค้า (Shop Name) *</label>
-              <input id="app_shop" v-model="form.shop_name" type="text" required placeholder="เช่น ชานมไข่มุก เฮงเฮง" class="form-input" />
+              <label class="form-label" for="app_shop">ชื่อร้านค้า (Shop Name) <b class="req-star">*</b></label>
+              <AppInput id="app_shop" v-model="form.shop_name" type="text" placeholder="เช่น ชานมไข่มุก เฮงเฮง" :error="errors.shop_name" @blur="validateField('shop_name')" />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="app_prod">ประเภทสินค้าที่จะจำหน่าย *</label>
-              <input id="app_prod" v-model="form.product_type" type="text" required placeholder="เช่น เครื่องดื่ม, ของทอด, เสื้อผ้า" class="form-input" />
+              <label class="form-label" for="app_prod">ประเภทสินค้าที่จะจำหน่าย <b class="req-star">*</b></label>
+              <AppInput id="app_prod" v-model="form.product_type" type="text" placeholder="เช่น เครื่องดื่ม, ของทอด, เสื้อผ้า" :error="errors.product_type" @blur="validateField('product_type')" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="app_start">วันที่ประสงค์เริ่มเช่า *</label>
-              <input id="app_start" v-model="form.requested_start_date" type="date" required class="form-input" />
+              <label class="form-label" for="app_start">วันที่ประสงค์เริ่มเช่า <b class="req-star">*</b></label>
+              <AppInput id="app_start" v-model="form.requested_start_date" type="date" :error="errors.requested_start_date" @blur="validateField('requested_start_date')" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">ระยะเวลาขอเช่า (เดือน)</label>
+              <label class="form-label">ระยะเวลาขอเช่า (เดือน) <b class="req-star">*</b></label>
               <AppSelect
                 v-model="form.requested_period_months"
                 :options="periodOptions"
@@ -215,9 +215,54 @@ const form = ref({
   proposed_rent_type: 'monthly'
 })
 
+const errors = reactive({
+  applicant_name: '',
+  applicant_id_card: '',
+  applicant_phone: '',
+  shop_name: '',
+  product_type: '',
+  requested_start_date: ''
+})
+
+const resetErrors = () => {
+  errors.applicant_name = ''
+  errors.applicant_id_card = ''
+  errors.applicant_phone = ''
+  errors.shop_name = ''
+  errors.product_type = ''
+  errors.requested_start_date = ''
+}
+
+const validateField = (field: keyof typeof errors) => {
+  if (field === 'applicant_name') {
+    errors.applicant_name = form.value.applicant_name.trim() ? '' : 'กรุณาระบุชื่อ-นามสกุล'
+  } else if (field === 'applicant_id_card') {
+    errors.applicant_id_card = form.value.applicant_id_card.trim() ? '' : 'กรุณาระบุเลขประจำตัวประชาชน'
+  } else if (field === 'applicant_phone') {
+    errors.applicant_phone = form.value.applicant_phone.trim() ? '' : 'กรุณาระบุเบอร์โทรศัพท์ติดต่อ'
+  } else if (field === 'shop_name') {
+    errors.shop_name = form.value.shop_name.trim() ? '' : 'กรุณาระบุชื่อร้านค้า'
+  } else if (field === 'product_type') {
+    errors.product_type = form.value.product_type.trim() ? '' : 'กรุณาระบุประเภทสินค้าที่จะจำหน่าย'
+  } else if (field === 'requested_start_date') {
+    errors.requested_start_date = form.value.requested_start_date ? '' : 'กรุณาเลือกวันที่ประสงค์เริ่มเช่า'
+  }
+}
+
+const validateForm = () => {
+  validateField('applicant_name')
+  validateField('applicant_id_card')
+  validateField('applicant_phone')
+  validateField('shop_name')
+  validateField('product_type')
+  validateField('requested_start_date')
+  return !Object.values(errors).some(Boolean)
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) {
     isSuccess.value = false
+    resetErrors()
     if (selectableSubBookings.value.length > 0) {
       selectedSubBookingId.value = selectableSubBookings.value[0].id
     } else {
@@ -236,6 +281,7 @@ watch(() => props.show, (newVal) => {
 })
 
 const handleSubmit = async () => {
+  if (!validateForm()) return
   submitting.value = true
   try {
     const targetRecord = activeBookingRecord.value || props.booking

@@ -23,6 +23,9 @@ func NewRepository(db *gorm.DB) domains.Repository {
 func (r *repository) FindAll(filter requests.BookingFilter, ownerID *int) ([]models.Booking, error) {
 	var bookings []models.Booking
 	query := r.conn.Model(&models.Booking{}).Where("status = 'A'")
+	if filter.MarketID != 0 {
+		query = query.Where("market_id = ?", filter.MarketID)
+	}
 
 	if filter.StallIdent != "" {
 		query = query.Where("stall_ident = ?", filter.StallIdent)
@@ -112,8 +115,8 @@ func (r *repository) Create(booking *models.Booking) error {
 			{
 				RecipientRole: "tenant", RecipientUserID: tenantID, RecipientName: booking.ApplicantName,
 				Type: booking.BookingStatus, StatusCode: booking.BookingStatus, StatusLabel: statusLabel,
-				Title: tenantTitle + " " + booking.StallIdent + " (" + booking.BookingNo + ")",
-				Message: tenantMsg,
+				Title:     tenantTitle + " " + booking.StallIdent + " (" + booking.BookingNo + ")",
+				Message:   tenantMsg,
 				BookingID: &bookingID, BookingNumber: booking.BookingNo, StallNumber: booking.StallIdent,
 				MarketName: booking.MarketName, ProjectName: booking.ProjectName,
 				TargetURL: "/bookings/" + fmt.Sprint(booking.ID) + "?role=tenant",
@@ -121,8 +124,8 @@ func (r *repository) Create(booking *models.Booking) error {
 			{
 				RecipientRole: "officer", RecipientName: "เจ้าหน้าที่ดูแลตลาด",
 				Type: booking.BookingStatus, StatusCode: booking.BookingStatus, StatusLabel: statusLabel,
-				Title: officerTitle + " " + booking.StallIdent + " (" + booking.BookingNo + ")",
-				Message: officerMsg,
+				Title:     officerTitle + " " + booking.StallIdent + " (" + booking.BookingNo + ")",
+				Message:   officerMsg,
 				BookingID: &bookingID, BookingNumber: booking.BookingNo, StallNumber: booking.StallIdent,
 				MarketName: booking.MarketName, ProjectName: booking.ProjectName,
 				TargetURL: "/bookings/" + fmt.Sprint(booking.ID) + "?role=officer",
@@ -210,8 +213,8 @@ func (r *repository) Update(booking *models.Booking) error {
 		notification := models.Notification{
 			RecipientRole: "tenant", RecipientUserID: booking.CreatedBy, RecipientName: booking.ApplicantName,
 			Type: booking.BookingStatus, StatusCode: booking.BookingStatus, StatusLabel: label,
-			Title: notifTitle,
-			Message: notifMsg,
+			Title:     notifTitle,
+			Message:   notifMsg,
 			BookingID: &bookingID, BookingNumber: booking.BookingNo, StallNumber: booking.StallIdent,
 			MarketName: booking.MarketName, ProjectName: booking.ProjectName,
 			TargetURL: "/bookings/" + fmt.Sprint(booking.ID) + "?role=tenant",
@@ -316,8 +319,8 @@ func (r *repository) Update(booking *models.Booking) error {
 			{
 				RecipientRole: "tenant", RecipientUserID: next.CreatedBy, RecipientName: next.ApplicantName,
 				Type: next.BookingStatus, StatusCode: next.BookingStatus, StatusLabel: "ถึงคิวของคุณแล้ว (ผู้จองหลัก)",
-				Title:   "ถึงคิวของคุณแล้ว! แผง " + next.StallIdent + " (" + next.BookingNo + ")",
-				Message: "ถึงคิวของคุณแล้ว! ผู้จองคิวหลักสละสิทธิ์แผง " + next.StallIdent + " เจ้าหน้าที่จะติดต่อคุณเพื่อยืนยันการเช่า (หากเข้าชมแผงแล้วและตกลงเช่า เจ้าหน้าที่จะเปิดสิทธิ์ให้ยื่นคำร้องทันที)",
+				Title:     "ถึงคิวของคุณแล้ว! แผง " + next.StallIdent + " (" + next.BookingNo + ")",
+				Message:   "ถึงคิวของคุณแล้ว! ผู้จองคิวหลักสละสิทธิ์แผง " + next.StallIdent + " เจ้าหน้าที่จะติดต่อคุณเพื่อยืนยันการเช่า (หากเข้าชมแผงแล้วและตกลงเช่า เจ้าหน้าที่จะเปิดสิทธิ์ให้ยื่นคำร้องทันที)",
 				BookingID: &nextID, BookingNumber: next.BookingNo, StallNumber: next.StallIdent,
 				MarketName: next.MarketName, ProjectName: next.ProjectName,
 				TargetURL: "/bookings/" + fmt.Sprint(next.ID) + "?role=tenant",
@@ -325,8 +328,8 @@ func (r *repository) Update(booking *models.Booking) error {
 			{
 				RecipientRole: "officer", RecipientName: "เจ้าหน้าที่ดูแลตลาด",
 				Type: next.BookingStatus, StatusCode: next.BookingStatus, StatusLabel: "เลื่อนคิวขึ้นเป็นผู้จองหลัก",
-				Title:   "ผู้จองคิวหลักสละสิทธิ์ • เลื่อนคุณ" + next.ApplicantName + " ขึ้นเป็นผู้จองหลักแผง " + next.StallIdent,
-				Message: "ผู้จองคิวหลักสละสิทธิ์ ระบบเลื่อนคุณ" + next.ApplicantName + " ขึ้นเป็นผู้จองหลักแผง " + next.StallIdent + " แล้ว กรุณาติดต่อสอบถามผู้เช่า หากตกลงเช่าสามารถกดยืนยันการเช่าได้ทันที",
+				Title:     "ผู้จองคิวหลักสละสิทธิ์ • เลื่อนคุณ" + next.ApplicantName + " ขึ้นเป็นผู้จองหลักแผง " + next.StallIdent,
+				Message:   "ผู้จองคิวหลักสละสิทธิ์ ระบบเลื่อนคุณ" + next.ApplicantName + " ขึ้นเป็นผู้จองหลักแผง " + next.StallIdent + " แล้ว กรุณาติดต่อสอบถามผู้เช่า หากตกลงเช่าสามารถกดยืนยันการเช่าได้ทันที",
 				BookingID: &nextID, BookingNumber: next.BookingNo, StallNumber: next.StallIdent,
 				MarketName: next.MarketName, ProjectName: next.ProjectName,
 				TargetURL: "/bookings/" + fmt.Sprint(next.ID) + "?role=officer",

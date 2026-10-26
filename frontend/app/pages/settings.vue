@@ -190,6 +190,16 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '~/core/modules/auth/store/AuthStore'
+
+definePageMeta({
+  middleware: () => {
+    if (!import.meta.client) return
+    const auth = useAuthStore()
+    auth.hydrate()
+    if (auth.role !== 'admin') return navigateTo(auth.role === 'staff' ? '/staff' : '/', { replace: true })
+  }
+})
 const { get, post, put, del } = useApi()
 const { showSuccess, showError, showConfirm } = useAppAlert()
 

@@ -105,6 +105,7 @@ const projectFootprintArea = (project: ProjectZone): number => {
 }
 
 export const isOverviewBoundaryProject = (candidate: ProjectZone, source: ProjectZone[]): boolean => {
+  if (candidate.id.startsWith('zone-') || candidate.layoutMode === 'manual') return false
   const candidateArea = projectFootprintArea(candidate)
   const containedProjects = source.filter(project => (
     project.id !== candidate.id &&
@@ -363,6 +364,22 @@ export const clearLayoutCache = (): void => {
 
 export const getProjectStallLayout = (project: ProjectZone, floorId?: string): ProjectStallLayout => {
   const effectiveFloorId = floorId || project.floors?.[0]?.id || '1'
+  const currentFloor = project.floors?.find(floor => floor.id === effectiveFloorId)
+
+  // Newly managed zones deliberately begin as an empty canvas. Generating
+  // placeholder stalls here would make an unfinished floor look bookable.
+  if (project.layoutMode === 'manual' && (!project.stalls || project.stalls.length === 0)) {
+    return {
+      stalls: [],
+      labelPoint: project.centroid,
+      total: 0,
+      available: 0,
+      reserved: 0,
+      occupied: 0,
+      floorId: effectiveFloorId,
+      floorName: currentFloor?.name || 'ชั้น 1'
+    }
+  }
   const hasSurveyStalls = Boolean(project.stalls && project.stalls.length > 0)
   const cacheKey = `${project.id}:${effectiveFloorId}:${project.centroid.join(',')}:${project.totalStalls}:${hasSurveyStalls ? project.stalls!.length : 'gen'}`
 
@@ -372,7 +389,7 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
     if (cachedSurveyLayout) return cachedSurveyLayout
 
     const matchingStalls = (project.stalls as MapStall[])
-      .filter(s => !s.floor || s.floor === effectiveFloorId)
+      .filter(s => !s.floor || String(s.floor) === String(effectiveFloorId))
       .map((stall, index) => {
         const coordinates = closePolygonRing(stall.coordinates)
         return {
@@ -381,13 +398,12 @@ export const getProjectStallLayout = (project: ProjectZone, floorId?: string): P
           center: getPolygonCenter(coordinates),
           // Statuses embedded in the GIS file are illustrative. Runtime
           // booking data is applied by MarketProjectsOverviewMap.
-          status: 'available' as StallStatus,
+          status: (project.layoutMode === 'manual' && stall.status ? stall.status : 'available') as StallStatus,
           selectionId: stall.selectionId || `${project.id}:${effectiveFloorId}:${index}`
         }
       })
     const available = matchingStalls.filter(s => s.status === 'available').length
     const reserved = matchingStalls.filter(s => s.status === 'reserved').length
-    const currentFloor = project.floors?.find(f => f.id === effectiveFloorId)
     const surveyLayout: ProjectStallLayout = {
       stalls: matchingStalls,
       labelPoint: project.centroid,

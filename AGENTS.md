@@ -155,6 +155,13 @@
   - รองรับ Props: `variant` (`primary`, `secondary`, `success`, `danger`, `danger-outline`, `purple`, `outline`, `ghost`), `size`, `to` (รองรับ NuxtLink), `loading`, `disabled`, `fullWidth`
 
 
+## History Panel Standards (มาตรฐานหน้าประวัติทั้งระบบ)
+
+- **ใช้ Side Panel แบบเดียวกันทั้งระบบ**: หน้าประวัติทุกประเภท เช่น ประวัติการแก้ไขข้อมูล, ประวัติสถานะ, Audit Log หรือ Timeline ต้องเปิดเป็น Side Panel สไลด์จากด้านขวา ห้ามใช้ Modal กลางหน้าสำหรับข้อมูลประวัติ
+- **Edge Trigger มาตรฐาน**: ใช้แท็บแนวตั้งติดขอบขวาของหน้าจอ พร้อม SVG outline icon และข้อความหมุนแนวตั้ง เช่น `ประวัติการแก้ไข`; เมื่อเปิดอยู่ให้เปลี่ยนพื้นหลังเป็นฟ้าอ่อน
+- **Panel & Timeline**: มี backdrop สีเข้มโปร่งพร้อม blur เล็กน้อย, panel กว้างไม่เกิน `480px` หรือ `92vw`, header ติดด้านบนพร้อมปุ่มปิด SVG และเนื้อหาเป็น timeline ที่แสดงสิ่งที่เปลี่ยนและวันเวลาอย่างชัดเจน
+- **Animation & Accessibility**: สไลด์เข้าจากขวาอย่างนุ่มนวล, ปิดได้ด้วยปุ่มปิดหรือคลิก backdrop, กำหนด `role="dialog"`, `aria-modal`, `aria-controls`, และ `aria-expanded` ให้ครบ
+
 ## Map UI & Control Layout Standards (มาตรฐานการจัดวางปุ่มควบคุมบนแผนที่)
 
 ทุกคอมโพเนนต์แผนที่ในระบบ (เช่น `MarketProjectsOverviewMap`, `BangkokMarketsGisMap`, `MarketGisMap`) ต้องยึดมาตรฐานการวางตำแหน่งและสไตล์คอนโทรลเดียวกันอย่างเคร่งครัด:
@@ -239,6 +246,4 @@
 5. **โมดอลและหน้าต่างแจ้งเตือน (Responsive Modals & Dialogs)**:
    - Modal กลางจอต้องมี `width: min(92vw, maxWidth)` และ `max-height: 90vh` พร้อมรองรับการเลื่อนดูเนื้อหาภายใน (`overflow-y: auto`)
    - ปุ่มใน Modal Footer ต้องจัดวางเรียงชิดกันอย่างสวยงาม หากปุ่มยาวในจอมือถือให้สามารถปรับเป็น Stack แนวตั้ง (ปุ่มยืนยันอยู่บน ปุ่มยกเลิกอยู่ล่าง) หรือสองปุ่มกว้างเท่ากัน (50%-50%) ได้อย่างเหมาะสม
-
-
 

@@ -16,7 +16,7 @@
       </button>
 
       <!-- System Brand Title -->
-      <NuxtLink to="/" class="navbar-brand-tag" title="ระบบบริหารจัดการแผงเช่า สำนักงานตลาดกรุงเทพมหานคร">
+      <NuxtLink :to="homeLink" class="navbar-brand-tag" title="ระบบบริหารจัดการแผงเช่า สำนักงานตลาดกรุงเทพมหานคร">
         <span class="brand-title-text">e-Market</span>
         <span class="bma-pill-badge">
           <span class="bma-dot"></span>
@@ -41,7 +41,7 @@
         <div class="user-info-text">
           <span class="user-name-text">{{ user?.full_name || (user?.role === 'tenant' ? 'สมชาย ใจดี' : 'ผู้ดูแลระบบ') }}</span>
           <span class="user-role-text" :style="user?.role === 'tenant' ? 'color: #059669; font-weight: 700;' : 'color: #2563eb; font-weight: 700;'">
-            {{ user?.role === 'tenant' ? 'ผู้เช่าแผงค้า' : 'เจ้าหน้าที่ดูแลตลาด (Admin)' }}
+            {{ roleLabel }}
           </span>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="user-dropdown-arrow" :class="{ open: showDropdown }">
@@ -60,7 +60,7 @@
             </div>
           </div>
           <div style="padding: 4px;">
-            <NuxtLink v-if="user?.role !== 'tenant'" to="/settings" class="dropdown-item">
+            <NuxtLink v-if="user?.role === 'admin'" to="/settings" class="dropdown-item">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -94,6 +94,15 @@ const { isExpanded, toggle: toggleSidebar } = useSidebar()
 const showDropdown = ref(false)
 const headerRightRef = ref<HTMLElement | null>(null)
 const notifDropdownRef = ref<{ closeNotifications: () => void } | null>(null)
+const assignedMarket = computed(() => (user.value as any)?.assigned_markets?.[0])
+const homeLink = computed(() => user.value?.role === 'staff' && assignedMarket.value
+  ? `/stalls/manage?market=${assignedMarket.value.id}&mode=inspect`
+  : '/')
+const roleLabel = computed(() => {
+  if (user.value?.role === 'tenant') return 'ผู้เช่าแผงค้า'
+  if (user.value?.role === 'staff') return assignedMarket.value ? `เจ้าหน้าที่${assignedMarket.value.name}` : 'เจ้าหน้าที่ตลาด'
+  return 'ผู้ดูแลระบบตลาด กทม. (Admin)'
+})
 
 const toggleMenu = () => {
   notifDropdownRef.value?.closeNotifications()

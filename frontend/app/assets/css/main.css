@@ -1840,3 +1840,9 @@ button, input, select, textarea {
     font-size: 1rem !important;
   }
 }
+
+.req-star {
+  color: #ef4444;
+  font-weight: 700;
+}
+

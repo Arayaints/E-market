@@ -3451,7 +3451,7 @@ export const BMA_MARKETS_MASTER: Record<string, MarketGisConfig> = {
     projects: [
       {
             "id": "sin-01",
-            "name": "โครงการ 01 (โซนแผงค้าตลาดสิงหา)",
+            "name": "โครงการ 01",
             "sectionNumber": "01",
             "category": "สินค้าทั่วไป อาหาร และบริการ",
             "color": "#2563eb",

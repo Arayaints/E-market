@@ -35,6 +35,8 @@ func toStallResponse(s *models.Stall) responses.StallResponse {
 		StallIdent:         s.Ident,
 		StallNumber:        s.Ident,
 		Name:               s.Name,
+		Description:        s.Description,
+		Category:           s.Category,
 		Width:              s.Width,
 		Depth:              s.Depth,
 		AreaSqm:            s.AreaSqm,
@@ -44,6 +46,7 @@ func toStallResponse(s *models.Stall) responses.StallResponse {
 		StallStatus:        s.StallStatus,
 		Floor:              s.Floor,
 		CoordinatesGeoJSON: s.CoordinatesGeoJSON,
+		Published:          s.Published,
 		CreatedAt:          s.CreatedAt,
 		UpdatedAt:          s.UpdatedAt,
 	}
@@ -162,6 +165,10 @@ func (u *useCase) GetWaitingQueue(ident string) (*responses.WaitingQueueResponse
 
 func (u *useCase) CreateStall(userID int, req requests.CreateStallRequest) (*responses.StallResponse, error) {
 	area := req.Width * req.Depth
+	initialStatus := req.StallStatus
+	if initialStatus == "" {
+		initialStatus = "available"
+	}
 	stall := models.Stall{
 		MarketID:           req.MarketID,
 		MarketSlug:         req.MarketSlug,
@@ -171,6 +178,8 @@ func (u *useCase) CreateStall(userID int, req requests.CreateStallRequest) (*res
 		ProjectName:        req.ProjectName,
 		Ident:              req.Ident,
 		Name:               req.Name,
+		Description:        req.Description,
+		Category:           req.Category,
 		Width:              req.Width,
 		Depth:              req.Depth,
 		AreaSqm:            area,
@@ -178,7 +187,8 @@ func (u *useCase) CreateStall(userID int, req requests.CreateStallRequest) (*res
 		MonthlyRent:        req.MonthlyRent,
 		Floor:              req.Floor,
 		CoordinatesGeoJSON: req.CoordinatesGeoJSON,
-		StallStatus:        "available",
+		Published:          req.Published,
+		StallStatus:        initialStatus,
 		CreatedBy:          &userID,
 		UpdatedBy:          &userID,
 	}
@@ -190,4 +200,39 @@ func (u *useCase) CreateStall(userID int, req requests.CreateStallRequest) (*res
 
 	res := toStallResponse(&stall)
 	return &res, nil
+}
+
+func (u *useCase) UpdateStall(id int, userID int, req requests.UpdateStallRequest) (*responses.StallResponse, error) {
+	stall, err := u.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, responses.NewAppErr(http.StatusNotFound, "ไม่พบข้อมูลแผงค้า")
+		}
+		return nil, responses.NewInternalServerError()
+	}
+	stall.MarketID, stall.MarketSlug, stall.MarketName = req.MarketID, req.MarketSlug, req.MarketName
+	stall.ZoneID, stall.ZoneName, stall.ProjectName = req.ZoneID, req.ZoneName, req.ProjectName
+	stall.Ident, stall.Name, stall.Description, stall.Category = req.Ident, req.Name, req.Description, req.Category
+	stall.Width, stall.Depth, stall.AreaSqm = req.Width, req.Depth, req.Width*req.Depth
+	stall.DailyRent, stall.MonthlyRent = req.DailyRent, req.MonthlyRent
+	stall.Floor, stall.CoordinatesGeoJSON, stall.Published = req.Floor, req.CoordinatesGeoJSON, req.Published
+	if req.StallStatus != "" {
+		stall.StallStatus = req.StallStatus
+	}
+	stall.UpdatedBy = &userID
+	if err := u.repo.Update(stall, userID, "แก้ไขข้อมูล ราคา ขนาด หรือตำแหน่งแผง"); err != nil {
+		logs.Error(err)
+		return nil, responses.NewInternalServerError()
+	}
+	res := toStallResponse(stall)
+	return &res, nil
+}
+
+func (u *useCase) GetStallHistory(id int) ([]models.StallAuditLog, error) {
+	items, err := u.repo.FindHistory(id)
+	if err != nil {
+		logs.Error(err)
+		return nil, responses.NewInternalServerError()
+	}
+	return items, nil
 }

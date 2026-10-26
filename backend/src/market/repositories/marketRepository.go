@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"emarket-api/models"
@@ -78,6 +79,24 @@ func (r *repository) FindAll(search string) ([]models.Market, error) {
 	return markets, nil
 }
 
+func (r *repository) FindByStaffUserID(search string, userID int) ([]models.Market, error) {
+	var markets []models.Market
+	query := r.conn.Model(&models.Market{}).
+		Joins("JOIN market_staff_assignment msa ON msa.market_id = market.id").
+		Where("msa.user_id = ? AND market.status != 'D'", userID)
+	if search != "" {
+		s := "%" + search + "%"
+		query = query.Where("market.name LIKE ? OR market.name_en LIKE ? OR market.district LIKE ? OR market.code LIKE ?", s, s, s, s)
+	}
+	if err := query.Order("market.id ASC").Find(&markets).Error; err != nil {
+		return nil, err
+	}
+	for i := range markets {
+		r.syncMarketStats(&markets[i])
+	}
+	return markets, nil
+}
+
 func (r *repository) FindByIDOrSlug(idOrSlug string) (*models.Market, error) {
 	var market models.Market
 	query := r.conn.Where("status != 'D'")
@@ -103,4 +122,65 @@ func (r *repository) FindZonesByMarketID(marketID int) ([]models.Zone, error) {
 	}
 	err := query.Order("id ASC").Find(&zones).Error
 	return zones, err
+}
+
+func (r *repository) FindGISConfig(marketID int) (*models.MarketGISConfig, error) {
+	var config models.MarketGISConfig
+	if err := r.conn.Where("market_id = ?", marketID).First(&config).Error; err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func (r *repository) SaveGISConfig(config *models.MarketGISConfig) error {
+	var existing models.MarketGISConfig
+	if err := r.conn.Where("market_id = ?", config.MarketID).First(&existing).Error; err == nil {
+		type projectItem struct {
+			ID     string `json:"id"`
+			Name   string `json:"name"`
+			Stalls []struct {
+				Code string `json:"code"`
+			} `json:"stalls"`
+		}
+		var oldProjects, newProjects []projectItem
+		_ = json.Unmarshal([]byte(existing.ProjectsJSON), &oldProjects)
+		_ = json.Unmarshal([]byte(config.ProjectsJSON), &newProjects)
+
+		activeProjectIDs := make(map[string]bool, len(newProjects))
+		activeProjectNames := make(map[string]bool, len(newProjects))
+		for _, p := range newProjects {
+			activeProjectIDs[p.ID] = true
+			activeProjectNames[p.Name] = true
+		}
+
+		var removedProjectNames []string
+		var removedStallCodes []string
+		for _, oldP := range oldProjects {
+			if !activeProjectIDs[oldP.ID] && !activeProjectNames[oldP.Name] {
+				if oldP.Name != "" {
+					removedProjectNames = append(removedProjectNames, oldP.Name)
+				}
+				for _, s := range oldP.Stalls {
+					if s.Code != "" {
+						removedStallCodes = append(removedStallCodes, s.Code)
+					}
+				}
+			}
+		}
+
+		if len(removedProjectNames) > 0 {
+			r.conn.Model(&models.Stall{}).
+				Where("market_id = ? AND project_name IN ?", config.MarketID, removedProjectNames).
+				Update("status", "D")
+		}
+		if len(removedStallCodes) > 0 {
+			r.conn.Model(&models.Stall{}).
+				Where("market_id = ? AND ident IN ?", config.MarketID, removedStallCodes).
+				Update("status", "D")
+		}
+	}
+
+	return r.conn.Where(models.MarketGISConfig{MarketID: config.MarketID}).
+		Assign(map[string]interface{}{"projects_json": config.ProjectsJSON, "facilities_json": config.FacilitiesJSON, "published": config.Published, "updated_by": config.UpdatedBy}).
+		FirstOrCreate(config).Error
 }

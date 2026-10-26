@@ -31,3 +31,12 @@ func (r *repository) FindByID(id int) (*models.User, error) {
 	}
 	return &user, nil
 }
+
+func (r *repository) FindAssignedMarkets(userID int) ([]models.Market, error) {
+	var markets []models.Market
+	err := r.conn.Model(&models.Market{}).
+		Joins("JOIN market_staff_assignment msa ON msa.market_id = market.id").
+		Where("msa.user_id = ? AND market.status != 'D'", userID).
+		Order("market.id ASC").Find(&markets).Error
+	return markets, err
+}

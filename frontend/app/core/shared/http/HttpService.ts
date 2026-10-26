@@ -78,19 +78,12 @@ export abstract class HttpService {
 			if (authStore.isLoggedIn && authStore.accessToken) {
 				headers.set("Authorization", `Bearer ${authStore.accessToken}`)
 			}
-			if (authStore.role) {
-				headers.set("X-Active-Role", authStore.role)
-			}
 		} catch {
 			// Auth store might not be ready yet in SSR or early lifecycle
 			if (typeof window !== "undefined") {
 				const token = localStorage.getItem("token") || localStorage.getItem("access_token")
 				if (token) {
 					headers.set("Authorization", `Bearer ${token}`)
-				}
-				const role = localStorage.getItem("user_role")
-				if (role) {
-					headers.set("X-Active-Role", role)
 				}
 			}
 		}

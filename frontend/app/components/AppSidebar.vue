@@ -19,11 +19,69 @@
 
     <!-- Nav Items -->
     <nav class="sidebar-nav">
-      <!-- 1. Home: 12 Markets Directory / Stalls Map -->
+      <!-- เจ้าหน้าที่ตลาด: เข้าถึงงานของตลาดตนเองจาก Sidebar โดยตรง -->
+      <template v-if="user?.role === 'staff'">
+        <NuxtLink
+          :to="staffDashboardLink"
+          class="nav-icon-link"
+          :class="{ active: route.path === '/stalls/manage' && route.query.mode === 'inspect' }"
+          :title="isExpanded ? '' : 'แดชบอร์ดตลาด'"
+        >
+          <span class="nav-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+            </svg>
+          </span>
+          <span v-if="isExpanded" class="nav-label">แดชบอร์ดตลาด</span>
+        </NuxtLink>
+
+        <NuxtLink
+          :to="staffMarketInfoLink"
+          class="nav-icon-link"
+          :class="{ active: route.path === '/stalls' }"
+          :title="isExpanded ? '' : 'ข้อมูลตลาด'"
+        >
+          <span class="nav-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"></path>
+              <path d="M5 21V5l7-3 7 3v16"></path>
+              <path d="M9 21v-5h6v5"></path>
+              <path d="M9 8h.01"></path>
+              <path d="M15 8h.01"></path>
+              <path d="M9 12h.01"></path>
+              <path d="M15 12h.01"></path>
+            </svg>
+          </span>
+          <span v-if="isExpanded" class="nav-label">ข้อมูลตลาด</span>
+        </NuxtLink>
+
+        <NuxtLink
+          :to="staffLayoutLink"
+          class="nav-icon-link"
+          :class="{ active: route.path === '/stalls/manage' && route.query.mode !== 'inspect' }"
+          :title="isExpanded ? '' : 'จัดการผัง'"
+        >
+          <span class="nav-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18-6 3V5l6-3 6 3 6-3v12"></path>
+              <path d="M9 2v16"></path>
+              <path d="M15 5v6"></path>
+              <path d="m14 18 6.5-6.5a1.7 1.7 0 0 0-2.4-2.4L11.6 15.6 11 19z"></path>
+            </svg>
+          </span>
+          <span v-if="isExpanded" class="nav-label">จัดการผัง</span>
+        </NuxtLink>
+      </template>
+
+      <!-- หน้าหลักสำหรับผู้ดูแลระบบและผู้เช่า -->
       <NuxtLink
+        v-else
         to="/"
         class="nav-icon-link"
-        :class="{ active: route.path === '/' || route.path.startsWith('/stalls') }"
+        :class="{ active: route.path === '/' }"
         :title="isExpanded ? '' : 'หน้าแรก'"
       >
         <span class="nav-icon-wrap">
@@ -95,7 +153,7 @@
 
       <!-- 5. Settings (Admin Only) -->
       <NuxtLink
-        v-if="user?.role !== 'tenant'"
+        v-if="user?.role === 'admin'"
         to="/settings"
         class="nav-icon-link"
         :class="{ active: route.path === '/settings' }"
@@ -119,6 +177,16 @@ const route = useRoute()
 const { user } = useAuth()
 const { isExpanded, collapse } = useSidebar()
 const { notifications, activeRole } = useNotifications()
+const staffMarketId = computed(() => (user.value as any)?.assigned_markets?.[0]?.id)
+const staffDashboardLink = computed(() =>
+  staffMarketId.value ? `/stalls/manage?market=${staffMarketId.value}&mode=inspect` : '/staff'
+)
+const staffMarketInfoLink = computed(() =>
+  staffMarketId.value ? `/stalls?market=${staffMarketId.value}` : '/staff'
+)
+const staffLayoutLink = computed(() =>
+  staffMarketId.value ? `/stalls/manage?market=${staffMarketId.value}` : '/staff'
+)
 const sidebarSeenByMenu = ref<Record<'bookings' | 'applications', number>>({
   bookings: 0,
   applications: 0

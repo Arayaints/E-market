@@ -15,6 +15,17 @@ type User struct {
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
+// MarketStaffAssignment is the server-side source of truth for the markets a
+// staff account is allowed to operate. Never infer this scope from the client.
+type MarketStaffAssignment struct {
+	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID    int       `gorm:"not null;uniqueIndex:idx_market_staff" json:"user_id"`
+	MarketID  int       `gorm:"not null;uniqueIndex:idx_market_staff" json:"market_id"`
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+}
+
+func (MarketStaffAssignment) TableName() string { return "market_staff_assignment" }
+
 func (User) TableName() string {
 	return "user"
 }

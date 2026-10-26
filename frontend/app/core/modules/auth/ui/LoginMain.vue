@@ -21,41 +21,29 @@
         <span>{{ errorMessage }}</span>
       </div>
 
-      <form @submit.prevent="handleLogin" class="login-form">
+      <form novalidate @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
-          <label class="form-label" for="username">ชื่อผู้ใช้งานหรืออีเมล (Username / Email)</label>
-          <div class="input-with-icon">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            </span>
-            <input
-              id="username"
-              v-model="username"
-              type="text"
-              required
-              class="form-input"
-              placeholder="เช่น tenant หรือ admin"
-              autocomplete="username"
-            />
-          </div>
+          <label class="form-label" for="username">ชื่อผู้ใช้งานหรืออีเมล (Username / Email) <b class="req-star">*</b></label>
+          <AppInput
+            id="username"
+            v-model="username"
+            type="text"
+            placeholder="เช่น tenant หรือ admin"
+            :error="usernameError"
+            @blur="validateUsername"
+          />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">รหัสผ่าน (Password)</label>
-          <div class="input-with-icon">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </span>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              required
-              class="form-input"
-              placeholder="••••••••"
-              autocomplete="current-password"
-            />
-          </div>
+          <label class="form-label" for="password">รหัสผ่าน (Password) <b class="req-star">*</b></label>
+          <AppInput
+            id="password"
+            v-model="password"
+            type="password"
+            placeholder="••••••••"
+            :error="passwordError"
+            @blur="validatePassword"
+          />
         </div>
 
         <button type="submit" class="btn btn-primary btn-submit-login" :disabled="isLoading">
@@ -92,12 +80,24 @@
               <strong>admin</strong> / <span>admin1234</span>
             </div>
           </button>
-          <button type="button" class="btn-quick" @click="fillCredentials('staff', 'staff1234')">
-            <div class="quick-badge badge-staff">เจ้าหน้าที่ (Staff)</div>
-            <div class="quick-user-info">
-              <strong>staff</strong> / <span>staff1234</span>
+          <section class="staff-demo-accounts" aria-label="บัญชีเจ้าหน้าที่ตลาดทั้ง 12 แห่ง">
+            <div class="staff-demo-heading">
+              <span>บัญชีเจ้าหน้าที่ตลาด 12 แห่ง</span>
+              <small>รหัสผ่านทุกบัญชี: <strong>staff1234</strong></small>
             </div>
-          </button>
+            <div class="staff-demo-grid">
+              <button
+                v-for="staff in staffDemoAccounts"
+                :key="staff.username"
+                type="button"
+                class="btn-quick btn-quick-staff"
+                @click="fillCredentials(staff.username, 'staff1234')"
+              >
+                <div class="quick-badge badge-staff">{{ staff.market }}</div>
+                <div class="quick-user-info"><strong>{{ staff.username }}</strong></div>
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -107,24 +107,54 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { useRouter } from "vue-router"
+import AppInput from "~/components/AppInput.vue"
 import { useAuthStore } from "../store/AuthStore"
-import { useHandlerSuccess } from "~/composables/useHandlerSuccess"
+import { useAppAlert } from "~/composables/useAppAlert"
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { showSuccess } = useHandlerSuccess()
+const { showSuccess, handleConfirm } = useAppAlert()
 
 const username = ref("tenant")
 const password = ref("tenant1234")
+const usernameError = ref("")
+const passwordError = ref("")
 const isLoading = ref(false)
 const errorMessage = ref("")
+const staffDemoAccounts = [
+  { username: "staff01", market: "ตลาดนัดจตุจักร" },
+  { username: "staff02", market: "ตลาดประชานิเวศน์ 1" },
+  { username: "staff03", market: "ตลาดมีนบุรี" },
+  { username: "staff04", market: "ตลาดสิงหา" },
+  { username: "staff05", market: "ตลาดเทวราช" },
+  { username: "staff06", market: "ตลาดราษฎร์บูรณะ" },
+  { username: "staff07", market: "ตลาดบางกะปิ" },
+  { username: "staff08", market: "ตลาดวงเวียนเล็ก" },
+  { username: "staff09", market: "ตลาดหนองจอก" },
+  { username: "staff10", market: "ตลาดรัชดาภิเษก" },
+  { username: "staff11", market: "ตลาดธนบุรี สนามหลวง 2" },
+  { username: "staff12", market: "ตลาดบางแคภิรมย์" },
+]
+
+const validateUsername = () => {
+  usernameError.value = username.value.trim() ? "" : "กรุณาระบุชื่อผู้ใช้งานหรืออีเมล"
+}
+
+const validatePassword = () => {
+  passwordError.value = password.value.trim() ? "" : "กรุณาระบุรหัสผ่าน"
+}
 
 const fillCredentials = (u: string, p: string) => {
   username.value = u
   password.value = p
+  usernameError.value = ""
+  passwordError.value = ""
 }
 
 const handleLogin = async () => {
+  validateUsername()
+  validatePassword()
+  if (usernameError.value || passwordError.value) return
   isLoading.value = true
   errorMessage.value = ""
 
@@ -134,8 +164,13 @@ const handleLogin = async () => {
       password: password.value,
     })
 
-    showSuccess("เข้าสู่ระบบสำเร็จ ยินดีต้อนรับสู่ e-Market")
-    router.push("/")
+    // แสดงสถานะสำเร็จสั้น ๆ แล้วเปลี่ยนหน้าเอง โดยไม่ต้องกดยืนยันซ้ำ
+    const successAlert = showSuccess("เข้าสู่ระบบสำเร็จ ยินดีต้อนรับสู่ e-Market")
+    const autoCloseTimer = window.setTimeout(handleConfirm, 900)
+    await successAlert
+    window.clearTimeout(autoCloseTimer)
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 220))
+    await router.push(authStore.role === "staff" ? "/staff" : "/")
   } catch (err: any) {
     errorMessage.value = err.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง"
   } finally {
@@ -145,6 +180,13 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+.login-wrapper {
+  min-height: 100vh;
+}
+.req-star {
+  color: #ef4444;
+  font-weight: 700;
+}
 .login-wrapper {
   min-height: 100vh;
   display: flex;
@@ -327,5 +369,53 @@ const handleLogin = async () => {
 
 .quick-user-info strong {
   color: #0f172a;
+}
+
+.staff-demo-accounts {
+  padding: 12px;
+  border: 1px solid #eadcff;
+  border-radius: 12px;
+  background: #fcfaff;
+}
+
+.staff-demo-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #6b21a8;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.staff-demo-heading small {
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.staff-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.btn-quick-staff {
+  min-width: 0;
+  padding: 7px 9px;
+  gap: 6px;
+}
+
+.btn-quick-staff .quick-badge {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .staff-demo-heading { align-items: flex-start; flex-direction: column; }
+  .staff-demo-grid { grid-template-columns: 1fr; }
 }
 </style>

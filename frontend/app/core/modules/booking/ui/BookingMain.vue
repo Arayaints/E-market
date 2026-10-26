@@ -2416,7 +2416,7 @@ import { useNotifications } from '~/composables/useNotifications'
 const route = useRoute()
 const router = useRouter()
 const { get, post } = useApi()
-const { user, role: authRole, switchRole: authSwitchRole } = useAuth()
+const { user, role: authRole } = useAuth()
 const { showAlert, showConfirm, showSuccess, showError, showWarning } = useAppAlert()
 const { fetchNotifications } = useNotifications()
 
@@ -2677,14 +2677,6 @@ const loadBookings = async () => {
   }
 }
 
-// Switch Role
-const switchRole = (newRole: 'tenant' | 'officer') => {
-  currentRole.value = newRole
-  if (authSwitchRole) {
-    authSwitchRole(newRole === 'tenant' ? 'tenant' : 'admin')
-  }
-}
-
 // ============================================================
 // TENANT COMPUTEDS (1 การจอง = 1 แผง = 1 การ์ด)
 // ============================================================
@@ -2723,10 +2715,10 @@ const tenantGroupedBookings = computed(() => {
 
 const countAll = computed(() => tenantGroupedBookings.value.length)
 
-// 2. รอดำเนินการ (pending, pending_approval, approved, pending_slot, interested - ไม่รวม waiting_queue)
+// 2. รอดำเนินการ (pending, pending_approval, approved, pending_slot, interested, waiting_queue)
 const countPending = computed(() => {
   return tenantGroupedBookings.value.filter(b =>
-    ['pending', 'pending_approval', 'approved', 'pending_slot', 'interested'].includes(b.status)
+    ['pending', 'pending_approval', 'approved', 'pending_slot', 'interested', 'waiting_queue'].includes(b.status)
   ).length
 })
 
@@ -2737,7 +2729,7 @@ const countWaiting = computed(() => {
 
 const tenantCountPendingApproval = computed(() => {
   return tenantGroupedBookings.value.filter(b =>
-    ['pending', 'pending_approval', 'pending_slot'].includes(b.status)
+    ['pending', 'pending_approval', 'pending_slot', 'waiting_queue'].includes(b.status)
   ).length
 })
 
@@ -2876,7 +2868,7 @@ const computeFilteredTenantBookings = (
   if (tenantStatusTab.value === 'pending') {
     if (tenantSubFilter.value === 'pending_approval') {
       list = list.filter(b =>
-        ['pending', 'pending_approval', 'pending_slot'].includes(b.status)
+        ['pending', 'pending_approval', 'pending_slot', 'waiting_queue'].includes(b.status)
       )
     } else if (tenantSubFilter.value === 'approved') {
       list = list.filter(b => b.status === 'approved')
@@ -2884,7 +2876,7 @@ const computeFilteredTenantBookings = (
       list = list.filter(b => b.status === 'interested')
     } else {
       list = list.filter(b =>
-        ['pending', 'pending_approval', 'approved', 'pending_slot', 'interested'].includes(b.status)
+        ['pending', 'pending_approval', 'approved', 'pending_slot', 'interested', 'waiting_queue'].includes(b.status)
       )
     }
   } else if (tenantStatusTab.value === 'waiting') {
@@ -3103,13 +3095,13 @@ const officerMarketBookings = computed(() => {
 
 const officerCountToday = computed(() => {
   return officerMarketBookings.value.filter(b =>
-    b.status === 'approved' && (b.visit_date?.includes('19 ตุลาคม') || b.visit_date?.includes('วันนี้') || !b.visit_date)
+    !isQueueBooking(b) && b.status === 'approved' && (b.visit_date?.includes('19 ตุลาคม') || b.visit_date?.includes('วันนี้') || !b.visit_date)
   ).length
 })
 
 const officerCountPending = computed(() => {
   return officerMarketBookings.value.filter(b =>
-    b.status === 'pending_approval' || b.status === 'pending' || b.status === 'pending_slot'
+    !isQueueBooking(b) && (b.status === 'pending_approval' || b.status === 'pending' || b.status === 'pending_slot')
   ).length
 })
 
@@ -3118,16 +3110,16 @@ const officerCountWaiting = computed(() => {
 })
 
 const officerCountApproved = computed(() => {
-  return officerMarketBookings.value.filter(b => b.status === 'approved').length
+  return officerMarketBookings.value.filter(b => !isQueueBooking(b) && b.status === 'approved').length
 })
 
 const officerCountInterested = computed(() => {
-  return officerMarketBookings.value.filter(b => b.status === 'interested').length
+  return officerMarketBookings.value.filter(b => !isQueueBooking(b) && b.status === 'interested').length
 })
 
 const officerCountActionable = computed(() => {
   return officerMarketBookings.value.filter(b =>
-    ['pending', 'pending_approval', 'pending_slot', 'approved', 'interested'].includes(b.status)
+    ['pending', 'pending_approval', 'pending_slot', 'approved', 'interested', 'waiting_queue'].includes(b.status)
   ).length
 })
 
@@ -3156,16 +3148,16 @@ const filteredOfficerBookings = computed(() => {
   }
 
   if (officerActiveTab.value === 'pending') {
-    list = list.filter(b => b.status === 'pending_approval' || b.status === 'pending' || b.status === 'pending_slot')
+    list = list.filter(b => !isQueueBooking(b) && (b.status === 'pending_approval' || b.status === 'pending' || b.status === 'pending_slot'))
   } else if (officerActiveTab.value === 'waiting') {
     list = list.filter(b => isQueueBooking(b))
   } else if (officerActiveTab.value === 'approved') {
-    list = list.filter(b => b.status === 'approved')
+    list = list.filter(b => !isQueueBooking(b) && b.status === 'approved')
     if (officerOnlyToday.value) {
       list = list.filter(b => b.visit_date?.includes('19 ตุลาคม') || b.visit_date?.includes('วันนี้') || !b.visit_date)
     }
   } else if (officerActiveTab.value === 'interested') {
-    list = list.filter(b => b.status === 'interested')
+    list = list.filter(b => !isQueueBooking(b) && b.status === 'interested')
   } else if (officerActiveTab.value === 'applied') {
     list = list.filter(b => b.status === 'lease_applied' || b.status === 'completed')
   } else if (officerActiveTab.value === 'cancelled') {

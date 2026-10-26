@@ -318,13 +318,18 @@
               v-for="m in filteredMarkets"
               :key="m.id"
               class="market-box-card"
+              :class="{ 'is-officer-card': isOfficer }"
             >
               <!-- Card Top Image with Rounded Corners & Green "ว่าง" Badge -->
-              <NuxtLink :to="`/stalls?market=${m.id}`" class="market-img-container" title="คลิกเพื่อดูภาพแผนผังและข้อมูลตลาด">
+              <NuxtLink :to="marketActionLink(m)" class="market-img-container" title="คลิกเพื่อดูภาพแผนผังและข้อมูลตลาด">
                 <img :src="m.image_url" :alt="m.name" class="market-box-img" />
                 <div class="market-img-gradient"></div>
+
                 <!-- Status Badge (Top-Right Pill: "● ว่าง" or "● เต็ม") -->
-                <div class="market-avail-badge" :class="m.status === 'open' && getAvailableCount(m) > 0 ? 'badge-green' : 'badge-red'">
+                <div
+                  class="market-avail-badge"
+                  :class="m.status === 'open' && getAvailableCount(m) > 0 ? 'badge-green' : 'badge-red'"
+                >
                   <span class="badge-dot-live"></span>
                   <span>{{ m.status === 'open' && getAvailableCount(m) > 0 ? 'ว่าง' : 'เต็ม' }}</span>
                 </div>
@@ -332,22 +337,16 @@
 
               <!-- Card Body Content -->
               <div class="market-box-body">
-                <!-- Market Title & Views Pill Row (No extra tag) -->
+                <!-- Market Title & District Pill Row -->
                 <div class="market-title-views-row">
                   <div class="market-title-col">
-                    <NuxtLink :to="`/stalls?market=${m.id}`" class="market-title-link">
+                    <NuxtLink :to="marketActionLink(m)" class="market-title-link">
                       <h3 class="market-card-name">{{ m.name }}</h3>
                     </NuxtLink>
                   </div>
-                  <!-- ซ่อนไว้ก่อน: จำนวนผู้เข้าชมตลาด (Views Pill)
-                  <div class="market-views-pill" title="จำนวนผู้เข้าชมตลาดนี้">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <span>{{ getMarketViews(m.id) }}</span>
-                  </div>
-                  -->
+                  <span v-if="m.district" class="officer-district-pill">
+                    {{ m.district }}
+                  </span>
                 </div>
 
                 <!-- Address with Map Pin Icon -->
@@ -361,54 +360,110 @@
                   <span class="address-text">{{ m.address }}</span>
                 </div>
 
-                <!-- Stall Availability Box (มุมมองแผงว่าง) -->
-                <div class="market-occupancy-row">
-                  <div class="occupancy-info">
-                    <div class="occupancy-title-col">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                      <span class="occupancy-label">แผงว่างพร้อมให้เช่า</span>
+                <!-- ==================================================== -->
+                <!-- OFFICER VIEW: 3-Status Stall Breakdown               -->
+                <!-- ==================================================== -->
+                <template v-if="isOfficer">
+                  <div class="officer-occupancy-box">
+                    <div class="officer-occupancy-head">
+                      <span class="officer-occupancy-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>สรุปสถานะแผงเช่า</span>
+                      </span>
+                      <span class="officer-total-stalls">ทั้งหมด <strong>{{ (m.total_stalls || 0).toLocaleString() }}</strong> แผง</span>
                     </div>
-                    <span class="occupancy-count">
-                      <template v-if="getAvailableCount(m) > 0">
-                        <strong :class="getAvailabilityTextClass(m)">{{ getAvailableCount(m).toLocaleString() }}</strong>
-                        <span class="occupancy-total">/ {{ (m.total_stalls || 0).toLocaleString() }} แผง</span>
-                      </template>
-                      <strong v-else class="avail-text-full">เต็ม</strong>
-                    </span>
+
+                    <div class="officer-stall-stats-grid">
+                      <div class="officer-stat-cell stat-occupied">
+                        <div class="stat-copy">
+                          <span class="stat-label">มีผู้เช่า</span>
+                          <strong class="stat-val">{{ getOccupiedCount(m).toLocaleString() }}</strong>
+                        </div>
+                      </div>
+                      <div class="officer-stat-cell stat-reserved">
+                        <div class="stat-copy">
+                          <span class="stat-label">ติดจอง</span>
+                          <strong class="stat-val">{{ getReservedCount(m).toLocaleString() }}</strong>
+                        </div>
+                      </div>
+                      <div class="officer-stat-cell stat-available">
+                        <div class="stat-copy">
+                          <span class="stat-label">แผงว่าง</span>
+                          <strong class="stat-val">{{ getAvailableCount(m).toLocaleString() }}</strong>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Progress Bar showing availability -->
-                  <div class="occupancy-progress-bar" :title="`ว่าง ${getAvailabilityRate(m)}% จากทั้งหมด ${(m.total_stalls || 0).toLocaleString()} แผง`">
-                    <div
-                      class="occupancy-progress-fill"
-                      :class="getAvailabilityBarColor(m)"
-                      :style="{ width: `${getAvailabilityBarWidth(m)}%` }"
-                    ></div>
+                  <!-- Officer Single Action Button -->
+                  <div class="market-card-actions">
+                    <NuxtLink
+                      :to="marketActionLink(m)"
+                      class="btn-book-action-bar"
+                      title="ดูและจัดการข้อมูลตลาด"
+                    >
+                      <span>ข้อมูลตลาด</span>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </NuxtLink>
                   </div>
-                </div>
+                </template>
 
-                <!-- Starting Price -->
-                <div class="market-price-row">
-                  <span class="price-prefix-text">เริ่มต้น</span>
-                  <span class="price-currency">฿</span>
-                  <span class="price-big-number">{{ getStartingPrice(m) }}</span>
-                  <span class="price-suffix-text">/ {{ getPriceUnit(m) }}</span>
-                </div>
+                <!-- ==================================================== -->
+                <!-- TENANT VIEW: Stall Availability & Starting Price     -->
+                <!-- ==================================================== -->
+                <template v-else>
+                  <!-- Stall Availability Box (มุมมองแผงว่าง) -->
+                  <div class="market-occupancy-row">
+                    <div class="occupancy-info">
+                      <div class="occupancy-title-col">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span class="occupancy-label">แผงว่างพร้อมให้เช่า</span>
+                      </div>
+                      <span class="occupancy-count">
+                        <template v-if="getAvailableCount(m) > 0">
+                          <strong :class="getAvailabilityTextClass(m)">{{ getAvailableCount(m).toLocaleString() }}</strong>
+                          <span class="occupancy-total">/ {{ (m.total_stalls || 0).toLocaleString() }} แผง</span>
+                        </template>
+                        <strong v-else class="avail-text-full">เต็ม</strong>
+                      </span>
+                    </div>
 
-                <!-- Action Button: Full-Width Primary "จองแผงเช่า →" -->
-                <div class="market-card-actions">
-                  <NuxtLink
-                    :to="marketActionLink(m)"
-                    class="btn-book-action-bar"
-                    :title="isOfficer ? 'จัดการแผงเช่าและการนัดเข้าชม' : 'เข้าสู่ขั้นตอนการจองแผงเช่าทันที'"
-                  >
-                    <span>{{ isOfficer ? 'จัดการแผงเช่า' : 'จองแผงเช่า' }}</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </NuxtLink>
-                </div>
+                    <!-- Progress Bar showing availability -->
+                    <div class="occupancy-progress-bar" :title="`ว่าง ${getAvailabilityRate(m)}% จากทั้งหมด ${(m.total_stalls || 0).toLocaleString()} แผง`">
+                      <div
+                        class="occupancy-progress-fill"
+                        :class="getAvailabilityBarColor(m)"
+                        :style="{ width: `${getAvailabilityBarWidth(m)}%` }"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <!-- Starting Price -->
+                  <div class="market-price-row">
+                    <span class="price-prefix-text">เริ่มต้น</span>
+                    <span class="price-currency">฿</span>
+                    <span class="price-big-number">{{ getStartingPrice(m) }}</span>
+                    <span class="price-suffix-text">/ {{ getPriceUnit(m) }}</span>
+                  </div>
+
+                  <!-- Action Button: Full-Width Primary "จองแผงเช่า →" -->
+                  <div class="market-card-actions">
+                    <NuxtLink
+                      :to="marketActionLink(m)"
+                      class="btn-book-action-bar"
+                      title="เข้าสู่ขั้นตอนการจองแผงเช่าทันที"
+                    >
+                      <span>จองแผงเช่า</span>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow-icon">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </NuxtLink>
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -449,7 +504,12 @@ const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff
 
 const marketActionLink = (market: any) => {
   const marketId = market.slug === 'chatuchak' ? 'chatuchak' : market.id
-  return isOfficer.value ? `/stalls/manage?market=${marketId}` : `/stalls/book?market=${marketId}`
+  return `/stalls?market=${marketId}`
+}
+
+const marketInspectStallsLink = (market: any) => {
+  const marketId = market.slug === 'chatuchak' ? 'chatuchak' : market.id
+  return `/stalls/manage?market=${marketId}&mode=inspect`
 }
 
 // Search & Filter State
@@ -513,25 +573,6 @@ const filteredMarkets = ref<any[]>([])
 // ใช้ตรวจ visual skeleton ใน local เท่านั้น: /markets?skeleton=1
 const showMarketSkeleton = computed(() => loadingMarkets.value || (import.meta.dev && route.query.skeleton === '1'))
 
-const MARKET_LIST_SCROLL_KEY = 'e-market:market-list-scroll-y'
-const shouldRestoreMarketListScroll = ref(false)
-
-const saveMarketListScroll = () => {
-  if (typeof window === 'undefined') return
-  sessionStorage.setItem(MARKET_LIST_SCROLL_KEY, String(window.scrollY))
-}
-
-const restoreMarketListScroll = async () => {
-  if (!shouldRestoreMarketListScroll.value || typeof window === 'undefined') return
-  const savedScrollY = Number(sessionStorage.getItem(MARKET_LIST_SCROLL_KEY))
-  shouldRestoreMarketListScroll.value = false
-  sessionStorage.removeItem(MARKET_LIST_SCROLL_KEY)
-  if (!Number.isFinite(savedScrollY) || savedScrollY <= 0) return
-
-  await nextTick()
-  requestAnimationFrame(() => window.scrollTo({ top: savedScrollY, behavior: 'auto' }))
-}
-
 const loadData = async () => {
   loadingMarkets.value = true
   try {
@@ -543,7 +584,6 @@ const loadData = async () => {
     console.error('Failed to load markets:', err)
   } finally {
     loadingMarkets.value = false
-    await restoreMarketListScroll()
   }
 }
 
@@ -645,6 +685,33 @@ const getAvailableCount = (m: any) => {
   return Math.max(0, Math.min(total, m.available_stalls ?? 0))
 }
 
+const getOccupiedCount = (m: any) => {
+  const total = m.total_stalls || 0
+  const explicit = Number(m.occupied_stalls ?? 0)
+  if (explicit > 0) return Math.min(total, explicit)
+  const reserved = Math.max(0, Number(m.reserved_stalls ?? 0))
+  const avail = getAvailableCount(m)
+  return Math.max(0, total - avail - reserved)
+}
+
+const getReservedCount = (m: any) => {
+  const total = m.total_stalls || 0
+  return Math.max(0, Math.min(total, Number(m.reserved_stalls ?? 0)))
+}
+
+const getOccupiedRate = (m: any) => {
+  const total = m.total_stalls || 0
+  if (!total) return 0
+  const used = getOccupiedCount(m) + getReservedCount(m)
+  return Math.min(100, Math.round((used / total) * 100))
+}
+
+const getSegmentPercent = (count: number, total?: number) => {
+  const totalCount = Number(total || 0)
+  if (!totalCount || count <= 0) return 0
+  return Math.max(2, (count / totalCount) * 100)
+}
+
 const getAvailabilityRate = (m: any) => {
   const total = m.total_stalls || 0
   if (!total) return 0
@@ -695,19 +762,82 @@ const getStartingPrice = (m: any) => {
 
 const getPriceUnit = (m: any) => (m.starting_price_monthly || !m.starting_price_daily ? 'เดือน' : 'วัน')
 
-onMounted(async () => {
-  startHeroCarousel()
-  if (typeof window !== 'undefined') {
-    shouldRestoreMarketListScroll.value = sessionStorage.getItem(MARKET_LIST_SCROLL_KEY) !== null
-  }
-  await loadData()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('focus', loadData)
+const MARKET_RETURN_STATE_KEY = 'e-market:market-return-state'
+
+onBeforeRouteLeave((to) => {
+  if (typeof window === 'undefined') return
+  if (to.path.startsWith('/stalls') || to.path.startsWith('/markets/')) {
+    try {
+      sessionStorage.setItem(MARKET_RETURN_STATE_KEY, JSON.stringify({
+        scrollY: window.scrollY,
+        viewMode: viewMode.value,
+        searchQuery: searchQuery.value,
+        selectedCategory: selectedCategory.value
+      }))
+    } catch {}
+  } else {
+    sessionStorage.removeItem(MARKET_RETURN_STATE_KEY)
+    sessionStorage.removeItem('e-market:bma-map-state')
   }
 })
 
-onBeforeRouteLeave(() => {
-  saveMarketListScroll()
+onMounted(async () => {
+  startHeroCarousel()
+
+  let savedState: {
+    scrollY?: number
+    viewMode?: 'grid' | 'map'
+    searchQuery?: string
+    selectedCategory?: string
+  } | null = null
+
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('e-market:market-list-scroll-y')
+    try {
+      const raw = sessionStorage.getItem(MARKET_RETURN_STATE_KEY)
+      if (raw) {
+        savedState = JSON.parse(raw)
+        sessionStorage.removeItem(MARKET_RETURN_STATE_KEY)
+      }
+    } catch {}
+
+    if (savedState) {
+      if (savedState.viewMode === 'map' || savedState.viewMode === 'grid') {
+        viewMode.value = savedState.viewMode
+      }
+      if (typeof savedState.searchQuery === 'string') {
+        searchQuery.value = savedState.searchQuery
+        appliedSearchQuery.value = savedState.searchQuery
+      }
+      if (typeof savedState.selectedCategory === 'string') {
+        selectedCategory.value = savedState.selectedCategory
+        appliedCategory.value = savedState.selectedCategory
+      }
+    } else {
+      sessionStorage.removeItem('e-market:bma-map-state')
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    }
+  }
+
+  await loadData()
+  if (savedState) {
+    filterMarkets()
+    if (typeof window !== 'undefined' && typeof savedState.scrollY === 'number') {
+      const targetY = savedState.scrollY
+      await nextTick()
+      window.scrollTo({ top: targetY, left: 0, behavior: 'auto' })
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: targetY, left: 0, behavior: 'auto' })
+      })
+      setTimeout(() => {
+        window.scrollTo({ top: targetY, left: 0, behavior: 'auto' })
+      }, 60)
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('focus', loadData)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -715,7 +845,6 @@ onBeforeUnmount(() => {
     clearInterval(heroCarouselTimer)
     heroCarouselTimer = null
   }
-  saveMarketListScroll()
   if (typeof window !== 'undefined') {
     window.removeEventListener('focus', loadData)
   }
@@ -2302,6 +2431,112 @@ onBeforeUnmount(() => {
 
 .btn-book-stall:hover .btn-arrow-icon {
   transform: translateX(4px);
+}
+
+/* ============================================================== */
+/* OFFICER MARKET CARD VIEW                                       */
+/* ============================================================== */
+.officer-district-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.officer-occupancy-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 22px;
+}
+
+.officer-occupancy-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.officer-occupancy-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.officer-total-stalls {
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.officer-total-stalls strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.officer-stall-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  text-align: center;
+  padding: 2px 0;
+}
+
+.officer-stat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+}
+
+.officer-stat-cell + .officer-stat-cell {
+  border-left: 1px solid #e2e8f0;
+}
+
+.officer-stat-cell .stat-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.officer-stat-cell .stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.officer-stat-cell .stat-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.officer-stat-cell.stat-occupied .stat-val {
+  color: #0f172a;
+}
+
+.officer-stat-cell.stat-reserved .stat-val {
+  color: #d97706;
+}
+
+.officer-stat-cell.stat-available .stat-val {
+  color: #10b981;
 }
 
 .empty-search-card {

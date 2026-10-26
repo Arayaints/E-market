@@ -16,12 +16,12 @@
 
       <!-- Breadcrumb Items -->
       <nav class="body-breadcrumb-trail" aria-label="Breadcrumb">
-        <NuxtLink to="/" class="body-breadcrumb-link">หน้าหลัก</NuxtLink>
+        <NuxtLink v-if="!isStaffUser" to="/" class="body-breadcrumb-link">หน้าหลัก</NuxtLink>
 
         <!-- Optional Market Parent (e.g. ตลาดธนบุรี (สนามหลวง 2)) -->
-        <template v-if="resolvedMarketName">
-          <span class="body-breadcrumb-sep">&gt;</span>
-          <NuxtLink v-if="current" :to="resolvedMarketId ? `/stalls?market=${resolvedMarketId}` : '/stalls'" class="body-breadcrumb-link">
+        <template v-if="shouldShowMarketParent">
+          <span v-if="!isStaffUser" class="body-breadcrumb-sep">&gt;</span>
+          <NuxtLink v-if="current || (items && items.length)" :to="resolvedMarketId ? `/stalls?market=${resolvedMarketId}` : '/stalls'" class="body-breadcrumb-link">
             {{ resolvedMarketName }}
           </NuxtLink>
           <span v-else class="body-breadcrumb-current">{{ resolvedMarketName }}</span>
@@ -29,14 +29,22 @@
 
         <!-- Optional Intermediate Items List -->
         <template v-for="(item, idx) in items" :key="idx">
-          <span class="body-breadcrumb-sep">&gt;</span>
-          <NuxtLink v-if="item.to" :to="item.to" class="body-breadcrumb-link">{{ item.label }}</NuxtLink>
+          <span v-if="!isStaffUser || shouldShowMarketParent || idx > 0" class="body-breadcrumb-sep">&gt;</span>
+          <button
+            v-if="item.onClick"
+            type="button"
+            class="body-breadcrumb-link body-breadcrumb-btn"
+            @click="item.onClick()"
+          >
+            {{ item.label }}
+          </button>
+          <NuxtLink v-else-if="item.to" :to="item.to" class="body-breadcrumb-link">{{ item.label }}</NuxtLink>
           <span v-else class="body-breadcrumb-current">{{ item.label }}</span>
         </template>
 
         <!-- Active / Current Page Label -->
         <template v-if="current">
-          <span class="body-breadcrumb-sep">&gt;</span>
+          <span v-if="!isStaffUser || shouldShowMarketParent || (items && items.length)" class="body-breadcrumb-sep">&gt;</span>
           <span class="body-breadcrumb-current">{{ current }}</span>
         </template>
       </nav>
@@ -56,13 +64,16 @@ const props = defineProps<{
   current?: string
   market?: string
   marketId?: string | number
-  items?: Array<{ label: string; to?: string }>
+  items?: Array<{ label: string; to?: string; onClick?: () => void }>
   backTo?: string
+  onBack?: () => void
   forceNavigation?: boolean
 }>()
 
 const route = useRoute()
 const { applyMarketOverride } = useMarketOverrides()
+const { user } = useAuth()
+const isStaffUser = computed(() => user.value?.role === 'staff')
 
 const resolvedMarketId = computed(() => {
   const raw = props.marketId ?? route.query.market ?? (route.path.startsWith('/markets/') ? route.params.id : undefined)
@@ -85,7 +96,29 @@ const resolvedMarketName = computed(() => {
   return props.market || ''
 })
 
+const shouldShowMarketParent = computed(() => {
+  if (!resolvedMarketName.value) return false
+  if (route.path === '/stalls') return false
+  if (props.current && resolvedMarketName.value.trim() === props.current.trim()) return false
+  return true
+})
+
 const handleBack = async () => {
+  if (props.onBack) {
+    props.onBack()
+    return
+  }
+
+  if (props.backTo) {
+    await navigateTo(props.backTo)
+    return
+  }
+
+  if (resolvedMarketId.value && route.path !== '/stalls') {
+    await navigateTo(`/stalls?market=${resolvedMarketId.value}`)
+    return
+  }
+
   if (import.meta.client && window.history.state && typeof window.history.state.back === 'string') {
     const backUrl = window.history.state.back
     const backPathOnly = backUrl.split('?')[0]?.split('#')[0] || ''
@@ -99,16 +132,6 @@ const handleBack = async () => {
       await navigateTo(backUrl)
       return
     }
-  }
-
-  if (props.backTo) {
-    await navigateTo(props.backTo)
-    return
-  }
-
-  if (resolvedMarketId.value && route.path !== '/stalls') {
-    await navigateTo(`/stalls?market=${resolvedMarketId.value}`)
-    return
   }
 
   await navigateTo('/')
@@ -175,6 +198,14 @@ const handleBack = async () => {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.15s ease;
+}
+
+.body-breadcrumb-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
 }
 
 .body-breadcrumb-link:hover {

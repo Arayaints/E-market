@@ -144,9 +144,39 @@ const satelliteStyle: any = {
 const { role } = useAuth()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 
+const MAP_STATE_KEY = 'e-market:bma-map-state'
+const activePopupMarketKey = ref<string | null>(null)
+
+const readSavedMapState = () => {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(MAP_STATE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+const saveMapState = (overrideMarketKey?: string | null) => {
+  if (typeof window === 'undefined' || !map) return
+  try {
+    const center = map.getCenter()
+    const marketKeyToSave = overrideMarketKey !== undefined ? overrideMarketKey : activePopupMarketKey.value
+    sessionStorage.setItem(MAP_STATE_KEY, JSON.stringify({
+      center: [center.lng, center.lat],
+      zoom: map.getZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing(),
+      mode: currentMode.value,
+      activeMarketKey: marketKeyToSave
+    }))
+  } catch {}
+}
+
 onMounted(async () => {
   if (process.client) {
     (window as any).$navigateToMarket = (marketId: number | string, action: 'book' | 'stalls') => {
+      saveMapState(String(marketId))
       if (action === 'book') {
         navigateTo(isOfficer.value ? `/stalls/manage?market=${marketId}` : `/stalls/book?market=${marketId}`)
       } else {
@@ -162,6 +192,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (map) {
+    saveMapState()
     const mapInstance = map
     map = null
     try {
@@ -194,17 +225,31 @@ const initMap = () => {
   const container = document.getElementById('bma-markets-map')
   if (!container || map || !maplibregl) return
 
+  const saved = readSavedMapState()
+  if (saved?.mode === 'satellite' || saved?.mode === 'street') {
+    currentMode.value = saved.mode
+  }
+  if (saved?.activeMarketKey) {
+    activePopupMarketKey.value = String(saved.activeMarketKey)
+  }
+
   map = new maplibregl.Map({
     container: 'bma-markets-map',
-    style: streetStyle,
-    center: bmaCenter,
-    zoom: 11,
+    style: currentMode.value === 'satellite' ? satelliteStyle : streetStyle,
+    center: Array.isArray(saved?.center) && saved.center.length === 2 ? saved.center : bmaCenter,
+    zoom: typeof saved?.zoom === 'number' ? saved.zoom : 11,
+    pitch: typeof saved?.pitch === 'number' ? saved.pitch : 0,
+    bearing: typeof saved?.bearing === 'number' ? saved.bearing : 0,
     minZoom: 9,
     maxZoom: 19
   })
 
   // Add standard navigation controls (zoom, pitch, compass)
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+
+  map.on('moveend', () => {
+    saveMapState()
+  })
 
   map.on('load', () => {
     renderMarkers()
@@ -214,6 +259,7 @@ const initMap = () => {
 const setMapMode = (mode: 'street' | 'satellite') => {
   if (currentMode.value === mode || !map) return
   currentMode.value = mode
+  saveMapState()
   map.setStyle(mode === 'satellite' ? satelliteStyle : streetStyle)
   map.once('style.load', () => {
     renderMarkers()
@@ -222,6 +268,7 @@ const setMapMode = (mode: 'street' | 'satellite') => {
 
 const recenterMap = () => {
   if (map) {
+    activePopupMarketKey.value = null
     map.flyTo({
       center: bmaCenter,
       zoom: 11,
@@ -236,6 +283,8 @@ const recenterMap = () => {
 const renderMarkers = () => {
   if (!map || !maplibregl || !props.markets) return
 
+  const targetPopupKey = activePopupMarketKey.value
+
   // Clear existing markers
   markers.forEach(m => m.remove())
   markers.length = 0
@@ -246,55 +295,97 @@ const renderMarkers = () => {
     const pinColor = isAvail ? '#10b981' : '#ef4444'
     const pinBg = isAvail ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'
 
+    const districtLabel = m.district
+      ? (String(m.district).trim().startsWith('เขต') ? String(m.district).trim() : `เขต${String(m.district).trim()}`)
+      : ''
+
     const el = document.createElement('div')
     el.className = 'custom-maplibre-marker'
     el.style.cursor = 'pointer'
     el.innerHTML = `
-      <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
-        <div style="background: ${pinColor}; color: #ffffff; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Bai Jamjuree', sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,0.25); white-space: nowrap; border: 2px solid #ffffff; display: flex; align-items: center; gap: 5px; transition: transform 0.2s ease;">
+      <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: ${pinColor}; color: #ffffff; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 700; font-family: 'Bai Jamjuree', sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,0.25); white-space: nowrap; border: 2px solid #ffffff; display: flex; align-items: center; gap: 6px; transition: transform 0.2s ease;">
           <span>${m.name}</span>
-          <span style="background: rgba(255,255,255,0.25); padding: 1px 6px; border-radius: 10px; font-size: 10px;">${isAvail ? `ว่าง ${m.available_stalls}` : 'เต็ม'}</span>
+          <span style="background: rgba(255,255,255,0.25); padding: 1px 7px; border-radius: 10px; font-size: 12px;">${isAvail ? `ว่าง ${m.available_stalls}` : 'เต็ม'}</span>
         </div>
-        <div style="width: 14px; height: 14px; background: ${pinColor}; transform: rotate(45deg); margin-top: -6px; border: 2px solid #ffffff; border-top: none; border-left: none;"></div>
-        <div style="width: 24px; height: 8px; border-radius: 50%; background: ${pinBg}; filter: blur(2px); margin-top: -2px;"></div>
+        <div style="width: 12px; height: 12px; background: ${pinColor}; transform: rotate(45deg); margin-top: -6px; border: 2px solid #ffffff; border-top: none; border-left: none;"></div>
+        <div style="width: 22px; height: 6px; border-radius: 50%; background: ${pinBg}; filter: blur(1.5px); margin-top: -1px;"></div>
       </div>
     `
 
+    const marketKey = String(m.slug === 'chatuchak' ? 'chatuchak' : m.id)
+    const actionButtonsHtml = isOfficer.value
+      ? `
+        <div style="display: flex; gap: 6px;">
+          <button type="button" onclick="window.$navigateToMarket('${marketKey}', 'stalls')" style="flex: 1; text-align: center; background: #2563eb; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
+            ข้อมูลตลาด &rarr;
+          </button>
+        </div>
+      `
+      : `
+        <div style="display: flex; gap: 6px;">
+          <button type="button" onclick="window.$navigateToMarket('${marketKey}', 'book')" style="flex: 1; text-align: center; background: #2563eb; color: #fff; border: none; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
+            จองแผง &rarr;
+          </button>
+          <button type="button" onclick="window.$navigateToMarket('${marketKey}', 'stalls')" style="text-align: center; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
+            ข้อมูลตลาด
+          </button>
+        </div>
+      `
+
     const popupHtml = `
-      <div style="font-family: 'Bai Jamjuree', sans-serif; width: 240px; padding: 4px;">
-        <div style="border-radius: 8px; overflow: hidden; height: 110px; margin-bottom: 8px; position: relative;">
+      <div style="font-family: 'Bai Jamjuree', sans-serif; width: 244px; padding: 4px;">
+        <div style="border-radius: 8px; overflow: hidden; height: 112px; margin-bottom: 8px; position: relative;">
           <img src="${m.image_url}" style="width: 100%; height: 100%; object-fit: cover;" alt="${m.name}" />
-          <span style="position: absolute; top: 6px; right: 6px; background: ${isAvail ? '#10b981' : '#ef4444'}; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
+          <span style="position: absolute; top: 6px; right: 6px; background: ${isAvail ? '#10b981' : '#ef4444'}; color: #fff; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 12px;">
             ${isAvail ? `ว่าง ${m.available_stalls} แผง` : 'เต็ม'}
           </span>
         </div>
-        <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">${m.name}</strong>
-        <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">เขต ${m.district}</div>
-        <div style="font-size: 11px; color: #334155; margin-bottom: 10px;">
+        <strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 2px;">${m.name}</strong>
+        <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">${districtLabel}</div>
+        <div style="font-size: 12px; color: #334155; margin-bottom: 10px;">
           ค่าเช่าเริ่มต้น: <strong style="color: #059669;">฿${m.starting_price_daily}/วัน</strong> (฿${Number(m.starting_price_monthly).toLocaleString()}/ด.)
         </div>
-        <div style="display: flex; gap: 6px;">
-          <button type="button" onclick="window.$navigateToMarket('${m.id}', 'book')" style="flex: 1; text-align: center; background: #4361ee; color: #fff; border: none; padding: 7px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
-            จองแผง &rarr;
-          </button>
-          <button type="button" onclick="window.$navigateToMarket('${m.id}', 'stalls')" style="text-align: center; background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; padding: 7px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Bai Jamjuree', sans-serif;">
-            ผังตลาด
-          </button>
-        </div>
+        ${actionButtonsHtml}
       </div>
     `
 
     const popup = new maplibregl.Popup({
-      offset: 15,
+      offset: {
+        top: [0, 6],
+        'top-left': [0, 6],
+        'top-right': [0, 6],
+        bottom: [0, -40],
+        'bottom-left': [0, -40],
+        'bottom-right': [0, -40],
+        left: [16, -20],
+        right: [-16, -20]
+      },
       closeButton: true,
       maxWidth: '280px',
       className: 'bma-maplibre-popup'
     }).setHTML(popupHtml)
 
-    const marker = new maplibregl.Marker({ element: el })
+    popup.on('open', () => {
+      activePopupMarketKey.value = marketKey
+      saveMapState(marketKey)
+    })
+
+    popup.on('close', () => {
+      if (activePopupMarketKey.value === marketKey && map) {
+        activePopupMarketKey.value = null
+        saveMapState(null)
+      }
+    })
+
+    const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([m.lng, m.lat])
       .setPopup(popup)
       .addTo(map)
+
+    if (targetPopupKey && (targetPopupKey === marketKey || targetPopupKey === String(m.id))) {
+      marker.togglePopup()
+    }
 
     el.addEventListener('click', () => {
       emit('selectMarket', m)

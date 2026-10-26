@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,14 +27,19 @@ func (r *repository) FindAll(filter requests.StallFilter) ([]models.Stall, error
 	resolvedMarketSlug := ""
 	resolvedMarketName := ""
 
-	marketKey := filter.Market
+	marketKey := strings.TrimSpace(filter.Market)
 	if marketKey == "" {
-		marketKey = filter.Slug
+		marketKey = strings.TrimSpace(filter.Slug)
 	}
 	if resolvedMarketID == 0 && marketKey != "" {
 		var market models.Market
-		if err := r.conn.Where("status != 'D' AND (slug = ? OR code = ? OR name = ?)", marketKey, marketKey, marketKey).
-			First(&market).Error; err == nil {
+		marketLookup := r.conn.Where("status != 'D'")
+		if parsedID, err := strconv.Atoi(marketKey); err == nil && parsedID > 0 {
+			marketLookup = marketLookup.Where("id = ? OR slug = ? OR code = ? OR name = ?", parsedID, marketKey, marketKey, marketKey)
+		} else {
+			marketLookup = marketLookup.Where("slug = ? OR code = ? OR name = ?", marketKey, marketKey, marketKey)
+		}
+		if err := marketLookup.First(&market).Error; err == nil {
 			resolvedMarketID = market.ID
 			resolvedMarketSlug = market.Slug
 			resolvedMarketName = market.Name
@@ -158,7 +165,50 @@ func (r *repository) Create(stall *models.Stall) error {
 	stall.CreatedAt = now
 	stall.UpdatedAt = now
 	stall.Status = "A"
-	return r.conn.Create(stall).Error
+	return r.conn.Transaction(func(tx *gorm.DB) error {
+		var existing models.Stall
+		if err := tx.Where("ident = ?", stall.Ident).First(&existing).Error; err == nil {
+			stall.ID = existing.ID
+			stall.CreatedAt = existing.CreatedAt
+			if err := tx.Save(stall).Error; err != nil {
+				return err
+			}
+			return tx.Create(&models.StallAuditLog{StallID: stall.ID, Action: "created", Changes: "สร้างแผงเช่า", ActorID: stall.CreatedBy, ActorName: r.actorName(tx, stall.CreatedBy)}).Error
+		}
+		if err := tx.Create(stall).Error; err != nil {
+			return err
+		}
+		return tx.Create(&models.StallAuditLog{StallID: stall.ID, Action: "created", Changes: "สร้างแผงเช่า", ActorID: stall.CreatedBy, ActorName: r.actorName(tx, stall.CreatedBy)}).Error
+	})
+}
+
+func (r *repository) actorName(tx *gorm.DB, actorID *int) string {
+	if actorID == nil {
+		return "ระบบ"
+	}
+	var user models.User
+	if err := tx.Select("full_name", "username").First(&user, *actorID).Error; err != nil {
+		return fmt.Sprintf("ผู้ใช้ #%d", *actorID)
+	}
+	if strings.TrimSpace(user.FullName) != "" {
+		return user.FullName
+	}
+	return user.Username
+}
+
+func (r *repository) Update(stall *models.Stall, actorID int, changes string) error {
+	return r.conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(stall).Error; err != nil {
+			return err
+		}
+		return tx.Create(&models.StallAuditLog{StallID: stall.ID, Action: "updated", Changes: changes, ActorID: &actorID, ActorName: r.actorName(tx, &actorID)}).Error
+	})
+}
+
+func (r *repository) FindHistory(stallID int) ([]models.StallAuditLog, error) {
+	var logs []models.StallAuditLog
+	err := r.conn.Where("stall_id = ?", stallID).Order("created_at DESC, id DESC").Find(&logs).Error
+	return logs, err
 }
 
 func (r *repository) GetActiveBooking(stallIdent string) (*models.Booking, error) {

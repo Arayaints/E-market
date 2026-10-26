@@ -27,9 +27,12 @@ func InitSQLite(dbPath string) (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&models.User{},
+		&models.MarketStaffAssignment{},
 		&models.Market{},
 		&models.Zone{},
 		&models.Stall{},
+		&models.StallAuditLog{},
+		&models.MarketGISConfig{},
 		&models.Booking{},
 		&models.Notification{},
 		&models.Application{},

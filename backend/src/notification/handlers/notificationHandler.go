@@ -25,6 +25,16 @@ func (h *Handler) scopedQuery(c *gin.Context) *gorm.DB {
 	if role == "tenant" {
 		return query.Where("recipient_role = ? AND recipient_user_id = ?", "tenant", middlewares.GetUserID(c))
 	}
+	if role == "staff" {
+		marketIDs, err := middlewares.StaffMarketIDs(h.db, middlewares.GetUserID(c))
+		if err != nil || len(marketIDs) == 0 {
+			return query.Where("1 = 0")
+		}
+		return query.Where(`recipient_role = ? AND (
+			booking_id IN (SELECT id FROM booking WHERE market_id IN ?) OR
+			market_name IN (SELECT name FROM market WHERE id IN ?)
+		)`, "officer", marketIDs, marketIDs)
+	}
 	return query.Where("recipient_role = ?", "officer")
 }
 

@@ -14,4 +14,5 @@ type UseCase interface {
 type Repository interface {
 	FindByUsername(username string) (*models.User, error)
 	FindByID(id int) (*models.User, error)
+	FindAssignedMarkets(userID int) ([]models.Market, error)
 }

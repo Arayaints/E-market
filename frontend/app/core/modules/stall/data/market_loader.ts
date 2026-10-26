@@ -6,6 +6,45 @@
 // ============================================================================
 
 import { getMarketGisConfig, type MarketGisConfig } from './markets_registry'
+import type { ProjectZone } from './market_gis_types'
+
+export function cloneProjects<T>(items: T): T {
+  if (!items) return items
+  return JSON.parse(JSON.stringify(items))
+}
+
+/**
+ * Merges base market projects (from /data/markets/<slug>.json) with saved GIS projects from API.
+ * Prevents custom-drawn zones (zone-*) from wiping out the original market projects when
+ * the initial draft was created before base JSON projects were loaded.
+ */
+function normalizeProjectNames(list: ProjectZone[] = []): ProjectZone[] {
+  return list.map(p => ({
+    ...p,
+    name: String(p.name || '').replace(/\s*\(โซนแผงค้าตลาดสิงหา\)/g, '').trim()
+  }))
+}
+
+export function mergeMarketProjects(baseProjects: ProjectZone[] = [], savedProjects: ProjectZone[] = []): ProjectZone[] {
+  if (!Array.isArray(savedProjects) || savedProjects.length === 0) {
+    return normalizeProjectNames(cloneProjects(baseProjects))
+  }
+  if (!Array.isArray(baseProjects) || baseProjects.length === 0) {
+    return normalizeProjectNames(cloneProjects(savedProjects))
+  }
+
+  const coreBaseProjects = baseProjects.filter(p => !String(p.id).startsWith('zone-'))
+  const baseIds = new Set(coreBaseProjects.map(p => p.id))
+  const savedHasAnyBaseProject = savedProjects.some(p => baseIds.has(p.id))
+
+  // If savedProjects only contains newly drawn custom zones (none of the base projects),
+  // combine all coreBaseProjects with the custom zones so original market zones never disappear.
+  if (!savedHasAnyBaseProject && coreBaseProjects.length > 0) {
+    return normalizeProjectNames([...cloneProjects(coreBaseProjects), ...cloneProjects(savedProjects)])
+  }
+
+  return normalizeProjectNames(cloneProjects(savedProjects))
+}
 
 export const MARKET_SLUG_MAP: Record<string, string> = {
   '1': 'chatuchak',
@@ -36,6 +75,14 @@ export const MARKET_SLUG_MAP: Record<string, string> = {
 
 const marketCache = new Map<string, MarketGisConfig>()
 
+export function clearMarketGisCache(marketIdOrSlug?: string | number | null): void {
+  if (!marketIdOrSlug) {
+    marketCache.clear()
+    return
+  }
+  marketCache.delete(getMarketSlug(marketIdOrSlug))
+}
+
 /**
  * Resolve the slug filename for a market ID or slug
  */
@@ -48,17 +95,17 @@ export function getMarketSlug(marketIdOrSlug: string | number): string {
  * Fetch and load a single market GIS JSON file on-demand.
  * Loads from /data/markets/<slug>.json with immediate cache.
  */
-export async function loadMarketGisJson(marketIdOrSlug?: string | number | null): Promise<MarketGisConfig> {
+export async function loadMarketGisJson(marketIdOrSlug?: string | number | null, forceReload = false): Promise<MarketGisConfig> {
   const slug = getMarketSlug(marketIdOrSlug || '1')
 
-  if (marketCache.has(slug)) {
+  if (!forceReload && marketCache.has(slug)) {
     return marketCache.get(slug)!
   }
 
   // If running in browser, fetch the dedicated JSON file
   if (typeof window !== 'undefined' && typeof fetch === 'function') {
     try {
-      const res = await fetch(`/data/markets/${slug}.json`)
+      const res = await fetch(`/data/markets/${slug}.json`, { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
         if (data && data.projects && Array.isArray(data.projects)) {

@@ -23,6 +23,12 @@ func NewRepository(db *gorm.DB) domains.Repository {
 func (r *repository) FindAll(filter requests.ApplicationFilter) ([]models.Application, error) {
 	var apps []models.Application
 	query := r.conn.Model(&models.Application{}).Where("status = 'A'")
+	if filter.MarketID != 0 {
+		query = query.Where("market_id = ?", filter.MarketID)
+	}
+	if filter.CreatedBy != 0 {
+		query = query.Where("created_by = ?", filter.CreatedBy)
+	}
 
 	if filter.StallIdent != "" {
 		query = query.Where("stall_ident = ?", filter.StallIdent)
@@ -53,6 +59,18 @@ func (r *repository) Create(app *models.Application) error {
 	app.CreatedAt = now
 	app.UpdatedAt = now
 	app.Status = "A"
+	if app.MarketID == nil {
+		var stall models.Stall
+		query := r.conn.Where("status = 'A'")
+		if app.StallID != nil && *app.StallID > 0 {
+			query = query.Where("id = ?", *app.StallID)
+		} else {
+			query = query.Where("ident = ?", app.StallIdent)
+		}
+		if query.First(&stall).Error == nil {
+			app.MarketID = &stall.MarketID
+		}
+	}
 	return r.conn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(app).Error; err != nil {
 			return err

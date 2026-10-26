@@ -29,6 +29,8 @@ func toContractResponse(c *models.Contract) responses.ContractResponse {
 		ContractNumber:  c.ContractNumber,
 		ApplicationID:   c.ApplicationID,
 		StallID:         c.StallID,
+		MarketID:        c.MarketID,
+		TenantUserID:    c.TenantUserID,
 		StallIdent:      c.StallIdent,
 		TenantName:      c.TenantName,
 		TenantPhone:     c.TenantPhone,

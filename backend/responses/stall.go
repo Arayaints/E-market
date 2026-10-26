@@ -14,6 +14,8 @@ type StallResponse struct {
 	StallIdent         string    `json:"stall_ident"`
 	StallNumber        string    `json:"stall_number"`
 	Name               string    `json:"name"`
+	Description        string    `json:"description"`
+	Category           string    `json:"category"`
 	Width              float64   `json:"width"`
 	Depth              float64   `json:"depth"`
 	AreaSqm            float64   `json:"area_sqm"`
@@ -23,6 +25,7 @@ type StallResponse struct {
 	StallStatus        string    `json:"stall_status"`
 	Floor              string    `json:"floor"`
 	CoordinatesGeoJSON string    `json:"coordinates_geojson,omitempty"`
+	Published          bool      `json:"published"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
 }

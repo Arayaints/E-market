@@ -8,8 +8,10 @@
       <AppBreadcrumb
         :market="currentMarketName"
         :marketId="route.query.market || '1'"
+        :items="bookingBreadcrumbItems"
         :current="currentBreadcrumbText"
         :backTo="`/stalls?market=${route.query.market || '1'}`"
+        :onBack="handleBreadcrumbBack"
       />
 
       <!-- Market Info Header Banner with Quick Market Switcher -->
@@ -2102,12 +2104,35 @@ const contractTotal = computed(() => {
 })
 
 // Dynamic Breadcrumb based on View Mode
+const bookingBreadcrumbItems = computed(() => {
+  if (currentStep.value === 1 && selectedProject.value) {
+    return [{ label: 'จองแผงเช่า', onClick: () => { selectedProject.value = null } }]
+  }
+  if (currentStep.value === 2) {
+    return [{ label: 'จองแผงเช่า', onClick: () => { currentStep.value = 1 } }]
+  }
+  if (currentStep.value === 3) {
+    return [
+      { label: 'จองแผงเช่า', onClick: () => { currentStep.value = 1 } },
+      { label: 'กรอกข้อมูลเพื่อเยี่ยมชมแผง', onClick: () => { currentStep.value = 2 } }
+    ]
+  }
+  return []
+})
+
 const currentBreadcrumbText = computed(() => {
   if (currentStep.value === 1) {
-    return selectedProject.value ? `จองแผงเช่า (${selectedProject.value.name})` : 'จองแผงเช่า'
+    return selectedProject.value ? selectedProject.value.name : 'จองแผงเช่า'
   }
   if (currentStep.value === 2) return 'กรอกข้อมูลเพื่อเยี่ยมชมแผง'
   return 'ตรวจสอบและยืนยัน'
+})
+
+const handleBreadcrumbBack = computed(() => {
+  if (currentStep.value === 3) return () => { currentStep.value = 2 }
+  if (currentStep.value === 2) return () => { currentStep.value = 1 }
+  if (currentStep.value === 1 && selectedProject.value) return () => { selectedProject.value = null }
+  return undefined
 })
 
 // Input Formatters (QA & UX)

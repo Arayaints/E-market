@@ -12,6 +12,8 @@ type Stall struct {
 	ProjectName        string    `gorm:"size:255;column:project_name" json:"project_name"`
 	Ident              string    `gorm:"size:50;unique;not null;column:ident" json:"ident"`
 	Name               string    `gorm:"size:255;column:name" json:"name"`
+	Description        string    `gorm:"type:text;column:description" json:"description"`
+	Category           string    `gorm:"size:100;column:category" json:"category"`
 	Width              float64   `gorm:"column:width" json:"width"`
 	Depth              float64   `gorm:"column:depth" json:"depth"`
 	AreaSqm            float64   `gorm:"column:area_sqm" json:"area_sqm"`
@@ -20,6 +22,7 @@ type Stall struct {
 	StallStatus        string    `gorm:"size:50;default:'available';column:stall_status" json:"stall_status"`
 	Floor              string    `gorm:"size:20;default:'1';column:floor" json:"floor"`
 	CoordinatesGeoJSON string    `gorm:"type:text;column:coordinates_geojson" json:"coordinates_geojson"`
+	Published          bool      `gorm:"default:false;column:published" json:"published"`
 	Status             string    `gorm:"type:char(1);default:'A';column:status" json:"status"`
 	CreatedBy          *int      `gorm:"column:created_by" json:"created_by"`
 	UpdatedBy          *int      `gorm:"column:updated_by" json:"updated_by"`
@@ -31,3 +34,14 @@ func (Stall) TableName() string {
 	return "stall"
 }
 
+type StallAuditLog struct {
+	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	StallID   int       `gorm:"column:stall_id;index;not null" json:"stall_id"`
+	Action    string    `gorm:"size:50;column:action;not null" json:"action"`
+	Changes   string    `gorm:"type:text;column:changes" json:"changes"`
+	ActorID   *int      `gorm:"column:actor_id;index" json:"actor_id"`
+	ActorName string    `gorm:"size:255;column:actor_name" json:"actor_name"`
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP;index" json:"created_at"`
+}
+
+func (StallAuditLog) TableName() string { return "stall_audit_log" }

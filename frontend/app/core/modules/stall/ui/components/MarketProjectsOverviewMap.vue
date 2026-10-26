@@ -15,7 +15,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="ค้นหาโครงการหรือหมวดหมู่สินค้า..."
+            :placeholder="managementMode ? 'ค้นหาโซน รหัสแผง หรือประเภทสินค้า...' : 'ค้นหาโครงการหรือหมวดหมู่สินค้า...'"
             class="map-search-input"
             @input="handleSearchInput"
           />
@@ -47,8 +47,17 @@
               </button>
             </div>
 
+            <div v-if="managementMode" class="filter-field-group">
+              <span class="filter-field-label">โซน / โครงการ</span>
+              <AppSelect
+                v-model="zoneFilter"
+                :options="zoneOptions"
+                placeholder="ทุกโซน"
+              />
+            </div>
+
             <div class="filter-field-group">
-              <span class="filter-field-label">หมวดหมู่</span>
+              <span class="filter-field-label">ประเภทสินค้า</span>
               <AppSelect
                 :model-value="draftCategoryFilter"
                 :options="categoryOptions"
@@ -72,6 +81,15 @@
                 v-model="availabilityFilter"
                 :options="availabilityOptions"
                 placeholder="สถานะแผง"
+              />
+            </div>
+
+            <div v-if="managementMode" class="filter-field-group">
+              <span class="filter-field-label">ความพร้อมของข้อมูล</span>
+              <AppSelect
+                v-model="readinessFilter"
+                :options="readinessOptions"
+                placeholder="ทั้งหมด"
               />
             </div>
 
@@ -176,8 +194,200 @@
     </div>
 
     <!-- MapLibre GL JS Interactive Map Container -->
-    <div class="maplibre-overview-wrapper">
-      <div :id="containerId" class="maplibre-overview-canvas"></div>
+    <div class="maplibre-overview-wrapper" :class="{ 'is-drawing-active': isDrawingZone || isDrawingStall || isAddingFacility, 'is-map-loading': isMapLoading }">
+      <div :id="containerId" ref="mapContainerRef" class="maplibre-overview-canvas"></div>
+
+      <div v-if="isMapLoading" class="map-loading-skeleton" aria-busy="true" aria-label="กำลังเตรียมผังตลาด">
+        <div class="map-skeleton-control-group" aria-hidden="true">
+          <span class="map-skeleton-line is-map-tab"></span>
+          <span class="map-skeleton-line is-map-tab short"></span>
+          <span class="map-skeleton-line is-center-control"></span>
+        </div>
+        <div class="map-skeleton-zone zone-one" aria-hidden="true"></div>
+        <div class="map-skeleton-zone zone-two" aria-hidden="true"></div>
+        <div class="map-skeleton-zone zone-three" aria-hidden="true"></div>
+        <div class="map-skeleton-legend" aria-hidden="true">
+          <span class="map-skeleton-line is-legend-title"></span>
+          <span class="map-skeleton-line is-legend-row"></span>
+          <span class="map-skeleton-line is-legend-row shorter"></span>
+        </div>
+        <div class="map-skeleton-tools" aria-hidden="true">
+          <span v-for="index in 4" :key="index" class="map-skeleton-tool"></span>
+        </div>
+      </div>
+
+      <div
+        v-if="managementMode && !activeProject && !isDrawingZone && !isDrawingStall && !isAddingFacility && !isDeletingStall && !isPolygonEditMode && !isStallPolygonEditMode && marketFloors.length <= 1"
+        class="map-project-guidance map-staff-guidance"
+        role="status"
+      >
+        <div class="map-project-guidance-icon" aria-hidden="true">
+          <svg v-if="inspectOnly" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="8" y1="13" x2="16" y2="13"></line>
+            <line x1="8" y1="17" x2="13" y2="17"></line>
+          </svg>
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+        </div>
+        <span>
+          <strong>{{ inspectOnly ? 'เลือกโซนเพื่อดูข้อมูลแผง' : 'เลือกโซนเพื่อจัดการผัง' }}</strong>
+          <small>{{ inspectOnly ? 'คลิกพื้นที่โซนบนแผนที่เพื่อดูข้อมูลแผงและสัญญาเช่า' : 'คลิกพื้นที่โซนเพื่อจัดการแผง หรือใช้เครื่องมือด้านล่าง' }}</small>
+        </span>
+      </div>
+
+      <div
+        v-if="managementMode && !inspectOnly"
+        class="zone-management-toolbar"
+        :class="{ 'is-drawing-toolbar': isDrawingZone || isDrawingStall || isAddingFacility || isDeletingStall || isPolygonEditMode || isStallPolygonEditMode || drawingPoints.length > 0 }"
+        aria-label="จัดการโซนบนผัง"
+      >
+        <template v-if="!isDrawingZone && !isDrawingStall && !isAddingFacility && !isDeletingStall && !isPolygonEditMode && !isStallPolygonEditMode && drawingPoints.length === 0">
+          <AppButton size="md" variant="outline" @click="beginDrawingZone"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="9 2 15 2 19 6 19 12 15 16 9 16 5 12 5 6"/><path d="M19 19v4M17 21h4"/></svg></template>เพิ่มโซน</AppButton>
+          <AppButton size="md" variant="outline" :disabled="!activeProject" @click="beginDrawingStall"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg></template>เพิ่มแผง</AppButton>
+          <AppButton size="md" variant="outline" :disabled="!activeProject || !(activeLayout?.stalls?.length)" @click="toggleStallPolygonEdit"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="4" cy="4" r="2"/><circle cx="20" cy="4" r="2"/><circle cx="20" cy="20" r="2"/><circle cx="4" cy="20" r="2"/></svg></template>ปรับขนาดแผง</AppButton>
+          <AppButton size="md" variant="danger-outline" :disabled="!activeProject || !(activeLayout?.stalls?.length)" @click="beginDeletingStall"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg></template>ลบแผง</AppButton>
+          <AppButton size="md" variant="outline" @click="beginAddingFacility"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-5.3 7-12a7 7 0 1 0-14 0c0 6.7 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/><path d="M12 7.5v5M9.5 10h5"/></svg></template>เพิ่มจุดบริการ</AppButton>
+          <AppButton size="md" variant="outline" :disabled="projects.length === 0" @click="togglePolygonEdit"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></template>แก้ไขโซน</AppButton>
+          <AppButton size="md" variant="danger-outline" :disabled="!activeProject && !overviewEditProject" @click="requestDeleteActiveProject"><template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></template>ลบโซน</AppButton>
+        </template>
+
+        <template v-else-if="isDrawingZone || isDrawingStall || drawingPoints.length > 0">
+          <AppButton size="md" variant="danger-outline" @click="cancelDrawing">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></template>
+            ยกเลิก
+          </AppButton>
+          <template v-if="isDrawingStall">
+            <AppButton size="md" :variant="stallDrawShape === 'rectangle' ? 'primary' : 'outline'" @click="setStallDrawShape('rectangle')">
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg></template>
+              ทรงสี่เหลี่ยม
+            </AppButton>
+            <AppButton size="md" :variant="stallDrawShape === 'polygon' ? 'primary' : 'outline'" @click="setStallDrawShape('polygon')">
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="9 2 15 2 19 6 19 12 15 16 9 16 5 12 5 6"/></svg></template>
+              วาดเอง
+            </AppButton>
+            <AppButton
+              v-if="stallDrawShape === 'rectangle'"
+              size="md"
+              :variant="stallRectAlign === 'zone' ? 'primary' : 'outline'"
+              @click="toggleStallRectAlign"
+            >
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20 20 4"/><rect x="7" y="7" width="10" height="10" rx="1.5" transform="rotate(-15 12 12)"/></svg></template>
+              {{ stallRectAlign === 'zone' ? 'ขนานขอบโซน' : 'แนวตรง' }}
+            </AppButton>
+          </template>
+          <AppButton size="md" variant="outline" :disabled="!drawingPoints.length && !rectStartCorner" @click="undoDrawingPoint">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></svg></template>
+            {{ isDrawingStall && stallDrawShape === 'rectangle' ? 'เริ่มกรอบใหม่' : 'ย้อนจุด' }}
+          </AppButton>
+          <AppButton size="md" variant="primary" :disabled="drawingPoints.length < 3" @click="finishDrawing">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"/></svg></template>
+            <span v-if="isDrawingStall && stallDrawShape === 'rectangle'">
+              บันทึกแผงที่วาด{{ drawnStallDimensions ? ` (${drawnStallDimensions.widthM}×${drawnStallDimensions.depthM} ม.)` : '' }}
+            </span>
+            <span v-else>{{ isDrawingStall ? 'บันทึกแผงที่วาด' : 'บันทึกโซนที่วาด' }} ({{ drawingPoints.length }} จุด)</span>
+          </AppButton>
+        </template>
+
+        <template v-else-if="isAddingFacility">
+          <AppButton size="md" variant="danger-outline" @click="cancelDrawing">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></template>
+            ยกเลิกการปักจุดบริการ
+          </AppButton>
+        </template>
+
+        <template v-else-if="isDeletingStall">
+          <AppButton size="md" variant="danger-outline" @click="cancelDrawing">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></template>
+            ยกเลิกการลบแผง
+          </AppButton>
+        </template>
+
+        <template v-else-if="isPolygonEditMode">
+          <AppButton size="md" variant="danger-outline" @click="cancelPolygonEdit">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></template>
+            ยกเลิก
+          </AppButton>
+          <template v-if="polygonEditTargetProject">
+            <AppButton size="md" variant="outline" :disabled="!polygonEditHistory.length" @click="undoPolygonEdit">
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></svg></template>
+              ย้อนกลับ
+            </AppButton>
+            <AppButton size="md" variant="danger-outline" @click="requestDeleteActiveProject">
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></template>
+              ลบโซน ({{ polygonEditTargetProject.name }})
+            </AppButton>
+            <AppButton size="md" variant="primary" @click="savePolygonEdit">
+              <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"/></svg></template>
+              บันทึกขอบเขตโซน ({{ polygonEditTargetProject.name }})
+            </AppButton>
+          </template>
+        </template>
+
+        <template v-else-if="isStallPolygonEditMode">
+          <AppButton size="md" variant="danger-outline" @click="cancelStallPolygonEdit">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></template>
+            ยกเลิก
+          </AppButton>
+          <AppButton size="md" variant="outline" :disabled="!stallEditHistory.length" @click="undoStallPolygonEdit">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></svg></template>
+            ย้อนกลับ
+          </AppButton>
+          <AppButton size="md" variant="danger-outline" :disabled="!editingStallCode" @click="deleteCurrentlyEditingStall">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></template>
+            ลบแผง{{ editingStallCode ? ` (${editingStallCode})` : '' }}
+          </AppButton>
+          <AppButton size="md" variant="primary" @click="saveStallPolygonEdit">
+            <template #prefix><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"/></svg></template>
+            บันทึกขนาดแผง{{ editingStallCode ? ` (${editingStallCode})` : '' }}
+          </AppButton>
+        </template>
+      </div>
+
+      <div v-if="managementMode && isDeletingStall" class="polygon-edit-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
+        <span>โหมดลบแผง: คลิกที่แผงเช่าบนแผนที่ที่ต้องการลบออกจากโซน</span>
+      </div>
+
+      <div v-if="managementMode && (isDrawingZone || isDrawingStall || drawingPoints.length > 0)" class="polygon-edit-hint">
+        <svg v-if="isDrawingStall && stallDrawShape === 'rectangle'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="9 2 15 2 19 6 19 12 15 16 9 16 5 12 5 6"/></svg>
+        <template v-if="isDrawingStall && stallDrawShape === 'rectangle'">
+          <span v-if="!rectStartCorner">โหมดทรงสี่เหลี่ยม ({{ stallRectAlign === 'zone' ? 'ขนานขอบโซน' : 'แนวตรง' }}): คลิกจุดที่ 1 บนแผนที่เพื่อกำหนดมุมเริ่มต้นของแผง</span>
+          <span v-else-if="drawingPoints.length < 4">
+            คลิกจุดที่ 2 เพื่อวางมุมตรงข้าม{{ liveRectPreview ? ` (ขนาดประมาณ ${liveRectPreview.widthM} × ${liveRectPreview.depthM} ม.)` : '' }}
+          </span>
+          <span v-else>
+            ได้กรอบสี่เหลี่ยม{{ drawnStallDimensions ? ` ${drawnStallDimensions.widthM} × ${drawnStallDimensions.depthM} ม.` : '' }} แล้ว — กดปุ่ม “บันทึกแผงที่วาด” ด้านล่าง หรือคลิกบนแผนที่เพื่อวางกรอบใหม่
+          </span>
+        </template>
+        <template v-else>
+          <span v-if="drawingPoints.length < 3">คลิกบนแผนที่เพื่อวางจุดมุมอย่างน้อย 3 จุด (วางแล้ว {{ drawingPoints.length }}/3 จุด)</span>
+          <span v-else>วางครบ {{ drawingPoints.length }} จุดแล้ว — กดปุ่ม “{{ isDrawingStall ? 'บันทึกแผงที่วาด' : 'บันทึกโซนที่วาด' }}” ด้านล่างเพื่อบันทึก</span>
+        </template>
+      </div>
+
+      <div v-if="managementMode && isPolygonEditMode" class="polygon-edit-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+        <span v-if="!polygonEditTargetProject">
+          โหมดแก้ไขขอบเขตโซน: คลิกเลือกโซนหรือโครงการบนแผนที่ที่ต้องการปรับแก้ไขขอบเขต
+        </span>
+        <span v-else-if="!activeProject">
+          กำลังแก้ไขขอบเขตโซน ({{ polygonEditTargetProject.name }}): ลากจุดมุมสีน้ำเงินเพื่อขยาย • คลิกหรือลากปุ่ม + บนเส้นขอบเพื่อเพิ่มมุมใหม่ (คลิกโซนอื่นเพื่อสลับโซน)
+        </span>
+        <span v-else>
+          กำลังแก้ไขขอบเขตโซน ({{ polygonEditTargetProject.name }}): ลากจุดมุมสีน้ำเงินเพื่อปรับขอบเขต • คลิกหรือลากปุ่ม + บนเส้นขอบเพื่อเพิ่มมุมใหม่ (ดับเบิลคลิกจุดมุมเพื่อลบ)
+        </span>
+      </div>
+
+      <div v-if="managementMode && isStallPolygonEditMode" class="polygon-edit-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="4" cy="4" r="2"/><circle cx="20" cy="4" r="2"/><circle cx="20" cy="20" r="2"/><circle cx="4" cy="20" r="2"/></svg>
+        <span>โหมดปรับขนาดแผง ({{ editingStallCode || 'คลิกเลือกแผง' }}): ลากจุดมุมสีเขียวเพื่อปรับขนาด หรือคลิก/ลากปุ่ม + บนเส้นขอบเพื่อเพิ่มมุมใหม่</span>
+      </div>
 
       <!-- Floating Map Top Controls: แผนที่ vs ดาวเทียม & ปุ่มปรับกึ่งกลาง (มุมซ้ายบน) -->
       <div class="map-floating-top-controls">
@@ -205,6 +415,24 @@
             @click="selectMarketFloor(floor.id)"
           >
             {{ getFloorDisplayLabel(floor) }}
+          </button>
+        </div>
+
+        <div
+          v-else-if="activeProject && (activeProject.floors?.length || 0) > 1"
+          class="market-floor-switcher active-project-floor-tabs"
+          aria-label="เลือกระดับชั้นของโซน"
+        >
+          <button
+            v-for="floor in activeProject.floors"
+            :key="floor.id"
+            type="button"
+            class="market-floor-tab"
+            :class="{ active: String(currentFloorId) === String(floor.id) }"
+            :title="`${getFloorDisplayLabel(floor)} · ทั้งหมด ${getFloorLayout(activeProject, floor.id).total} แผง (ว่าง ${getFloorLayout(activeProject, floor.id).available} แผง)`"
+            @click="switchFloor(floor.id)"
+          >
+            {{ getFloorDisplayLabel(floor) }} ({{ getFloorLayout(activeProject, floor.id).total }})
           </button>
         </div>
 
@@ -373,7 +601,7 @@
       <transition name="smp-slide">
         <aside v-if="!previewMode && activeProject && activeLayout" class="stall-mode-panel" aria-label="รายละเอียดโครงการ">
           <div class="smp-back-section">
-            <button id="btn-back-overview" type="button" class="smp-back-btn" @click="exitProject">
+            <button id="btn-back-overview" type="button" class="smp-back-btn" @click="handleBackOverviewClick">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               <span>ดูผังรวมตลาด</span>
             </button>
@@ -507,14 +735,16 @@
 
           <div class="smp-hint">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            <span>แผงละ 2.5 × 2 ม. (5 ตร.ม.) — คลิกแผงสีเขียวหรือสีเหลืองบนผังแผนที่เพื่อเลือก</span>
+            <span v-if="managementMode && inspectOnly">คลิกแผงใดก็ได้บนผังแผนที่ (รวมถึงแผงที่มีผู้เช่า) เพื่อดูข้อมูลแผง สัญญาเช่า และประวัติ</span>
+            <span v-else-if="managementMode">คลิกแผงบนผังแผนที่เพื่อตั้งค่าข้อมูลแผง หรือใช้ปุ่มเครื่องมือด้านบนเพื่อวาดและปรับขนาด</span>
+            <span v-else>แผงละ 2.5 × 2 ม. (5 ตร.ม.) — คลิกแผงสีเขียวหรือสีเหลืองบนผังแผนที่เพื่อเลือก</span>
           </div>
         </aside>
       </transition>
 
       <!-- First-visit guidance: disappears as soon as a project is selected. -->
       <transition name="fade">
-        <div v-if="!previewMode && !activeProject" class="map-project-guidance" aria-live="polite">
+        <div v-if="!previewMode && !managementMode && !activeProject && marketFloors.length <= 1" class="map-project-guidance" aria-live="polite">
           <span class="map-project-guidance-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5l7-3 7 3v16"></path><path d="M9 9h1M14 9h1M9 13h1M14 13h1"></path></svg>
           </span>
@@ -591,11 +821,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
+import AppButton from '~/components/AppButton.vue'
 import AppSelect, { type SelectOption } from '~/components/AppSelect.vue'
-import type { ProjectZone, ProjectFloor } from '../../data/market_gis_types'
+import type { ProjectZone, ProjectFloor, MarketFacility } from '../../data/market_gis_types'
 import { getProjectStallLayout, getAllFloorLayoutsForProject, isOverviewBoundaryProject, clearLayoutCache, type MapStall, type ProjectStallLayout } from '../../data/market_stall_layout'
 import { getMarketGisConfig, type MarketGisConfig } from '../../data/markets_registry'
-import { loadMarketGisJson } from '../../data/market_loader'
+import { loadMarketGisJson, mergeMarketProjects, cloneProjects } from '../../data/market_loader'
 
 export type { ProjectZone, ProjectFloor }
 
@@ -608,10 +839,15 @@ const props = withDefaults(defineProps<{
   selectedStallKeys?: string[]
   myBookedStallCodes?: string[]
   stallStatusOverrides?: Record<string, 'available' | 'reserved' | 'occupied'>
+  stallStatusFilter?: 'all' | 'available' | 'reserved' | 'occupied'
   onlyAvailable?: boolean
   categoryFilter?: string | null
   mapStyle?: 'standard' | 'dark' | 'satellite'
   previewMode?: boolean
+  managementMode?: boolean
+  inspectOnly?: boolean
+  managedProjects?: ProjectZone[]
+  managedFacilities?: MarketFacility[]
 }>(), {
   containerId: 'step1-projects-maplibre',
   marketId: '1',
@@ -621,15 +857,29 @@ const props = withDefaults(defineProps<{
   selectedStallKeys: () => [],
   myBookedStallCodes: () => [],
   stallStatusOverrides: () => ({}),
+  stallStatusFilter: 'all',
   onlyAvailable: false,
   categoryFilter: null,
   mapStyle: 'standard',
-  previewMode: false
+  previewMode: false,
+  managementMode: false,
+  inspectOnly: false,
+  managedProjects: () => [],
+  managedFacilities: () => []
 })
 
 const emit = defineEmits<{
   (e: 'selectProject', project: ProjectZone): void
-  (e: 'selectStall', stall: Omit<MapStall, 'coordinates' | 'center'>): void
+  (e: 'selectStall', stall: MapStall): void
+  (e: 'updateProjectPolygon', project: ProjectZone): void
+  (e: 'updateStallPolygon', project: ProjectZone, stall: any): void
+  (e: 'requestAddProject', coordinates: [number, number][]): void
+  (e: 'requestAddStallLayout', project: ProjectZone, coordinates: [number, number][], floorId: string, dimensions?: { widthM: number; depthM: number }): void
+  (e: 'requestAddFacility', coordinates: [number, number], projectId?: string): void
+  (e: 'requestDeleteFacility', facility: MarketFacility): void
+  (e: 'requestDeleteStall', project: ProjectZone, stall: any): void
+  (e: 'requestDeleteProject', project: ProjectZone, stats?: { total: number; available: number; reserved: number; occupied: number }): void
+  (e: 'requestExitProject'): void
   (e: 'exitProject'): void
   (e: 'update:categoryFilter', cat: string | null): void
   (e: 'update:mapStyle', style: 'standard' | 'satellite'): void
@@ -655,18 +905,24 @@ const setMapStyle = (mode: 'standard' | 'satellite') => {
 
 const searchQuery = ref('')
 const rentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
-const availabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
+const availabilityFilter = ref<'available' | 'reserved' | 'occupied' | 'all'>('all')
+const zoneFilter = ref('all')
+const readinessFilter = ref<'all' | 'ready' | 'missing-stalls' | 'incomplete-stalls'>('all')
 // Inputs keep draft values. The map only reads the applied values after the
 // user presses “ค้นหา”, so changing a dropdown never shifts the map mid-task.
 const draftCategoryFilter = ref(props.categoryFilter || '')
 const appliedCategoryFilter = ref(props.categoryFilter || '')
 const appliedSearchQuery = ref('')
 const appliedRentFilter = ref<'all' | 'under-2000' | '2000-3000' | 'over-3000'>('all')
-const appliedAvailabilityFilter = ref<'available' | 'reserved' | 'all'>('all')
+const appliedAvailabilityFilter = ref<'available' | 'reserved' | 'occupied' | 'all'>('all')
+const appliedZoneFilter = ref('all')
+const appliedReadinessFilter = ref<'all' | 'ready' | 'missing-stalls' | 'incomplete-stalls'>('all')
 const showAdvancedFilters = ref(false)
 const showColorLegend = ref(false)
 
 const currentMarket = ref<MarketGisConfig>(getMarketGisConfig(props.marketId))
+const managedFacilities = ref<MarketFacility[]>([])
+const { get: apiGet } = useApi()
 const currentMarketCenter = computed<[number, number]>(() => currentMarket.value.center)
 const currentMarketZoom = computed<number>(() => currentMarket.value.overviewZoom)
 const currentMarketBearing = computed<number>(() => currentMarket.value.bearing ?? DEFAULT_BEARING)
@@ -682,14 +938,18 @@ type MarketFloorOption = ProjectFloor & {
 // broader than the actual GIS content (Min Buri originally declared both
 // floors on every project even when its stalls existed on only one floor).
 const getProjectActualFloorIds = (project: ProjectZone): string[] => {
+  const declaredFloorIds = (project.floors || []).map(floor => String(floor.id))
   const stallFloorIds = Array.from(new Set(
     (project.stalls || [])
       .map(stall => stall.floor ?? stall.floorLevel)
       .filter(floor => floor !== undefined && floor !== null && String(floor).trim())
       .map(floor => String(floor))
   ))
+  if (project.layoutMode === 'manual' || String(project.id).startsWith('zone-') || props.managementMode) {
+    return Array.from(new Set([...declaredFloorIds, ...stallFloorIds]))
+  }
   if (stallFloorIds.length) return stallFloorIds
-  return (project.floors || []).map(floor => String(floor.id))
+  return declaredFloorIds
 }
 
 const marketFloors = computed<MarketFloorOption[]>(() => {
@@ -811,17 +1071,74 @@ const projectFootprintArea = (project: ProjectZone): number => {
   return Math.abs(twiceArea) / 2
 }
 
+const baseMarketProjects = ref<ProjectZone[]>([])
+
 const syncMarketJson = async (idOrSlug?: string | number) => {
   const data = await loadMarketGisJson(idOrSlug)
   if (data) {
     clearLayoutCache()
-    currentMarket.value = data
+    baseMarketProjects.value = cloneProjects((data.projects || []).filter(p => !String(p.id).startsWith('zone-')))
+    currentMarket.value = cloneProjects(data)
+    try {
+      const endpoint = props.managementMode
+        ? `/markets/${encodeURIComponent(String(idOrSlug || data.id))}/gis-config/draft`
+        : `/markets/${encodeURIComponent(String(idOrSlug || data.id))}/gis-config`
+      const response: any = await apiGet(endpoint)
+      const managed = response?.data || response
+      if (Array.isArray(managed?.projects) && managed.projects.length) {
+        currentMarket.value = { ...data, projects: mergeMarketProjects(baseMarketProjects.value, managed.projects) }
+      }
+      managedFacilities.value = Array.isArray(managed?.facilities) ? managed.facilities : []
+    } catch {
+      managedFacilities.value = []
+    }
+    if (props.managementMode && props.managedProjects.length) {
+      currentMarket.value = { ...currentMarket.value, projects: mergeMarketProjects(baseMarketProjects.value, props.managedProjects) }
+    }
+    if (props.managementMode) managedFacilities.value = props.managedFacilities
     if (map) {
       refreshSources()
       renderZoneLabels()
     }
   }
 }
+
+const applyManagedProjects = (nextProjects: ProjectZone[]) => {
+  if (!props.managementMode || !nextProjects.length) return
+  clearLayoutCache()
+  const merged = mergeMarketProjects(baseMarketProjects.value, nextProjects)
+  currentMarket.value = { ...currentMarket.value, projects: merged }
+  if (activeProjectId.value && !merged.some(project => project.id === activeProjectId.value)) {
+    isPolygonEditMode.value = false
+    clearPolygonVertexHandles()
+    exitProject()
+    return
+  }
+  if (props.selectedProjectId && props.selectedProjectId !== activeProjectId.value && !isPolygonEditMode.value) {
+    const selectedTarget = projects.value.find(project => project.id === props.selectedProjectId)
+    if (selectedTarget) {
+      enterProject(selectedTarget)
+      return
+    }
+  }
+  refreshSources()
+}
+
+const applyManagedFacilities = (nextFacilities: MarketFacility[]) => {
+  if (!props.managementMode) return
+  managedFacilities.value = nextFacilities
+  map?.getSource('market-facilities')?.setData(getFacilitiesGeoJson())
+  renderFacilityMarkers()
+}
+
+const getFacilitiesGeoJson = () => ({
+  type: 'FeatureCollection' as const,
+  features: managedFacilities.value.map(facility => ({
+    type: 'Feature' as const,
+    geometry: { type: 'Point' as const, coordinates: facility.coordinates },
+    properties: { id: facility.id, name: facility.name, type: facility.type }
+  }))
+})
 
 // Extract categories dynamically from the current market's projects
 const categories = computed(() => {
@@ -992,15 +1309,27 @@ const projectHasMatchingStallWith = (
     .some(layout => layout.stalls.some(stall => matchesStallFiltersWith(stall, rent, availability)))
 }
 
+const getProjectReadiness = (project: ProjectZone): 'ready' | 'missing-stalls' | 'incomplete-stalls' => {
+  const stalls = Array.from(getEffectiveFloorLayoutsForProject(project).values()).flatMap(layout => layout.stalls)
+  if (!stalls.length) return 'missing-stalls'
+  return stalls.some(stall => !stall.code || !Number(stall.widthM) || !Number(stall.depthM) || !Number(stall.monthlyRent))
+    ? 'incomplete-stalls'
+    : 'ready'
+}
+
 const projectMatchesAllFiltersWith = (
   project: ProjectZone,
   category: string,
   query: string,
   rent: typeof rentFilter.value,
-  availability: typeof availabilityFilter.value
+  availability: typeof availabilityFilter.value,
+  zone = 'all',
+  readiness: typeof readinessFilter.value = 'all'
 ) => {
   const matchesCategory = !category || project.category === category
-  return matchesCategory && matchesSearchWith(project, query) && projectHasMatchingStallWith(project, rent, availability)
+  const matchesZone = zone === 'all' || project.id === zone
+  const matchesReadiness = readiness === 'all' || getProjectReadiness(project) === readiness
+  return matchesCategory && matchesZone && matchesReadiness && matchesSearchWith(project, query) && projectHasMatchingStallWith(project, rent, availability)
 }
 
 const projectMatchesAllFilters = (project: ProjectZone) => projectMatchesAllFiltersWith(
@@ -1008,7 +1337,9 @@ const projectMatchesAllFilters = (project: ProjectZone) => projectMatchesAllFilt
   appliedCategoryFilter.value,
   appliedSearchQuery.value,
   appliedRentFilter.value,
-  appliedAvailabilityFilter.value
+  appliedAvailabilityFilter.value,
+  appliedZoneFilter.value,
+  appliedReadinessFilter.value
 )
 
 const filteredProjectCount = computed(() => overviewProjects.value.filter(projectMatchesAllFilters).length)
@@ -1026,21 +1357,20 @@ const previewFilteredProjectCount = computed(() => overviewProjects.value.filter
   draftCategoryFilter.value,
   searchQuery.value,
   rentFilter.value,
-  availabilityFilter.value
+  availabilityFilter.value,
+  zoneFilter.value,
+  readinessFilter.value
 )).length)
 const previewFilteredStallCount = computed(() => overviewProjects.value.reduce((count, project) => {
-  if (!projectMatchesAllFiltersWith(project, draftCategoryFilter.value, searchQuery.value, rentFilter.value, availabilityFilter.value)) return count
-  if (rentFilter.value === 'all' && availabilityFilter.value === 'all') {
-    return count + (project.stalls?.length || project.totalStalls || 0)
-  }
+  if (!projectMatchesAllFiltersWith(project, draftCategoryFilter.value, searchQuery.value, rentFilter.value, availabilityFilter.value, zoneFilter.value, readinessFilter.value)) return count
   return count + Array.from(getEffectiveFloorLayoutsForProject(project).values())
     .reduce((floorCount, layout) => floorCount + layout.stalls.filter(stall => matchesStallFiltersWith(stall, rentFilter.value, availabilityFilter.value)).length, 0)
 }, 0))
 
 const hasActiveFilters = computed(() => Boolean(
-  appliedCategoryFilter.value || appliedSearchQuery.value.trim() || appliedRentFilter.value !== 'all' || appliedAvailabilityFilter.value !== 'all'
+  appliedCategoryFilter.value || appliedSearchQuery.value.trim() || appliedRentFilter.value !== 'all' || appliedAvailabilityFilter.value !== 'all' || appliedZoneFilter.value !== 'all' || appliedReadinessFilter.value !== 'all'
 ))
-const advancedFilterCount = computed(() => [appliedCategoryFilter.value, appliedRentFilter.value !== 'all', appliedAvailabilityFilter.value !== 'all'].filter(Boolean).length)
+const advancedFilterCount = computed(() => [appliedCategoryFilter.value, appliedRentFilter.value !== 'all', appliedAvailabilityFilter.value !== 'all', appliedZoneFilter.value !== 'all', appliedReadinessFilter.value !== 'all'].filter(Boolean).length)
 const hasAdvancedFilters = computed(() => advancedFilterCount.value > 0)
 
 // Category legend (read-only): สี → หมวดหมู่ → เลขโครงการ
@@ -1065,6 +1395,14 @@ const categoryOptions = computed<SelectOption[]>(() => [
   }))
 ])
 
+const zoneOptions = computed<SelectOption[]>(() => [
+  { value: 'all', label: `ทุกโซน (${projects.value.length} โซน)` },
+  ...projects.value.map(project => ({
+    value: project.id,
+    label: `${project.sectionNumber ? `โครงการ ${project.sectionNumber} · ` : ''}${project.name}`
+  }))
+])
+
 const rentOptions: SelectOption[] = [
   { value: 'all', label: 'ทั้งหมด' },
   { value: 'under-2000', label: 'ต่ำกว่า ฿2,000' },
@@ -1076,6 +1414,14 @@ const availabilityOptions: SelectOption[] = [
   { value: 'all', label: 'ทุกสถานะ' },
   { value: 'available', label: 'แผงว่าง (จองได้)' },
   { value: 'reserved', label: 'ติดจอง (คิวสำรอง)' },
+  { value: 'occupied', label: 'มีผู้เช่า' },
+]
+
+const readinessOptions: SelectOption[] = [
+  { value: 'all', label: 'ทั้งหมด' },
+  { value: 'ready', label: 'พร้อมเผยแพร่' },
+  { value: 'missing-stalls', label: 'ยังไม่มีแผงในโซน' },
+  { value: 'incomplete-stalls', label: 'ข้อมูลแผงไม่ครบ' },
 ]
 
 const handleCategoryChange = (val: string | number) => {
@@ -1086,6 +1432,22 @@ const handleCategoryChange = (val: string | number) => {
 const hoveredProject = ref<ProjectZone | null>(null)
 const hoveredStallKey = ref<string | null>(null)
 const activeProjectId = ref<string | null>(null)
+const overviewEditProjectId = ref<string | null>(null)
+const isPolygonEditMode = ref(false)
+const isStallPolygonEditMode = ref(false)
+const editingStallCode = ref<string | null>(null)
+const stallEditSnapshot = ref<ProjectZone | null>(null)
+const stallEditHistory = ref<ProjectZone[]>([])
+const isDrawingZone = ref(false)
+const isDrawingStall = ref(false)
+const isAddingFacility = ref(false)
+const isDeletingStall = ref(false)
+const stallDrawShape = ref<'rectangle' | 'polygon'>('rectangle')
+const stallRectAlign = ref<'zone' | 'axis'>('zone')
+const rectStartCorner = ref<[number, number] | null>(null)
+const drawnStallDimensions = ref<{ widthM: number; depthM: number } | null>(null)
+const drawingPoints = ref<[number, number][]>([])
+const drawingCursor = ref<[number, number] | null>(null)
 const marketFloorBeforeProject = ref('all')
 const currentFloorId = ref<string>('1')
 const floorSelectorProject = ref<ProjectZone | null>(null)
@@ -1110,6 +1472,467 @@ const isNotViewingBookedProject = computed(() => {
 })
 
 const activeProject = computed(() => projects.value.find(p => p.id === activeProjectId.value) || null)
+const overviewEditProject = computed(() => {
+  if (activeProject.value) return null
+  const targetId = overviewEditProjectId.value
+  return (targetId ? projects.value.find(p => p.id === targetId) : null) || null
+})
+const polygonEditTargetProject = computed<ProjectZone | null>(() => activeProject.value || overviewEditProject.value)
+const polygonEditSnapshot = ref<ProjectZone[] | null>(null)
+const polygonEditHistory = ref<ProjectZone[][]>([])
+
+const rememberPolygonEdit = () => {
+  polygonEditHistory.value.push(cloneProjects(currentMarket.value.projects))
+}
+
+const isAnyEditingToolActive = computed(() => (
+  isPolygonEditMode.value ||
+  isStallPolygonEditMode.value ||
+  isDrawingZone.value ||
+  isDrawingStall.value ||
+  isAddingFacility.value ||
+  isDeletingStall.value ||
+  drawingPoints.value.length > 0
+))
+
+const togglePolygonEdit = () => {
+  if (projects.value.length === 0) return
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isStallPolygonEditMode.value = false
+  clearStallVertexHandles()
+  isPolygonEditMode.value = !isPolygonEditMode.value
+  if (isPolygonEditMode.value) {
+    polygonEditSnapshot.value = cloneProjects(currentMarket.value.projects)
+    polygonEditHistory.value = []
+    if (!activeProject.value) {
+      overviewEditProjectId.value = null
+    }
+    renderPolygonVertexHandles()
+  } else {
+    clearPolygonVertexHandles()
+    overviewEditProjectId.value = null
+    polygonEditSnapshot.value = null
+    polygonEditHistory.value = []
+  }
+  refreshSources()
+}
+
+const savePolygonEdit = () => {
+  const target = polygonEditTargetProject.value
+  if (target) {
+    const latest = currentMarket.value.projects.find(item => item.id === target.id)
+    if (latest) emit('updateProjectPolygon', cloneProjects(latest))
+  }
+  isPolygonEditMode.value = false
+  overviewEditProjectId.value = activeProjectId.value || null
+  polygonEditSnapshot.value = null
+  polygonEditHistory.value = []
+  clearPolygonVertexHandles()
+  refreshSources()
+}
+
+const undoPolygonEdit = () => {
+  const previousProjects = polygonEditHistory.value.pop()
+  if (!previousProjects) return
+  currentMarket.value.projects = cloneProjects(previousProjects)
+  clearLayoutCache()
+  refreshSources()
+  const target = polygonEditTargetProject.value
+  if (target) {
+    const restored = currentMarket.value.projects.find(item => item.id === target.id)
+    if (restored) emit('updateProjectPolygon', cloneProjects(restored))
+  }
+  renderPolygonVertexHandles()
+}
+
+const cancelPolygonEdit = () => {
+  const targetId = polygonEditTargetProject.value?.id
+  const snapshot = polygonEditSnapshot.value
+  if (snapshot) {
+    currentMarket.value.projects = cloneProjects(snapshot)
+    clearLayoutCache()
+    if (targetId) {
+      const restored = snapshot.find(item => item.id === targetId)
+      if (restored) emit('updateProjectPolygon', cloneProjects(restored))
+    }
+  }
+  isPolygonEditMode.value = false
+  overviewEditProjectId.value = activeProjectId.value || null
+  polygonEditSnapshot.value = null
+  polygonEditHistory.value = []
+  clearPolygonVertexHandles()
+  refreshSources()
+}
+
+const toggleStallPolygonEdit = () => {
+  if (!activeProject.value || !activeLayout.value?.stalls?.length) return
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isPolygonEditMode.value = false
+  clearPolygonVertexHandles()
+  isStallPolygonEditMode.value = !isStallPolygonEditMode.value
+  if (isStallPolygonEditMode.value) {
+    stallEditSnapshot.value = cloneProjects(currentMarket.value.projects.find(item => item.id === activeProject.value?.id) || null)
+    stallEditHistory.value = []
+    if (!editingStallCode.value || !activeLayout.value.stalls.some(s => s.code === editingStallCode.value)) {
+      editingStallCode.value = activeLayout.value.stalls[0]?.code || null
+    }
+    renderStallVertexHandles()
+  } else {
+    clearStallVertexHandles()
+    stallEditSnapshot.value = null
+    stallEditHistory.value = []
+  }
+  refreshSources()
+}
+
+const saveStallPolygonEdit = () => {
+  const project = currentMarket.value.projects.find(item => item.id === activeProject.value?.id)
+  const stall = project?.stalls?.find((item: any) => String(item.code) === String(editingStallCode.value))
+  if (project && stall) emit('updateStallPolygon', cloneProjects(project), cloneProjects(stall))
+  toggleStallPolygonEdit()
+}
+
+const rememberStallEdit = () => {
+  const project = currentMarket.value.projects.find(item => item.id === activeProject.value?.id)
+  if (!project) return
+  stallEditHistory.value.push(cloneProjects(project))
+}
+
+const emitCurrentEditingStallUpdate = () => {
+  const project = currentMarket.value.projects.find(item => item.id === activeProject.value?.id)
+  const stall = project?.stalls?.find((item: any) => String(item.code) === String(editingStallCode.value))
+  if (project && stall) emit('updateStallPolygon', cloneProjects(project), cloneProjects(stall))
+}
+
+const undoStallPolygonEdit = () => {
+  const previous = stallEditHistory.value.pop()
+  if (!previous) return
+  const index = currentMarket.value.projects.findIndex(item => item.id === previous.id)
+  if (index >= 0) currentMarket.value.projects[index] = cloneProjects(previous)
+  clearLayoutCache()
+  refreshSources()
+  emitCurrentEditingStallUpdate()
+  renderStallVertexHandles()
+}
+
+const cancelStallPolygonEdit = () => {
+  const snapshot = stallEditSnapshot.value
+  if (snapshot) {
+    const index = currentMarket.value.projects.findIndex(item => item.id === snapshot.id)
+    if (index >= 0) currentMarket.value.projects[index] = cloneProjects(snapshot)
+    clearLayoutCache()
+  }
+  emitCurrentEditingStallUpdate()
+  isStallPolygonEditMode.value = false
+  stallEditSnapshot.value = null
+  stallEditHistory.value = []
+  clearStallVertexHandles()
+  refreshSources()
+}
+
+const requestDeleteActiveProject = () => {
+  const target = activeProject.value || overviewEditProject.value
+  if (!target) return
+  const layoutSummary = layouts.value.get(target.id)
+  const stats = layoutSummary
+    ? {
+        total: layoutSummary.total,
+        available: layoutSummary.available,
+        reserved: layoutSummary.reserved,
+        occupied: layoutSummary.occupied
+      }
+    : undefined
+  emit('requestDeleteProject', target, stats)
+}
+
+const getZoneReferenceAngleRad = (p1: [number, number]): number => {
+  if (stallRectAlign.value === 'axis' || !activeProject.value?.coordinates?.length) return 0
+  const ring = activeProject.value.coordinates
+  if (ring.length < 2) return 0
+  const latRad = (p1[1] * Math.PI) / 180
+  const mPerDegLng = 111320 * Math.cos(latRad)
+  const mPerDegLat = 110540
+
+  let bestDistSq = Infinity
+  let bestAngle = 0
+  for (let i = 0; i < ring.length - 1; i++) {
+    const a = ring[i]!
+    const b = ring[i + 1]!
+    const ax = (a[0] - p1[0]) * mPerDegLng
+    const ay = (a[1] - p1[1]) * mPerDegLat
+    const bx = (b[0] - p1[0]) * mPerDegLng
+    const by = (b[1] - p1[1]) * mPerDegLat
+    const vx = bx - ax
+    const vy = by - ay
+    const lenSq = vx * vx + vy * vy
+    if (lenSq < 1e-4) continue
+    const t = Math.max(0, Math.min(1, -(ax * vx + ay * vy) / lenSq))
+    const px = ax + t * vx
+    const py = ay + t * vy
+    const distSq = px * px + py * py
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq
+      bestAngle = Math.atan2(vy, vx)
+    }
+  }
+  return bestAngle
+}
+
+const buildRectangleCorners = (p1: [number, number], p2: [number, number]): { corners: [number, number][]; widthM: number; depthM: number } => {
+  const latRad = (p1[1] * Math.PI) / 180
+  const mPerDegLng = 111320 * Math.cos(latRad)
+  const mPerDegLat = 110540
+  const dx = (p2[0] - p1[0]) * mPerDegLng
+  const dy = (p2[1] - p1[1]) * mPerDegLat
+  const theta = getZoneReferenceAngleRad(p1)
+  const ux = Math.cos(theta)
+  const uy = Math.sin(theta)
+  const vx = -uy
+  const vy = ux
+  const uDist = dx * ux + dy * uy
+  const vDist = dx * vx + dy * vy
+
+  const toLngLat = (mx: number, my: number): [number, number] => [
+    p1[0] + mx / mPerDegLng,
+    p1[1] + my / mPerDegLat
+  ]
+
+  const corners: [number, number][] = [
+    [p1[0], p1[1]],
+    toLngLat(uDist * ux, uDist * uy),
+    toLngLat(dx, dy),
+    toLngLat(vDist * vx, vDist * vy)
+  ]
+
+  return {
+    corners,
+    widthM: Math.max(0.5, Number(Math.abs(uDist).toFixed(1))),
+    depthM: Math.max(0.5, Number(Math.abs(vDist).toFixed(1)))
+  }
+}
+
+const liveRectPreview = computed<{ corners: [number, number][]; widthM: number; depthM: number } | null>(() => {
+  if (!isDrawingStall.value || stallDrawShape.value !== 'rectangle') return null
+  if (!rectStartCorner.value || !drawingCursor.value || drawingPoints.value.length >= 4) return null
+  return buildRectangleCorners(rectStartCorner.value, drawingCursor.value)
+})
+
+const getDrawingZoneGeoJSON = () => {
+  if (isDrawingStall.value && stallDrawShape.value === 'rectangle') {
+    if (drawingPoints.value.length === 4) {
+      const polygon = [...drawingPoints.value, drawingPoints.value[0]!]
+      const drawnPointFeatures = drawingPoints.value.map(point => ({ type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties: {} }))
+      return {
+        type: 'FeatureCollection',
+        features: [
+          { type: 'Feature', geometry: { type: 'Polygon', coordinates: [polygon] }, properties: {} },
+          ...drawnPointFeatures
+        ]
+      }
+    }
+    if (rectStartCorner.value && drawingCursor.value) {
+      const { corners } = buildRectangleCorners(rectStartCorner.value, drawingCursor.value)
+      const polygon = [...corners, corners[0]!]
+      const drawnPointFeatures = corners.map(point => ({ type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties: {} }))
+      return {
+        type: 'FeatureCollection',
+        features: [
+          { type: 'Feature', geometry: { type: 'Polygon', coordinates: [polygon] }, properties: {} },
+          ...drawnPointFeatures
+        ]
+      }
+    }
+    if (rectStartCorner.value) {
+      return {
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: rectStartCorner.value }, properties: {} }]
+      }
+    }
+    return { type: 'FeatureCollection', features: [] }
+  }
+
+  const points = [...drawingPoints.value]
+  if (drawingCursor.value && points.length) points.push(drawingCursor.value)
+  const drawnPointFeatures = drawingPoints.value.map(point => ({ type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties: {} }))
+  if (points.length < 2) return { type: 'FeatureCollection', features: drawnPointFeatures }
+  const polygon = points.length >= 3 ? [...points, points[0]!] : points
+  return {
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', geometry: { type: points.length >= 3 ? 'Polygon' : 'LineString', coordinates: points.length >= 3 ? [polygon] : polygon }, properties: {} },
+      ...drawnPointFeatures
+    ]
+  }
+}
+
+const refreshDrawingZone = () => {
+  map?.getSource('zone-drawing')?.setData(getDrawingZoneGeoJSON())
+}
+
+const setStallDrawShape = (mode: 'rectangle' | 'polygon') => {
+  if (stallDrawShape.value === mode) return
+  stallDrawShape.value = mode
+  rectStartCorner.value = null
+  drawnStallDimensions.value = null
+  drawingPoints.value = []
+  refreshDrawingZone()
+}
+
+const toggleStallRectAlign = () => {
+  stallRectAlign.value = stallRectAlign.value === 'zone' ? 'axis' : 'zone'
+  if (rectStartCorner.value && drawingPoints.value.length === 4 && drawingPoints.value[2]) {
+    const { corners, widthM, depthM } = buildRectangleCorners(rectStartCorner.value, drawingPoints.value[2])
+    drawingPoints.value = corners
+    drawnStallDimensions.value = { widthM, depthM }
+  }
+  refreshDrawingZone()
+}
+
+const beginDrawingZone = () => {
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isDrawingZone.value = true
+  isDrawingStall.value = false
+  isAddingFacility.value = false
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+  rectStartCorner.value = null
+  drawnStallDimensions.value = null
+  drawingPoints.value = []
+  drawingCursor.value = null
+  refreshDrawingZone()
+  if (map) map.getCanvas().style.cursor = 'crosshair'
+}
+
+const beginDrawingStall = () => {
+  if (!activeProject.value) return
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isDrawingStall.value = true
+  isDrawingZone.value = false
+  isAddingFacility.value = false
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+  rectStartCorner.value = null
+  drawnStallDimensions.value = null
+  drawingPoints.value = []
+  drawingCursor.value = null
+  refreshDrawingZone()
+  if (map) map.getCanvas().style.cursor = 'crosshair'
+}
+
+const beginAddingFacility = () => {
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isAddingFacility.value = true
+  isDrawingZone.value = false
+  isDrawingStall.value = false
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+  if (map) map.getCanvas().style.cursor = 'crosshair'
+}
+
+const undoDrawingPoint = () => {
+  if (isDrawingStall.value && stallDrawShape.value === 'rectangle') {
+    rectStartCorner.value = null
+    drawnStallDimensions.value = null
+    drawingPoints.value = []
+    refreshDrawingZone()
+    return
+  }
+  drawingPoints.value.pop()
+  refreshDrawingZone()
+}
+
+const materializeActiveProjectStalls = (): ProjectZone | null => {
+  if (!activeProject.value) return null
+  const projectID = activeProject.value.id
+  const sourceProject = currentMarket.value.projects.find(item => item.id === projectID)
+  if (!sourceProject) return null
+  if (!sourceProject.stalls || sourceProject.stalls.length === 0) {
+    const allGenerated: any[] = []
+    const floors = sourceProject.floors?.length ? sourceProject.floors : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+    floors.forEach(fl => {
+      const flLayout = applyMarketStatus(getProjectStallLayout(sourceProject, fl.id))
+      flLayout.stalls.forEach(st => {
+        allGenerated.push({ ...st, floor: String(fl.id) })
+      })
+    })
+    sourceProject.stalls = cloneProjects(allGenerated)
+    sourceProject.layoutMode = 'manual'
+    clearLayoutCache()
+  }
+  return sourceProject
+}
+
+const triggerDeleteStall = (stall: any) => {
+  const sourceProject = materializeActiveProjectStalls()
+  if (!sourceProject || !stall) return
+  isDeletingStall.value = false
+  if (isStallPolygonEditMode.value) {
+    isStallPolygonEditMode.value = false
+    clearStallVertexHandles()
+  }
+  if (map) map.getCanvas().style.cursor = ''
+  emit('requestDeleteStall', cloneProjects(sourceProject), cloneProjects(stall))
+}
+
+const beginDeletingStall = () => {
+  if (!activeProject.value || !activeLayout.value?.stalls?.length) return
+  pinnedFacilityPopup.value = false
+  hoverPopup?.remove()
+  isDrawingZone.value = false
+  isDrawingStall.value = false
+  isAddingFacility.value = false
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+  if (activeLayout.value.stalls.length === 1) {
+    triggerDeleteStall(activeLayout.value.stalls[0])
+    return
+  }
+  isDeletingStall.value = true
+  if (map) map.getCanvas().style.cursor = 'pointer'
+}
+
+const deleteCurrentlyEditingStall = () => {
+  if (!editingStallCode.value || !activeLayout.value?.stalls?.length) return
+  const target = activeLayout.value.stalls.find(s => String(s.code) === String(editingStallCode.value))
+  if (target) triggerDeleteStall(target)
+}
+
+const cancelDrawing = () => {
+  isDrawingZone.value = false
+  isDrawingStall.value = false
+  isAddingFacility.value = false
+  isDeletingStall.value = false
+  rectStartCorner.value = null
+  drawnStallDimensions.value = null
+  drawingPoints.value = []
+  drawingCursor.value = null
+  refreshDrawingZone()
+  if (map) map.getCanvas().style.cursor = ''
+}
+
+const finishDrawing = () => {
+  if (drawingPoints.value.length < 3) return
+  const points = drawingPoints.value.map(point => [...point] as [number, number])
+  const project = activeProject.value
+  const isStall = isDrawingStall.value
+  const dims = drawnStallDimensions.value ? { ...drawnStallDimensions.value } : undefined
+  cancelDrawing()
+  if (isStall && project) emit('requestAddStallLayout', project, points, currentFloorId.value, dims)
+  else emit('requestAddProject', points)
+}
 
 // Multi-floor management for active project
 const activeProjectFloors = computed<ProjectFloor[]>(() => {
@@ -1156,10 +1979,15 @@ const getFloorLayout = (project: ProjectZone, floorId: string) => {
 const switchFloor = (floorId: string) => {
   if (currentFloorId.value === floorId) return
   currentFloorId.value = floorId
+  pinnedFacilityPopup.value = false
   setHoveredStall(null)
   hoverPopup?.remove()
   refreshSources()
   renderSelectedStallPins()
+  if (isStallPolygonEditMode.value) {
+    editingStallCode.value = activeLayout.value?.stalls[0]?.code || null
+    renderStallVertexHandles()
+  }
 }
 
 const currentProjectInfo = computed<ProjectZone | null>(() => {
@@ -1231,9 +2059,8 @@ const handleStallCardLeave = () => {
 }
 
 const handleStallCardClick = (stall: MapStall) => {
-  if (stall.status === 'occupied') return
-  const { coordinates, center, ...stallModel } = stall
-  emit('selectStall', stallModel)
+  if (stall.status === 'occupied' && !props.managementMode) return
+  emit('selectStall', stall)
 }
 
 watch([stallSearchQuery, stallFilterTab], () => {
@@ -1246,6 +2073,10 @@ watch([stallSearchQuery, stallFilterTab], () => {
 let maplibregl: any = null
 let map: any = null
 let projectMarkers: any[] = []
+let polygonHandleMarkers: any[] = []
+let stallHandleMarkers: any[] = []
+let facilityMarkers: any[] = []
+const pinnedFacilityPopup = ref(false)
 const projectMarkerElements = new Map<string, HTMLElement>()
 let hoverPopup: any = null
 
@@ -1449,12 +2280,23 @@ const setBuildingsOpacity = (value: number) => {
   }
 }
 
+const mapContainerRef = ref<HTMLElement | null>(null)
+const isMapLoading = ref(true)
+
 const initMap = () => {
-  const container = document.getElementById(props.containerId)
+  const container = (mapContainerRef.value || document.getElementById(props.containerId)) as any
   if (!container || map || !maplibregl) return
 
+  isMapLoading.value = true
+
+  if (container.__mapInstance) {
+    try { container.__mapInstance.remove() } catch {}
+    container.__mapInstance = null
+  }
+  container.innerHTML = ''
+
   map = new maplibregl.Map({
-    container: props.containerId,
+    container,
     style: getStyleConfig(currentStyle.value),
     center: currentMarketCenter.value,
     zoom: props.previewMode ? (currentMarketZoom.value + 1.2) : currentMarketZoom.value,
@@ -1465,6 +2307,7 @@ const initMap = () => {
     bearing: currentMarketBearing.value,
     canvasContextAttributes: { antialias: true }
   })
+  container.__mapInstance = map
 
   // Standard Navigation Controls (Zoom, Compass)
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
@@ -1477,9 +2320,14 @@ const initMap = () => {
     className: 'mlp-popup'
   })
 
-  map.on('load', () => {
+  bindMapEvents()
+
+  let layersInitialized = false
+  const initLayersOnce = () => {
+    if (layersInitialized || !map) return
+    layersInitialized = true
     setupProjectLayers()
-    bindMapEvents()
+    renderFacilityMarkers()
     if (props.selectedProjectId) {
       const found = projects.value.find(p => p.id === props.selectedProjectId)
       if (found) {
@@ -1487,7 +2335,23 @@ const initMap = () => {
       }
     }
     renderSelectedStallPins()
-  })
+
+    // Wait for the initial viewport to settle before revealing the live map.
+    // This keeps the management canvas from flashing as an empty white area
+    // while MapLibre is still fetching its style and tiles.
+    const clearLoading = () => {
+      isMapLoading.value = false
+    }
+    map.once('idle', clearLoading)
+    setTimeout(clearLoading, 450)
+  }
+
+  if (map.isStyleLoaded()) {
+    initLayersOnce()
+  } else {
+    map.once('style.load', initLayersOnce)
+    map.once('load', initLayersOnce)
+  }
 }
 
 // ---------------- GeoJSON builders ----------------
@@ -1502,7 +2366,8 @@ const getProjectsGeoJson = () => {
   return {
     type: 'FeatureCollection',
     features: overviewProjects.value.map((p, index) => {
-      const isActive = activeProjectId.value === p.id
+      const isOverviewEditTarget = isPolygonEditMode.value && !activeProjectId.value && overviewEditProjectId.value === p.id
+      const isActive = activeProjectId.value === p.id || isOverviewEditTarget
       const isOtherWhileActive = Boolean(activeProjectId.value) && !isActive
 
       const fillColor = p.color
@@ -1559,15 +2424,17 @@ const getStallsGeoJson = () => {
 const setupProjectLayers = () => {
   if (!map) return
 
-  ;['projects-hover-outline', 'projects-hover-casing', 'projects-active-outline', 'stalls-selected-stroke', 'stalls-hover-stroke', 'stalls-hover-casing', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
+  ;['zone-drawing-points', 'zone-drawing-line', 'zone-drawing-fill', 'facilities-label', 'facilities-circle', 'projects-hover-outline', 'projects-hover-casing', 'projects-active-outline', 'stalls-selected-stroke', 'stalls-hover-stroke', 'stalls-hover-casing', 'stalls-line', 'stalls-casing', 'stalls-fill', 'projects-stroke', 'projects-casing', 'projects-fill'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id)
   })
-  ;['projects-polygons', 'project-stalls'].forEach(id => {
+  ;['projects-polygons', 'project-stalls', 'market-facilities', 'zone-drawing'].forEach(id => {
     if (map.getSource(id)) map.removeSource(id)
   })
 
   map.addSource('projects-polygons', { type: 'geojson', data: getProjectsGeoJson() })
   map.addSource('project-stalls', { type: 'geojson', data: getStallsGeoJson() })
+  map.addSource('market-facilities', { type: 'geojson', data: getFacilitiesGeoJson() })
+  map.addSource('zone-drawing', { type: 'geojson', data: getDrawingZoneGeoJSON() })
 
   // กรอบพื้นที่โครงการ (Fill)
   map.addLayer({
@@ -1585,6 +2452,12 @@ const setupProjectLayers = () => {
       ]
     }
   })
+
+  map.addLayer({ id: 'facilities-circle', type: 'circle', source: 'market-facilities', paint: { 'circle-radius': 8, 'circle-color': '#ffffff', 'circle-stroke-color': '#2563eb', 'circle-stroke-width': 3 } })
+  map.addLayer({ id: 'facilities-label', type: 'symbol', source: 'market-facilities', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.5], 'text-anchor': 'top' }, paint: { 'text-color': '#1e3a8a', 'text-halo-color': '#ffffff', 'text-halo-width': 2 } })
+  map.addLayer({ id: 'zone-drawing-fill', type: 'fill', source: 'zone-drawing', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#2563eb', 'fill-opacity': .16 } })
+  map.addLayer({ id: 'zone-drawing-line', type: 'line', source: 'zone-drawing', paint: { 'line-color': '#2563eb', 'line-width': 3, 'line-dasharray': [2, 1] } })
+  map.addLayer({ id: 'zone-drawing-points', type: 'circle', source: 'zone-drawing', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#2563eb', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } })
 
   // ขอบขาวรองใต้เส้นกรอบ ให้คมชัดบนแผนที่ถนน
   map.addLayer({
@@ -1674,7 +2547,6 @@ const setupProjectLayers = () => {
     id: 'stalls-hover-casing',
     type: 'line',
     source: 'project-stalls',
-    filter: ['boolean', ['feature-state', 'isHovered'], false],
     layout: {
       'line-join': 'round',
       'line-cap': 'round'
@@ -1688,7 +2560,7 @@ const setupProjectLayers = () => {
         18, 4,
         20, 5
       ],
-      'line-opacity': 1
+      'line-opacity': ['case', ['boolean', ['feature-state', 'isHovered'], false], 1, 0]
     }
   })
 
@@ -1696,7 +2568,6 @@ const setupProjectLayers = () => {
     id: 'stalls-hover-stroke',
     type: 'line',
     source: 'project-stalls',
-    filter: ['boolean', ['feature-state', 'isHovered'], false],
     layout: {
       'line-join': 'round',
       'line-cap': 'round'
@@ -1710,7 +2581,7 @@ const setupProjectLayers = () => {
         18, 2.2,
         20, 3
       ],
-      'line-opacity': 1
+      'line-opacity': ['case', ['boolean', ['feature-state', 'isHovered'], false], 1, 0]
     }
   })
 
@@ -1819,7 +2690,636 @@ const refreshSources = () => {
   if (!map) return
   map.getSource('projects-polygons')?.setData(getProjectsGeoJson())
   map.getSource('project-stalls')?.setData(getStallsGeoJson())
+  map.getSource('market-facilities')?.setData(getFacilitiesGeoJson())
+  refreshDrawingZone()
   renderZoneLabels()
+  renderFacilityMarkers()
+}
+
+const clearPolygonVertexHandles = () => {
+  polygonHandleMarkers.forEach(marker => {
+    try { marker.remove() } catch {}
+  })
+  polygonHandleMarkers = []
+}
+
+const clearStallVertexHandles = () => {
+  stallHandleMarkers.forEach(marker => {
+    try { marker.remove() } catch {}
+  })
+  stallHandleMarkers = []
+}
+
+const calcPolygonMetrics = (ring: [number, number][]) => {
+  if (ring.length < 3) return { areaSqm: 4, widthM: 2, depthM: 2, centroid: ring[0] || ([100.5, 13.8] as [number, number]) }
+  const open = ring.length > 1 && ring[0]?.[0] === ring.at(-1)?.[0] && ring[0]?.[1] === ring.at(-1)?.[1]
+    ? ring.slice(0, -1)
+    : ring
+  const latRad = ((open[0]?.[1] || 13.8) * Math.PI) / 180
+  const mPerDegLng = 111320 * Math.cos(latRad)
+  const mPerDegLat = 110540
+  let twiceArea = 0
+  for (let i = 0; i < ring.length - 1; i++) {
+    const x1 = (ring[i]?.[0] || 0) * mPerDegLng
+    const y1 = (ring[i]?.[1] || 0) * mPerDegLat
+    const x2 = (ring[i + 1]?.[0] || 0) * mPerDegLng
+    const y2 = (ring[i + 1]?.[1] || 0) * mPerDegLat
+    twiceArea += x1 * y2 - x2 * y1
+  }
+  const areaSqm = Math.max(1, Number((Math.abs(twiceArea) / 2).toFixed(1)))
+  const centroid: [number, number] = [
+    open.reduce((s, p) => s + p[0], 0) / open.length,
+    open.reduce((s, p) => s + p[1], 0) / open.length
+  ]
+  if (open.length >= 3) {
+    const d1 = Math.hypot((open[1]![0] - open[0]![0]) * mPerDegLng, (open[1]![1] - open[0]![1]) * mPerDegLat)
+    const d2 = Math.hypot((open[2]![0] - open[1]![0]) * mPerDegLng, (open[2]![1] - open[1]![1]) * mPerDegLat)
+    return {
+      areaSqm,
+      widthM: Math.max(0.5, Number(d1.toFixed(1))),
+      depthM: Math.max(0.5, Number(d2.toFixed(1))),
+      centroid
+    }
+  }
+  return { areaSqm, widthM: 2, depthM: 2, centroid }
+}
+
+// Staff can adjust a real project boundary directly on the map (both from Overview and inside a Zone).
+const renderPolygonVertexHandles = () => {
+  clearPolygonVertexHandles()
+  const targetProject = polygonEditTargetProject.value
+  if (!map || !maplibregl || !props.managementMode || !isPolygonEditMode.value || !targetProject) return
+
+  const projectID = targetProject.id
+  const sourceProject = currentMarket.value.projects.find(item => item.id === projectID)
+  if (!sourceProject) return
+  const closedCoordinates = sourceProject.coordinates || []
+  const vertexCount = closedCoordinates.length > 1 && closedCoordinates[0]?.[0] === closedCoordinates.at(-1)?.[0] && closedCoordinates[0]?.[1] === closedCoordinates.at(-1)?.[1]
+    ? closedCoordinates.length - 1
+    : closedCoordinates.length
+
+  const midpointMarkersByEdge: any[] = []
+
+  // 1. Midpoint '+' handles along each edge to insert & drag a new corner vertex
+  for (let index = 0; index < vertexCount; index++) {
+    const p1 = closedCoordinates[index]
+    const p2 = closedCoordinates[(index + 1) % vertexCount]
+    if (!p1 || !p2) continue
+    const midPt: [number, number] = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]
+
+    const midEl = document.createElement('button')
+    midEl.type = 'button'
+    midEl.className = 'zone-midpoint-handle'
+    midEl.setAttribute('aria-label', `เพิ่มจุดมุมโซนระหว่างจุดที่ ${index + 1} และ ${((index + 1) % vertexCount) + 1}`)
+    midEl.title = 'คลิกหรือลากเพื่อเพิ่มจุดมุมโซนใหม่บนเส้นขอบนี้'
+    Object.assign(midEl.style, {
+      width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #2563eb',
+      background: '#ffffff', color: '#2563eb', boxShadow: '0 1px 4px rgba(15,23,42,.3)',
+      cursor: 'copy', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: '24'
+    })
+    midEl.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+
+    const midMarker = new maplibregl.Marker({ element: midEl, draggable: true, anchor: 'center' })
+      .setLngLat(midPt)
+      .addTo(map)
+
+    let insertedIdx = -1
+    let didDrag = false
+
+    const insertVertexAt = (lngLat: [number, number]): number => {
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return -1
+      const openVerts = target.coordinates.slice(0, vertexCount).map(pair => [...pair] as [number, number])
+      const insertPos = index + 1
+      openVerts.splice(insertPos, 0, [lngLat[0], lngLat[1]])
+      const nextClosed: [number, number][] = [...openVerts, [...openVerts[0]!]]
+      const metrics = calcPolygonMetrics(nextClosed)
+      target.coordinates = nextClosed
+      target.realAreaSqm = Math.round(metrics.areaSqm)
+      target.centroid = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+      return insertPos
+    }
+
+    midMarker.on('dragstart', () => {
+      didDrag = true
+      rememberPolygonEdit()
+      const cur = midMarker.getLngLat()
+      insertedIdx = insertVertexAt([cur.lng, cur.lat])
+      midEl.style.background = '#3b5bff'
+      midEl.style.borderColor = '#ffffff'
+      midEl.style.color = '#ffffff'
+      midEl.style.cursor = 'grabbing'
+    })
+
+    midMarker.on('drag', () => {
+      if (insertedIdx < 0) return
+      const next = midMarker.getLngLat()
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return
+      const coordinates = target.coordinates.map(pair => [...pair] as [number, number])
+      coordinates[insertedIdx] = [next.lng, next.lat]
+      if (insertedIdx === 0 && coordinates.length > 1) {
+        coordinates[coordinates.length - 1] = [next.lng, next.lat]
+      }
+      const metrics = calcPolygonMetrics(coordinates)
+      target.coordinates = coordinates
+      target.realAreaSqm = Math.round(metrics.areaSqm)
+      target.centroid = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+    })
+
+    midMarker.on('dragend', () => {
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return
+      const coordinates = target.coordinates.map(pair => [...pair] as [number, number])
+      const metrics = calcPolygonMetrics(coordinates)
+      emit('updateProjectPolygon', {
+        ...target,
+        coordinates,
+        realAreaSqm: Math.round(metrics.areaSqm),
+        centroid: metrics.centroid
+      })
+      renderPolygonVertexHandles()
+    })
+
+    midEl.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      if (didDrag) {
+        didDrag = false
+        return
+      }
+      const cur = midMarker.getLngLat()
+      rememberPolygonEdit()
+      if (insertVertexAt([cur.lng, cur.lat]) >= 0) {
+        const target = currentMarket.value.projects.find(item => item.id === projectID)
+        if (target) {
+          emit('updateProjectPolygon', {
+            ...target,
+            coordinates: target.coordinates.map(pair => [...pair] as [number, number]),
+            realAreaSqm: target.realAreaSqm,
+            centroid: target.centroid
+          })
+        }
+        renderPolygonVertexHandles()
+      }
+    })
+
+    midpointMarkersByEdge.push(midMarker)
+    polygonHandleMarkers.push(midMarker)
+  }
+
+  // 2. Corner vertex handles (drag to move, double-click / right-click to delete when > 3 vertices)
+  for (let index = 0; index < vertexCount; index++) {
+    const point = closedCoordinates[index]
+    if (!point) continue
+    const element = document.createElement('button')
+    element.type = 'button'
+    element.className = 'zone-vertex-handle'
+    element.setAttribute('aria-label', `ปรับจุดขอบเขต ${index + 1}`)
+    element.title = vertexCount > 3
+      ? `ลากเพื่อปรับจุดขอบเขตโซนที่ ${index + 1} (ดับเบิลคลิกเพื่อลบมุมนี้)`
+      : `ลากเพื่อปรับจุดขอบเขตโซนที่ ${index + 1}`
+    Object.assign(element.style, {
+      width: '18px', height: '18px', borderRadius: '50%', border: '3px solid #ffffff',
+      background: '#3b5bff', boxShadow: '0 1px 5px rgba(15,23,42,.35)', cursor: 'grab', padding: '0',
+      zIndex: '25'
+    })
+    const marker = new maplibregl.Marker({ element, draggable: true, anchor: 'center' })
+      .setLngLat(point)
+      .addTo(map)
+    marker.on('dragstart', () => {
+      rememberPolygonEdit()
+      element.style.cursor = 'grabbing'
+    })
+    marker.on('drag', () => {
+      const next = marker.getLngLat()
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return
+      const coordinates = target.coordinates.map(pair => [...pair] as [number, number])
+      coordinates[index] = [next.lng, next.lat]
+      if (coordinates.length > vertexCount) coordinates[coordinates.length - 1] = [...coordinates[0]!]
+      const metrics = calcPolygonMetrics(coordinates)
+      target.coordinates = coordinates
+      target.realAreaSqm = Math.round(metrics.areaSqm)
+      target.centroid = metrics.centroid
+      // Keep adjacent midpoint handles centered while dragging
+      const prevIdx = (index - 1 + vertexCount) % vertexCount
+      const nextIdx = (index + 1) % vertexCount
+      const prevPt = coordinates[prevIdx]
+      const nextPt = coordinates[nextIdx]
+      if (prevPt && midpointMarkersByEdge[prevIdx]) {
+        midpointMarkersByEdge[prevIdx].setLngLat([(prevPt[0] + next.lng) / 2, (prevPt[1] + next.lat) / 2])
+      }
+      if (nextPt && midpointMarkersByEdge[index]) {
+        midpointMarkersByEdge[index].setLngLat([(next.lng + nextPt[0]) / 2, (next.lat + nextPt[1]) / 2])
+      }
+      clearLayoutCache()
+      refreshSources()
+    })
+    marker.on('dragend', () => {
+      element.style.cursor = 'grab'
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return
+      const coordinates = target.coordinates.map(pair => [...pair] as [number, number])
+      const metrics = calcPolygonMetrics(coordinates)
+      emit('updateProjectPolygon', {
+        ...target,
+        coordinates,
+        realAreaSqm: Math.round(metrics.areaSqm),
+        centroid: metrics.centroid
+      })
+      renderPolygonVertexHandles()
+    })
+    const removeCornerVertex = (ev: Event) => {
+      ev.preventDefault()
+      ev.stopPropagation()
+      if (vertexCount <= 3) return
+      rememberPolygonEdit()
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target) return
+      const openVerts = target.coordinates.slice(0, vertexCount).map(pair => [...pair] as [number, number])
+      openVerts.splice(index, 1)
+      if (openVerts.length < 3) return
+      const nextClosed: [number, number][] = [...openVerts, [...openVerts[0]!]]
+      const metrics = calcPolygonMetrics(nextClosed)
+      target.coordinates = nextClosed
+      target.realAreaSqm = Math.round(metrics.areaSqm)
+      target.centroid = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+      emit('updateProjectPolygon', {
+        ...target,
+        coordinates: nextClosed,
+        realAreaSqm: Math.round(metrics.areaSqm),
+        centroid: metrics.centroid
+      })
+      renderPolygonVertexHandles()
+    }
+    element.addEventListener('dblclick', removeCornerVertex)
+    element.addEventListener('contextmenu', removeCornerVertex)
+    polygonHandleMarkers.push(marker)
+  }
+}
+
+const renderStallVertexHandles = () => {
+  clearStallVertexHandles()
+  if (!map || !maplibregl || !props.managementMode || !isStallPolygonEditMode.value || !activeProject.value) return
+
+  const projectID = activeProject.value.id
+  const sourceProject = currentMarket.value.projects.find(item => item.id === projectID)
+  if (!sourceProject) return
+
+  // Ensure stalls array is materialized if editing a procedurally generated zone
+  if (!sourceProject.stalls || sourceProject.stalls.length === 0) {
+    const allGenerated: any[] = []
+    const floors = sourceProject.floors?.length ? sourceProject.floors : [{ id: '1', name: 'ชั้น 1', shortLabel: '1F', level: 1 }]
+    floors.forEach(fl => {
+      const flLayout = applyMarketStatus(getProjectStallLayout(sourceProject, fl.id))
+      flLayout.stalls.forEach(st => {
+        allGenerated.push({ ...st, floor: String(fl.id) })
+      })
+    })
+    sourceProject.stalls = cloneProjects(allGenerated)
+    sourceProject.layoutMode = 'manual'
+    clearLayoutCache()
+  }
+
+  const targetCode = editingStallCode.value || activeLayout.value?.stalls[0]?.code
+  if (!targetCode) return
+  editingStallCode.value = targetCode
+
+  const stallItem = (sourceProject.stalls || []).find(
+    (s: any) => String(s.code) === String(targetCode) && String(s.floor || '1') === String(currentFloorId.value)
+  ) || (sourceProject.stalls || []).find((s: any) => String(s.code) === String(targetCode))
+  if (!stallItem || !Array.isArray(stallItem.coordinates)) return
+
+  const closedCoordinates: [number, number][] = stallItem.coordinates
+  const vertexCount = closedCoordinates.length > 1 && closedCoordinates[0]?.[0] === closedCoordinates.at(-1)?.[0] && closedCoordinates[0]?.[1] === closedCoordinates.at(-1)?.[1]
+    ? closedCoordinates.length - 1
+    : closedCoordinates.length
+
+  // 1. Midpoint '+' handles along each stall edge
+  for (let index = 0; index < vertexCount; index++) {
+    const p1 = closedCoordinates[index]
+    const p2 = closedCoordinates[(index + 1) % vertexCount]
+    if (!p1 || !p2) continue
+    const midPt: [number, number] = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]
+
+    const midEl = document.createElement('button')
+    midEl.type = 'button'
+    midEl.className = 'stall-midpoint-handle'
+    midEl.setAttribute('aria-label', `เพิ่มจุดมุมแผง ${targetCode} บนเส้นขอบที่ ${index + 1}`)
+    midEl.title = `คลิกหรือลากเพื่อเพิ่มจุดมุมแผง ${targetCode}`
+    Object.assign(midEl.style, {
+      width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #059669',
+      background: '#ffffff', color: '#059669', boxShadow: '0 1px 4px rgba(15,23,42,.3)',
+      cursor: 'copy', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: '24'
+    })
+    midEl.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+
+    const midMarker = new maplibregl.Marker({ element: midEl, draggable: true, anchor: 'center' })
+      .setLngLat(midPt)
+      .addTo(map)
+
+    let insertedIdx = -1
+    let didDrag = false
+
+    const insertStallVertexAt = (lngLat: [number, number]): number => {
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target || !Array.isArray(target.stalls)) return -1
+      const sTarget = target.stalls.find((s: any) => String(s.code) === String(targetCode))
+      if (!sTarget) return -1
+      const openVerts = sTarget.coordinates.slice(0, vertexCount).map((pair: [number, number]) => [...pair] as [number, number])
+      const insertPos = index + 1
+      openVerts.splice(insertPos, 0, [lngLat[0], lngLat[1]])
+      const nextClosed: [number, number][] = [...openVerts, [...openVerts[0]!]]
+      const metrics = calcPolygonMetrics(nextClosed)
+      sTarget.coordinates = nextClosed
+      sTarget.widthM = metrics.widthM
+      sTarget.depthM = metrics.depthM
+      sTarget.size = metrics.areaSqm
+      sTarget.center = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+      return insertPos
+    }
+
+    midMarker.on('dragstart', () => {
+      didDrag = true
+      const cur = midMarker.getLngLat()
+      insertedIdx = insertStallVertexAt([cur.lng, cur.lat])
+      midEl.style.background = '#10b981'
+      midEl.style.borderColor = '#ffffff'
+      midEl.style.color = '#ffffff'
+      midEl.style.cursor = 'grabbing'
+    })
+
+    midMarker.on('drag', () => {
+      if (insertedIdx < 0) return
+      const next = midMarker.getLngLat()
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target || !Array.isArray(target.stalls)) return
+      const sTarget = target.stalls.find((s: any) => String(s.code) === String(targetCode))
+      if (!sTarget) return
+      const coords = sTarget.coordinates.map((pair: [number, number]) => [...pair] as [number, number])
+      coords[insertedIdx] = [next.lng, next.lat]
+      if (insertedIdx === 0 && coords.length > 1) {
+        coords[coords.length - 1] = [next.lng, next.lat]
+      }
+      const metrics = calcPolygonMetrics(coords)
+      sTarget.coordinates = coords
+      sTarget.widthM = metrics.widthM
+      sTarget.depthM = metrics.depthM
+      sTarget.size = metrics.areaSqm
+      sTarget.center = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+    })
+
+    midMarker.on('dragend', () => {
+      emitCurrentEditingStallUpdate()
+      renderStallVertexHandles()
+    })
+
+    midEl.addEventListener('click', (ev) => {
+      ev.stopPropagation()
+      if (didDrag) {
+        didDrag = false
+        return
+      }
+      const cur = midMarker.getLngLat()
+      rememberStallEdit()
+      if (insertStallVertexAt([cur.lng, cur.lat]) >= 0) {
+        emitCurrentEditingStallUpdate()
+        renderStallVertexHandles()
+      }
+    })
+
+    stallHandleMarkers.push(midMarker)
+  }
+
+  // 2. Corner vertex handles
+  for (let index = 0; index < vertexCount; index++) {
+    const point = closedCoordinates[index]
+    if (!point) continue
+    const element = document.createElement('button')
+    element.type = 'button'
+    element.className = 'stall-vertex-handle'
+    element.setAttribute('aria-label', `ปรับจุดมุมแผง ${targetCode} จุดที่ ${index + 1}`)
+    element.title = `ลากเพื่อปรับขนาดแผง ${targetCode} (มุมที่ ${index + 1})`
+    Object.assign(element.style, {
+      width: '16px', height: '16px', borderRadius: '50%', border: '2.5px solid #ffffff',
+      background: '#10b981', boxShadow: '0 1px 5px rgba(15,23,42,.38)', cursor: 'grab', padding: '0',
+      zIndex: '25'
+    })
+    const marker = new maplibregl.Marker({ element, draggable: true, anchor: 'center' })
+      .setLngLat(point)
+      .addTo(map)
+    marker.on('dragstart', () => {
+      rememberStallEdit()
+      element.style.cursor = 'grabbing'
+    })
+    marker.on('drag', () => {
+      const next = marker.getLngLat()
+      const target = currentMarket.value.projects.find(item => item.id === projectID)
+      if (!target || !Array.isArray(target.stalls)) return
+      const sTarget = target.stalls.find((s: any) => String(s.code) === String(targetCode))
+      if (!sTarget) return
+      const coords = sTarget.coordinates.map((pair: [number, number]) => [...pair] as [number, number])
+      coords[index] = [next.lng, next.lat]
+      if (coords.length > vertexCount) coords[coords.length - 1] = [...coords[0]!]
+      const metrics = calcPolygonMetrics(coords)
+      sTarget.coordinates = coords
+      sTarget.widthM = metrics.widthM
+      sTarget.depthM = metrics.depthM
+      sTarget.size = metrics.areaSqm
+      sTarget.center = metrics.centroid
+      clearLayoutCache()
+      refreshSources()
+    })
+    marker.on('dragend', () => {
+      element.style.cursor = 'grab'
+      emitCurrentEditingStallUpdate()
+      renderStallVertexHandles()
+    })
+    stallHandleMarkers.push(marker)
+  }
+}
+
+watch(() => props.inspectOnly, (inspect) => {
+  if (!inspect) return
+  cancelDrawing()
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  editingStallCode.value = null
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+})
+
+const FACILITY_META: Record<string, { label: string; color: string; bg: string; svg: string }> = {
+  toilet: {
+    label: 'ห้องน้ำ',
+    color: '#0284c7',
+    bg: '#e0f2fe',
+    svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="5" r="2"/><path d="M5 22v-5l-1-1v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4l-1 1v5"/><circle cx="17" cy="5" r="2"/><path d="M15 22v-4h-2l2-6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1l2 6h-2v4"/></svg>'
+  },
+  parking: {
+    label: 'ที่จอดรถ',
+    color: '#2563eb',
+    bg: '#dbeafe',
+    svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>'
+  },
+  exit: {
+    label: 'ทางเข้า–ออก',
+    color: '#059669',
+    bg: '#d1fae5',
+    svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8"/><path d="M10 12h11m0 0-4-4m4 4-4 4"/></svg>'
+  },
+  service: {
+    label: 'จุดบริการประชาสัมพันธ์',
+    color: '#7c3aed',
+    bg: '#ede9fe',
+    svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>'
+  },
+  waste: {
+    label: 'จุดทิ้งขยะ',
+    color: '#d97706',
+    bg: '#fef3c7',
+    svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>'
+  }
+}
+
+const getFacilityMeta = (type: string) => FACILITY_META[type] || {
+  label: 'จุดอำนวยความสะดวก',
+  color: '#2563eb',
+  bg: '#eff6ff',
+  svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-5.3 7-12a7 7 0 1 0-14 0c0 6.7 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+}
+
+const findHostZoneForFacility = (facility: MarketFacility): ProjectZone | null => {
+  if (facility.projectId) {
+    const byId = projects.value.find(p => p.id === facility.projectId)
+    if (byId) return byId
+  }
+  return projects.value.find(p => pointInProject(facility.coordinates, p)) || null
+}
+
+const showPopupForFacility = (facility: MarketFacility) => {
+  if (!map || !hoverPopup) return
+  if (isAnyEditingToolActive.value) {
+    hoverPopup.remove()
+    return
+  }
+  const meta = getFacilityMeta(facility.type)
+  const hostZone = findHostZoneForFacility(facility)
+  const canEditFacility = props.managementMode && !props.inspectOnly
+  const deleteAction = canEditFacility
+    ? `<button type="button" class="mlp-facility-delete" data-facility-id="${facility.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>ลบจุดบริการ</button>`
+    : ''
+  hoverPopup.setLngLat(facility.coordinates).setHTML(`
+    <div class="mlp" style="--mlp-accent:${meta.color}">
+      <div class="mlp-body">
+        <div class="mlp-head">
+          <div class="mlp-title">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:${meta.bg};color:${meta.color}">${meta.svg}</span>
+            <strong>${facility.name}</strong>
+          </div>
+          <span class="mlp-pill" style="background:${meta.bg};color:${meta.color}">${meta.label}</span>
+        </div>
+        <div class="mlp-sub">${hostZone ? `ตั้งอยู่ใน: ${hostZone.name}` : 'จุดอำนวยความสะดวกส่วนกลางตลาด'}</div>
+        <div class="mlp-hint">${canEditFacility ? 'จัดการจุดบริการบนผังตลาด' : 'จุดอำนวยความสะดวกสำหรับผู้ค้าและผู้มาใช้บริการ'}</div>
+        ${deleteAction}
+      </div>
+    </div>
+  `).addTo(map)
+  const popupElement = hoverPopup.getElement()
+  popupElement?.classList.toggle('is-interactive', canEditFacility)
+  if (canEditFacility) {
+    // Keep the popup open and prevent map handlers from receiving clicks made
+    // inside it. Attach to the inner .mlp node so listeners are fresh per-popup.
+    const innerMlp = popupElement?.querySelector('.mlp')
+    innerMlp?.addEventListener('mousedown', (event: Event) => event.stopPropagation())
+    innerMlp?.addEventListener('click', (event: Event) => event.stopPropagation())
+    const deleteButton = popupElement?.querySelector(`[data-facility-id="${facility.id}"]`)
+    deleteButton?.addEventListener('click', (event: Event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      pinnedFacilityPopup.value = false
+      hoverPopup?.remove()
+      emit('requestDeleteFacility', facility)
+    }, { once: true })
+  }
+}
+
+const clearFacilityMarkers = () => {
+  facilityMarkers.forEach(m => {
+    try { m.remove() } catch {}
+  })
+  facilityMarkers = []
+}
+
+const renderFacilityMarkers = () => {
+  clearFacilityMarkers()
+  if (!map || !maplibregl) return
+  if (map.getLayer('facilities-circle')) map.setLayoutProperty('facilities-circle', 'visibility', 'none')
+  if (map.getLayer('facilities-label')) map.setLayoutProperty('facilities-label', 'visibility', 'none')
+
+  // Facilities are part of a project's internal layout. Keep the overview
+  // uncluttered; reveal them only after a staff member enters that project.
+  const activeProjectID = activeProjectId.value
+  if (!activeProjectID) return
+
+  managedFacilities.value
+    .filter(facility => findHostZoneForFacility(facility)?.id === activeProjectID)
+    .forEach(facility => {
+      if (!Array.isArray(facility.coordinates) || facility.coordinates.length < 2) return
+      const meta = getFacilityMeta(facility.type)
+      const el = document.createElement('button')
+      el.type = 'button'
+      el.className = 'facility-map-marker'
+      el.setAttribute('aria-label', `${meta.label}: ${facility.name}`)
+      el.title = `${meta.label}: ${facility.name}`
+      Object.assign(el.style, {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '24px',
+        height: '24px',
+        padding: '0',
+        borderRadius: '50%',
+        border: `1.5px solid ${meta.color}`,
+        background: '#ffffff',
+        color: '#0f172a',
+        fontFamily: "'Bai Jamjuree', sans-serif",
+        boxShadow: '0 2px 6px rgba(15,23,42,0.16)',
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        zIndex: '22'
+      })
+      el.innerHTML = `
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${meta.bg};color:${meta.color}">${meta.svg}</span>
+      `
+      el.addEventListener('mouseenter', () => {
+        showPopupForFacility(facility)
+      })
+      el.addEventListener('mouseleave', () => {
+        if (!props.managementMode) hoverPopup?.remove()
+      })
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        pinnedFacilityPopup.value = props.managementMode
+        showPopupForFacility(facility)
+      })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(facility.coordinates)
+        .addTo(map)
+      facilityMarkers.push(marker)
+    })
 }
 
 // ---------------- Popups ----------------
@@ -1842,6 +3342,11 @@ const ICONS = {
 }
 
 const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
+  if (!map || !hoverPopup) return
+  if (isAnyEditingToolActive.value) {
+    hoverPopup.remove()
+    return
+  }
   const layout = layouts.value.get(p.id)
   const total = layout?.total ?? 0
   const available = layout?.available ?? 0
@@ -1904,6 +3409,7 @@ const showPopupForProject = (p: ProjectZone, lngLat: [number, number]) => {
       </div>
     </div>
   `).addTo(map)
+  hoverPopup.getElement()?.classList.remove('is-interactive')
 }
 
 const stallPhotoSamples = [
@@ -1920,6 +3426,11 @@ const getStallDisplayPhoto = (s: MapStall): string => {
 }
 
 const showPopupForStall = (s: MapStall) => {
+  if (!map || !hoverPopup) return
+  if (isAnyEditingToolActive.value) {
+    hoverPopup.remove()
+    return
+  }
   const meta = statusMeta[s.status]
   const selected = isStallSelected(s)
   const isMyBooked = !props.previewMode && (props.myBookedStallCodes || []).includes(s.code)
@@ -1944,15 +3455,19 @@ const showPopupForStall = (s: MapStall) => {
           ? '#f59e0b'
           : '#cbd5e1'
 
-  const ctaText = s.status === 'occupied'
-    ? 'แผงนี้มีผู้เช่าแล้ว ไม่สามารถเลือกได้'
-    : isMyBooked
-      ? 'คุณมีรายการจอง/คิวสำรองในแผงนี้แล้ว ไม่สามารถจองซ้ำได้'
-      : selected
-        ? 'คลิกอีกครั้งเพื่อยกเลิกการเลือก'
-        : isReserved
-          ? 'คลิกเพื่อลงทะเบียนคิวสำรองแผงนี้'
-          : 'คลิกเพื่อเลือกแผงนี้'
+  const ctaText = props.managementMode
+    ? (props.inspectOnly
+        ? 'คลิกเพื่อดูข้อมูลแผง สัญญาเช่า และประวัติ'
+        : 'คลิกเพื่อตั้งค่าหรือแก้ไขข้อมูลแผงนี้')
+    : s.status === 'occupied'
+      ? 'แผงนี้มีผู้เช่าแล้ว ไม่สามารถเลือกได้'
+      : isMyBooked
+        ? 'คุณมีรายการจอง/คิวสำรองในแผงนี้แล้ว ไม่สามารถจองซ้ำได้'
+        : selected
+          ? 'คลิกอีกครั้งเพื่อยกเลิกการเลือก'
+          : isReserved
+            ? 'คลิกเพื่อลงทะเบียนคิวสำรองแผงนี้'
+            : 'คลิกเพื่อเลือกแผงนี้'
 
   hoverPopup.setLngLat(s.center).setHTML(`
     <div class="mlp" style="--mlp-accent:${accent}">
@@ -2007,7 +3522,7 @@ const showPopupForStall = (s: MapStall) => {
           </div>
         </div>
 
-        ${isReserved ? `
+        ${!props.managementMode && isReserved ? `
           <div class="mlp-queue-box">
             <div class="mlp-queue-icon">${ICONS.clock}</div>
             <div class="mlp-queue-content">
@@ -2021,6 +3536,7 @@ const showPopupForStall = (s: MapStall) => {
       </div>
     </div>
   `).addTo(map)
+  hoverPopup.getElement()?.classList.remove('is-interactive')
 }
 
 // ---------------- Drill-down actions ----------------
@@ -2107,7 +3623,15 @@ const recenterMapView = () => {
 }
 
 const openProject = (p: ProjectZone) => {
-  if (!props.previewMode && (p.floors?.length || 0) > 1) {
+  if (isDrawingZone.value || isDrawingStall.value || isAddingFacility.value) return
+  if (props.managementMode && isPolygonEditMode.value && !activeProjectId.value) {
+    overviewEditProjectId.value = p.id
+    hoverPopup?.remove()
+    renderPolygonVertexHandles()
+    refreshSources()
+    return
+  }
+  if (!props.previewMode && !props.managementMode && (p.floors?.length || 0) > 1) {
     hoverPopup?.remove()
     floorSelectorProject.value = p
     return
@@ -2137,6 +3661,12 @@ const enterProject = (p: ProjectZone, directToFloor?: string) => {
       : (projectFloorIds[0] || marketFloors.value[0]?.id || '')
   }
   activeProjectId.value = p.id
+  overviewEditProjectId.value = p.id
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  editingStallCode.value = null
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
   hoveredProject.value = null
   hoveredStallKey.value = null
 
@@ -2165,13 +3695,25 @@ const enterProject = (p: ProjectZone, directToFloor?: string) => {
     duration: 800
   })
   renderSelectedStallPins()
+  renderPolygonVertexHandles()
   emit('selectProject', p)
 }
 
+const handleBackOverviewClick = () => {
+  exitProject()
+}
+
 const exitProject = () => {
+  finishActiveTools()
   floorSelectorProject.value = null
   hoverPopup?.remove()
   activeProjectId.value = null
+  overviewEditProjectId.value = null
+  isPolygonEditMode.value = false
+  isStallPolygonEditMode.value = false
+  editingStallCode.value = null
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
   hoveredStallKey.value = null
   currentFloorId.value = '1'
   selectedMarketFloorId.value = marketFloorBeforeProject.value
@@ -2250,6 +3792,15 @@ const bindMapEvents = () => {
   })
 
   map.on('mousemove', (e: any) => {
+    // A facility popup selected by a staff member is an action surface, not a
+    // hover hint. Do not let the regular map hover logic dismiss it.
+    if (pinnedFacilityPopup.value) return
+    if (isDrawingZone.value || isDrawingStall.value || isAddingFacility.value) {
+      drawingCursor.value = [e.lngLat.lng, e.lngLat.lat]
+      refreshDrawingZone()
+      map.getCanvas().style.cursor = 'crosshair'
+      return
+    }
     const stallHit = map.getLayer('stalls-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['stalls-fill'] })
       : []
@@ -2281,25 +3832,78 @@ const bindMapEvents = () => {
   })
 
   map.on('mouseout', () => {
+    if (pinnedFacilityPopup.value) return
     setHoveredProject(null)
     setHoveredStall(null)
     hoverPopup?.remove()
   })
 
   map.on('click', (e: any) => {
+    if (pinnedFacilityPopup.value) {
+      pinnedFacilityPopup.value = false
+      hoverPopup?.remove()
+      return
+    }
+    if (isAddingFacility.value) {
+      const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+      const projHitForFacility = map.getLayer('projects-fill')
+        ? map.queryRenderedFeatures(e.point, { layers: ['projects-fill'] })
+        : []
+      const hostProject = activeProject.value || getMostSpecificProjectHit(projHitForFacility)
+      cancelDrawing()
+      emit('requestAddFacility', coordinates, hostProject?.id)
+      return
+    }
+    if (isDrawingZone.value || isDrawingStall.value) {
+      if (isDrawingStall.value && stallDrawShape.value === 'rectangle') {
+        const clickedPt: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+        if (!rectStartCorner.value || drawingPoints.value.length >= 4) {
+          rectStartCorner.value = clickedPt
+          drawnStallDimensions.value = null
+          drawingPoints.value = [clickedPt]
+          refreshDrawingZone()
+          return
+        }
+        const { corners, widthM, depthM } = buildRectangleCorners(rectStartCorner.value, clickedPt)
+        drawingPoints.value = corners
+        drawnStallDimensions.value = { widthM, depthM }
+        refreshDrawingZone()
+        return
+      }
+
+      if (drawingPoints.value.length >= 3 && drawingPoints.value[0]) {
+        const firstScreenPt = map.project(drawingPoints.value[0])
+        const dist = Math.hypot(e.point.x - firstScreenPt.x, e.point.y - firstScreenPt.y)
+        if (dist <= 16) {
+          finishDrawing()
+          return
+        }
+      }
+      drawingPoints.value.push([e.lngLat.lng, e.lngLat.lat])
+      refreshDrawingZone()
+      return
+    }
 
     const stallHit = map.getLayer('stalls-fill')
       ? map.queryRenderedFeatures(e.point, { layers: ['stalls-fill'] })
       : []
     if (stallHit.length) {
       const s = getStallFromFeature(stallHit[0])
+      if (props.managementMode && isDeletingStall.value && s) {
+        triggerDeleteStall(s)
+        return
+      }
+      if (props.managementMode && isStallPolygonEditMode.value && s) {
+        editingStallCode.value = s.code
+        renderStallVertexHandles()
+        return
+      }
       if (props.previewMode) {
         if (s) showPopupForStall(s)
         return
       }
-      if (s && s.status !== 'occupied') {
-        const { coordinates, center, ...stallModel } = s
-        emit('selectStall', stallModel)
+      if (s && (s.status !== 'occupied' || props.managementMode)) {
+        emit('selectStall', s)
       }
       return
     }
@@ -2435,6 +4039,8 @@ const matchesSearchWith = (p: ProjectZone, value: string): boolean => {
   if (!query) return true
   if (p.name.toLowerCase().includes(query)) return true
   if (p.category.toLowerCase().includes(query)) return true
+  if (props.managementMode && Array.from(getEffectiveFloorLayoutsForProject(p).values())
+    .some(layout => layout.stalls.some(stall => String(stall.code || '').toLowerCase().includes(query)))) return true
   const numInQuery = query.replace(/[^0-9]/g, '')
   const numInProject = p.name.replace(/[^0-9]/g, '')
   if (numInQuery && numInProject && numInProject.includes(numInQuery)) return true
@@ -2465,10 +4071,14 @@ const clearAllFilters = () => {
   searchQuery.value = ''
   rentFilter.value = 'all'
   availabilityFilter.value = 'all'
+  zoneFilter.value = 'all'
+  readinessFilter.value = 'all'
   draftCategoryFilter.value = ''
   appliedSearchQuery.value = ''
   appliedRentFilter.value = 'all'
   appliedAvailabilityFilter.value = 'all'
+  appliedZoneFilter.value = 'all'
+  appliedReadinessFilter.value = 'all'
   appliedCategoryFilter.value = ''
   emit('update:categoryFilter', null)
   refreshSources()
@@ -2478,6 +4088,8 @@ const applyFilters = () => {
   appliedSearchQuery.value = searchQuery.value
   appliedRentFilter.value = rentFilter.value
   appliedAvailabilityFilter.value = availabilityFilter.value
+  appliedZoneFilter.value = zoneFilter.value
+  appliedReadinessFilter.value = readinessFilter.value
   appliedCategoryFilter.value = draftCategoryFilter.value
   emit('update:categoryFilter', draftCategoryFilter.value || null)
   emit('update:onlyAvailable', availabilityFilter.value === 'available')
@@ -2525,6 +4137,12 @@ watch(() => props.onlyAvailable, (onlyAvailable) => {
   refreshSources()
 })
 
+watch(() => props.stallStatusFilter, (status) => {
+  availabilityFilter.value = status
+  appliedAvailabilityFilter.value = status
+  refreshSources()
+})
+
 watch(() => [props.selectedStallCodes, props.selectedStallKeys], () => {
   map?.getSource('project-stalls')?.setData(getStallsGeoJson())
   renderSelectedStallPins()
@@ -2540,9 +4158,18 @@ watch(() => props.stallStatusOverrides, () => {
   renderZoneLabels()
 }, { deep: true })
 
-// Parent may switch project externally (e.g. deep-link); follow it if different
+watch(() => props.managedProjects, applyManagedProjects, { deep: true })
+watch(() => props.managedFacilities, applyManagedFacilities, { deep: true })
+
+// Parent may switch project externally (e.g. deep-link or breadcrumb reset); follow it if different
 watch(() => props.selectedProjectId, (newId) => {
-  if (!map || !newId || newId === activeProjectId.value) return
+  if (!map) return
+  if (!newId) {
+    if (activeProjectId.value) exitProject()
+    return
+  }
+  if (newId === activeProjectId.value) return
+  if (props.managementMode && isPolygonEditMode.value && !activeProjectId.value) return
   const found = projects.value.find(p => p.id === newId)
   if (found) enterProject(found)
 })
@@ -2577,7 +4204,23 @@ const resize = () => {
   map?.resize()
 }
 
-defineExpose({ enterProject, exitProject, resize })
+const finishActiveTools = () => {
+  cancelDrawing()
+  if (isStallPolygonEditMode.value) {
+    emitCurrentEditingStallUpdate()
+    isStallPolygonEditMode.value = false
+    stallEditSnapshot.value = null
+    stallEditHistory.value = []
+    clearStallVertexHandles()
+  }
+  if (isPolygonEditMode.value) {
+    isPolygonEditMode.value = false
+    clearPolygonVertexHandles()
+  }
+  refreshSources()
+}
+
+defineExpose({ enterProject, exitProject, resize, finishActiveTools })
 
 const canTeleportToolbar = ref(false)
 let isUnmounted = false
@@ -2591,16 +4234,24 @@ onMounted(async () => {
   if (process.client) {
     canTeleportToolbar.value = Boolean(document.getElementById('step1-map-toolbar'))
     window.addEventListener('resize', handleWindowResize)
-    await syncMarketJson(props.marketId)
-    const ml = await import('maplibre-gl')
-    if (isUnmounted) return
-    maplibregl = ml.default || ml
-    initMap()
+    try {
+      await syncMarketJson(props.marketId)
+      const ml = await import('maplibre-gl')
+      if (isUnmounted) return
+      maplibregl = ml.default || ml
+      initMap()
+    } catch (error) {
+      // Do not leave a permanent loading surface if the map library or data
+      // cannot be prepared; the existing page controls remain usable.
+      console.error('[map] unable to initialize:', error)
+      isMapLoading.value = false
+    }
   }
 })
 
 const cleanupMapResources = () => {
   isUnmounted = true
+  isMapLoading.value = true
   canTeleportToolbar.value = false
   if (process.client) {
     window.removeEventListener('resize', handleWindowResize)
@@ -2612,6 +4263,9 @@ const cleanupMapResources = () => {
     try { m.remove() } catch {}
   })
   selectedStallMarkers = []
+  clearPolygonVertexHandles()
+  clearStallVertexHandles()
+  clearFacilityMarkers()
   if (map) {
     const mapInstance = map
     map = null
@@ -2626,6 +4280,8 @@ onUnmounted(cleanupMapResources)
 </script>
 
 <style scoped>
+.maplibre-overview-wrapper.is-drawing-active :deep(.maplibre-zone-number-badge),.maplibre-overview-wrapper.is-drawing-active :deep(.facility-map-marker){pointer-events:none!important}
+.zone-management-toolbar{position:absolute;z-index:26;left:50%;bottom:18px;transform:translateX(-50%);display:flex;max-width:calc(100% - 32px);overflow-x:auto;background:rgba(255,255,255,.97);border:1px solid #d7e2ef;border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.13);backdrop-filter:blur(8px)}.zone-management-toolbar :deep(.app-btn){height:68px;min-height:68px;max-height:68px;min-width:104px;padding:7px 14px;flex:0 0 auto;flex-direction:column;gap:5px;border:0!important;border-right:1px solid #e8eef6!important;border-radius:0!important;background:transparent!important;color:#334155!important;font-size:.8125rem;font-weight:600;line-height:1.15;white-space:nowrap;box-shadow:none!important}.zone-management-toolbar :deep(.app-btn:first-child){border-radius:13px 0 0 13px!important}.zone-management-toolbar :deep(.app-btn:last-child){border-right:0!important;border-radius:0 13px 13px 0!important}.zone-management-toolbar :deep(.app-btn:hover:not(.is-disabled)){background:#f8fbff!important;color:#2563eb!important}.zone-management-toolbar :deep(.app-btn.app-btn-primary:not(.is-disabled)){background:#eff6ff!important;color:#2563eb!important;font-weight:700!important}.zone-management-toolbar :deep(.app-btn.app-btn-primary:hover:not(.is-disabled)){background:#dbeafe!important;color:#1d4ed8!important}.zone-management-toolbar :deep(.app-btn.app-btn-danger-outline:not(.is-disabled)){color:#dc2626!important}.zone-management-toolbar :deep(.app-btn.app-btn-danger-outline:hover:not(.is-disabled)){background:#fef2f2!important;color:#b91c1c!important}.zone-management-toolbar :deep(.app-btn.is-disabled){background:#fff!important;color:#cbd5e1!important;opacity:1!important}.zone-management-toolbar :deep(.app-btn svg){width:20px;height:20px}.zone-management-toolbar>button:not(.app-btn){min-width:88px;padding:11px 13px;border:0;border-radius:8px;background:transparent;color:#334155;display:grid;justify-items:center;gap:4px;font:600 .8125rem/1 inherit;cursor:pointer;white-space:nowrap}.zone-management-toolbar>button:not(.app-btn):hover:not(:disabled),.zone-management-toolbar>button:not(.app-btn).active{background:#eff6ff;color:#2563eb}.zone-management-toolbar>button.primary-save:not(:disabled){background:#2563eb;color:#fff;padding-inline:18px}.zone-management-toolbar>button.primary-save:hover:not(:disabled){background:#1d4ed8;color:#fff}.zone-management-toolbar>button:disabled{opacity:.38;cursor:not-allowed}.zone-management-toolbar>button.danger:hover:not(:disabled){background:#fef2f2;color:#dc2626}.polygon-edit-hint{position:absolute;z-index:26;left:50%;bottom:96px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.97);border:1px solid #d7e2ef;color:#1e293b;font-size:.8125rem;font-weight:600;box-shadow:0 8px 20px rgba(15,23,42,.12);backdrop-filter:blur(8px);white-space:nowrap}.polygon-edit-hint svg{width:16px;height:16px;color:#2563eb;flex-shrink:0}@media(max-width:640px){.zone-management-toolbar{bottom:10px;left:16px;right:16px;transform:none}.zone-management-toolbar :deep(.app-btn){min-width:88px;height:62px;min-height:62px;max-height:62px;padding:6px 8px;font-size:.75rem}.zone-management-toolbar>button:not(.app-btn){min-width:76px;padding:9px 8px;font-size:.75rem}.polygon-edit-hint{bottom:82px;font-size:.75rem;white-space:normal;text-align:center}}
 .projects-master-container {
   display: flex;
   flex-direction: column;
@@ -3064,6 +4720,117 @@ onUnmounted(cleanupMapResources)
 .maplibre-overview-canvas {
   width: 100%;
   height: 100%;
+}
+
+/* Preserve the final map's spatial hierarchy while MapLibre fetches its style
+   and tiles. The overlay is intentionally non-interactive so it never traps
+   focus or pointer events once the map is ready. */
+.map-loading-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(226, 232, 240, .5) 12%, rgba(248, 250, 252, .96) 30%, rgba(226, 232, 240, .5) 48%) 0 0 / 260% 100%,
+    #f8fafc;
+  animation: mapSkeletonSweep 1.7s ease-in-out infinite;
+}
+
+.map-loading-skeleton::before,
+.map-loading-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: auto;
+  border: 1px solid rgba(203, 213, 225, .72);
+  background: rgba(226, 232, 240, .36);
+}
+
+.map-loading-skeleton::before {
+  width: 54%;
+  height: 18%;
+  right: -7%;
+  top: 35%;
+  transform: rotate(-12deg);
+}
+
+.map-loading-skeleton::after {
+  width: 44%;
+  height: 23%;
+  left: -9%;
+  bottom: 9%;
+  transform: rotate(17deg);
+}
+
+.map-skeleton-control-group {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-skeleton-line,
+.map-skeleton-tool,
+.map-skeleton-zone {
+  display: block;
+  border: 1px solid rgba(203, 213, 225, .78);
+  background: rgba(226, 232, 240, .75);
+}
+
+.is-map-tab { width: 68px; height: 34px; border-radius: 999px; }
+.is-map-tab.short { width: 56px; }
+.is-center-control { width: 112px; height: 34px; border-radius: 999px; }
+
+.map-skeleton-zone {
+  position: absolute;
+  z-index: 1;
+  border-radius: 8px;
+  background: rgba(191, 219, 254, .48);
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, .22);
+}
+
+.map-skeleton-zone.zone-one { width: 18%; height: 25%; top: 27%; left: 21%; transform: rotate(-8deg); }
+.map-skeleton-zone.zone-two { width: 15%; height: 36%; top: 35%; left: 45%; transform: rotate(9deg); }
+.map-skeleton-zone.zone-three { width: 22%; height: 20%; right: 14%; bottom: 20%; transform: rotate(-13deg); }
+
+.map-skeleton-legend {
+  position: absolute;
+  z-index: 1;
+  left: 18px;
+  bottom: 18px;
+  width: 184px;
+  padding: 13px;
+  border: 1px solid rgba(203, 213, 225, .76);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .78);
+}
+
+.is-legend-title { width: 74px; height: 12px; border-radius: 999px; margin-bottom: 10px; }
+.is-legend-row { width: 100%; height: 10px; border-radius: 999px; margin-top: 7px; }
+.is-legend-row.shorter { width: 68%; }
+
+.map-skeleton-tools {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+.map-skeleton-tool { width: 82px; height: 48px; border-radius: 10px; background: rgba(255, 255, 255, .82); }
+
+@keyframes mapSkeletonSweep {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-loading-skeleton { animation: none; }
 }
 
 .map-project-guidance {
@@ -5186,9 +6953,17 @@ onUnmounted(cleanupMapResources)
 
 /* Custom Popup Content (hover cards) */
 .mlp-popup {
-  pointer-events: none;
+  pointer-events: none !important;
   filter: drop-shadow(0 0 1px rgba(15, 23, 42, 0.18))
           drop-shadow(0 14px 28px rgba(15, 23, 42, 0.22));
+}
+.mlp-popup:not(.is-interactive) .maplibregl-popup-content,
+.mlp-popup:not(.is-interactive) .maplibregl-popup-tip {
+  pointer-events: none !important;
+}
+.mlp-popup.is-interactive,
+.mlp-popup.is-interactive .maplibregl-popup-content {
+  pointer-events: auto !important;
 }
 .mlp-popup .maplibregl-popup-content {
   border-radius: 14px !important;
@@ -5423,6 +7198,23 @@ onUnmounted(cleanupMapResources)
   color: #d97706;
   font-weight: 500;
 }
+.mlp-facility-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 34px;
+  margin-top: 10px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #dc2626;
+  font: 600 .8125rem/1 'Bai Jamjuree', sans-serif;
+  cursor: pointer;
+}
+.mlp-facility-delete:hover { background: #fef2f2; }
+.mlp-facility-delete svg { width: 15px; height: 15px; }
 
 /* Queue Info Box for Reserved Stalls */
 .mlp-queue-box {
@@ -5818,7 +7610,7 @@ onUnmounted(cleanupMapResources)
 }
 
 /* Selected Stall Checkmark Icon */
-:deep(.selected-stall-pin-marker) {
+.selected-stall-pin-marker {
   pointer-events: none;
   z-index: 25;
 }
@@ -5927,12 +7719,12 @@ onUnmounted(cleanupMapResources)
 }
 
 /* Beacon Pin for Booked Project when viewing other projects */
-:deep(.booked-project-beacon-marker) {
+.booked-project-beacon-marker {
   cursor: pointer;
   z-index: 28;
 }
 
-:deep(.beacon-pin-bubble) {
+.beacon-pin-bubble {
   position: relative;
   background: #2563eb;
   color: #ffffff;
@@ -5949,12 +7741,12 @@ onUnmounted(cleanupMapResources)
   transition: transform 0.2s ease;
 }
 
-:deep(.beacon-pin-bubble:hover) {
+.beacon-pin-bubble:hover {
   transform: scale(1.08);
   background: #1d4ed8;
 }
 
-:deep(.beacon-pulse-ring) {
+.beacon-pulse-ring {
   position: absolute;
   top: 50%;
   left: 12px;

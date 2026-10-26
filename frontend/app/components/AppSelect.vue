@@ -4,10 +4,11 @@
     <button
       type="button"
       class="app-select-trigger"
-      :class="{ 'has-value': !!selectedOption, 'is-focused': isOpen, 'is-error': error }"
+      :class="{ 'has-value': !!selectedOption, 'is-focused': isOpen, 'is-error': Boolean(error) }"
       :disabled="disabled"
       @click="toggleDropdown"
       :aria-expanded="isOpen"
+      :aria-invalid="Boolean(error)"
     >
       <span class="app-select-label">
         {{ selectedLabel || placeholder }}
@@ -18,6 +19,7 @@
         </svg>
       </span>
     </button>
+    <span v-if="typeof error === 'string' && error" class="app-select-error">{{ error }}</span>
 
     <!-- Dropdown Menu -->
     <transition name="app-select-fade">
@@ -30,7 +32,7 @@
             :class="{ 'is-selected': isOptionSelected(opt) }"
             role="option"
             :aria-selected="isOptionSelected(opt)"
-            @click="selectOption(opt)"
+            @click.stop="selectOption(opt)"
           >
             <span class="app-select-option-text">{{ opt.label }}</span>
             <span v-if="isOptionSelected(opt)" class="app-select-check">
@@ -56,8 +58,9 @@ export interface SelectOption {
 const props = withDefaults(defineProps<{
   modelValue?: string | number
   options: (SelectOption | string)[]
+  placeholder?: string
   disabled?: boolean
-  error?: boolean
+  error?: boolean | string
 }>(), {
   modelValue: '',
   options: () => [],
@@ -106,6 +109,8 @@ const selectOption = (opt: SelectOption) => {
   emit('update:modelValue', opt.value)
   emit('change', opt.value)
   isOpen.value = false
+  // ป้องกัน event จากคอนเทนเนอร์ภายนอกเปิดเมนูซ้ำในรอบ click เดียวกัน
+  requestAnimationFrame(() => { isOpen.value = false })
 }
 
 const handleClickOutside = (e: MouseEvent) => {
@@ -182,6 +187,15 @@ onBeforeUnmount(() => {
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 1px #ef4444, 0 1px 2px rgba(239, 68, 68, 0.1) !important;
   background: #fffafa;
+}
+
+.app-select-error {
+  display: block;
+  margin-top: 5px;
+  color: #dc2626;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .app-select-trigger:disabled {

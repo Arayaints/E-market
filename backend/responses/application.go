@@ -7,6 +7,7 @@ type ApplicationResponse struct {
 	ApplicationNo         string     `json:"application_no"`
 	ApplicationNumber     string     `json:"application_number"`
 	StallID               *int       `json:"stall_id,omitempty"`
+	MarketID              *int       `json:"market_id,omitempty"`
 	StallIdent            string     `json:"stall_ident"`
 	StallNumber           string     `json:"stall_number"`
 	ApplicantName         string     `json:"applicant_name"`

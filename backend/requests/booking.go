@@ -1,6 +1,7 @@
 package requests
 
 type BookingFilter struct {
+	MarketID   int    `form:"market_id"`
 	StallIdent string `form:"stall_ident"`
 	Status     string `form:"status"`
 	Search     string `form:"search"`

@@ -1,6 +1,8 @@
 package requests
 
 type ContractFilter struct {
+	MarketID   int    `form:"market_id"`
+	CreatedBy  int    `form:"created_by"`
 	StallIdent string `form:"stall_ident"`
 	Status     string `form:"status"`
 	Search     string `form:"search"`

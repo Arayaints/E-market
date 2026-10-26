@@ -267,6 +267,51 @@ func SeedAll(db *gorm.DB) error {
 		log.Println("Seeded stalls successfully")
 	}
 
+	// Each market officer has an explicit, single-market scope. This seed is
+	// idempotent so existing databases receive the accounts and assignments too.
+	var marketsForStaff []models.Market
+	if err := db.Where("status != 'D'").Order("id ASC").Limit(12).Find(&marketsForStaff).Error; err != nil {
+		return err
+	}
+	for _, market := range marketsForStaff {
+		username := fmt.Sprintf("staff%02d", market.ID)
+		staff := models.User{Username: username}
+		defaults := models.User{
+			Username: username,
+			Password: hashPassword("staff1234"),
+			FullName: fmt.Sprintf("เจ้าหน้าที่%s", market.Name),
+			Role:     "staff",
+			Email:    fmt.Sprintf("%s@emarket.bma.go.th", username),
+			Phone:    fmt.Sprintf("02-100-%04d", market.ID),
+			Status:   "A",
+		}
+		if err := db.Where("username = ?", username).Attrs(defaults).FirstOrCreate(&staff).Error; err != nil {
+			return err
+		}
+		assignment := models.MarketStaffAssignment{UserID: staff.ID, MarketID: market.ID}
+		if err := db.Where("user_id = ? AND market_id = ?", staff.ID, market.ID).
+			FirstOrCreate(&assignment).Error; err != nil {
+			return err
+		}
+	}
+	// Keep the legacy demo account usable while treating it as a normal
+	// single-market officer rather than a global staff account.
+	if len(marketsForStaff) > 0 {
+		var legacyStaff models.User
+		if db.Where("username = ? AND role = ?", "staff", "staff").First(&legacyStaff).Error == nil {
+			assignment := models.MarketStaffAssignment{UserID: legacyStaff.ID, MarketID: marketsForStaff[0].ID}
+			if err := db.Where("user_id = ? AND market_id = ?", legacyStaff.ID, marketsForStaff[0].ID).FirstOrCreate(&assignment).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	// Backfill scope for records created before market_id was introduced.
+	db.Exec("UPDATE application SET market_id = (SELECT market_id FROM stall WHERE stall.id = application.stall_id OR stall.ident = application.stall_ident LIMIT 1) WHERE market_id IS NULL")
+	db.Exec("UPDATE contract SET market_id = (SELECT market_id FROM stall WHERE stall.id = contract.stall_id OR stall.ident = contract.stall_ident LIMIT 1) WHERE market_id IS NULL")
+	db.Exec("UPDATE contract SET tenant_user_id = (SELECT created_by FROM application WHERE application.id = contract.application_id LIMIT 1) WHERE tenant_user_id IS NULL AND application_id IS NOT NULL")
+	db.Exec("UPDATE contract SET tenant_user_id = (SELECT created_by FROM booking WHERE booking.stall_ident = contract.stall_ident AND created_by IS NOT NULL ORDER BY booking.id DESC LIMIT 1) WHERE tenant_user_id IS NULL")
+
 	// Ensure accurate GIS totals and starting rates across all markets
 	gisTotals := map[string]int{
 		"chatuchak":             9522,

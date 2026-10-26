@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"emarket-api/middlewares"
+	"emarket-api/requests"
 	"emarket-api/responses"
 	"emarket-api/src/market/domains"
 	"github.com/gin-gonic/gin"
@@ -11,6 +13,38 @@ import (
 
 type Handler struct {
 	useCase domains.UseCase
+}
+
+func (h *Handler) GetGISConfig(c *gin.Context) {
+	res, err := h.useCase.GetGISConfig(c.Param("id"), false)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) GetGISDraft(c *gin.Context) {
+	res, err := h.useCase.GetGISConfig(c.Param("id"), true)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) SaveGISConfig(c *gin.Context) {
+	var req requests.UpdateMarketGISRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondError(c, err)
+		return
+	}
+	res, err := h.useCase.SaveGISConfig(c.Param("id"), middlewares.GetUserID(c), req)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
 }
 
 func NewHandler(uc domains.UseCase) *Handler {
@@ -36,6 +70,15 @@ func respondError(c *gin.Context, err error) {
 func (h *Handler) GetMarkets(c *gin.Context) {
 	search := c.Query("search")
 	res, err := h.useCase.GetMarkets(search)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, responses.SuccessResponse(res, http.StatusOK))
+}
+
+func (h *Handler) GetMyMarkets(c *gin.Context) {
+	res, err := h.useCase.GetMarketsForUser(c.Query("search"), middlewares.GetUserID(c), middlewares.GetUserRole(c))
 	if err != nil {
 		respondError(c, err)
 		return

@@ -15,10 +15,20 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
 const { isExpanded, collapse } = useSidebar()
 const { initAuth } = useAuth()
 
+watch(
+  () => route.path,
+  () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    }
+  }
+)
+
 onMounted(() => {
-  initAuth()
+	void initAuth()
 })
 </script>

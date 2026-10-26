@@ -20,4 +20,16 @@ export interface ProjectZone {
   coordinates: [number, number][]
   floors?: ProjectFloor[]
   stalls?: any[]
+  /** Manual projects start empty; staff draw each stall on the selected floor. */
+  layoutMode?: 'manual' | 'generated'
+}
+
+export interface MarketFacility {
+  id: string
+  name: string
+  type: string
+  coordinates: [number, number]
+  description?: string
+  projectId?: string
+  floorId?: string
 }

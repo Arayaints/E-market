@@ -8,6 +8,8 @@ type Contract struct {
 	ApplicationID   *int      `gorm:"column:application_id" json:"application_id"`
 	StallID         *int      `gorm:"column:stall_id" json:"stall_id"`
 	StallIdent      string    `gorm:"size:50;not null;column:stall_ident" json:"stall_ident"`
+	MarketID        *int      `gorm:"column:market_id;index" json:"market_id"`
+	TenantUserID    *int      `gorm:"column:tenant_user_id;index" json:"tenant_user_id"`
 	TenantName      string    `gorm:"size:255;not null;column:tenant_name" json:"tenant_name"`
 	TenantPhone     string    `gorm:"size:50;not null;column:tenant_phone" json:"tenant_phone"`
 	TenantIDCard    string    `gorm:"size:50;column:tenant_id_card" json:"tenant_id_card"`

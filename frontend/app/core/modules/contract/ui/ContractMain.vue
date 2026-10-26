@@ -209,104 +209,102 @@
           </button>
         </div>
 
-        <form @submit.prevent="submitContract">
+        <form novalidate @submit.prevent="submitContract">
           <div class="modal-body">
             <h4 style="font-size: 0.95rem; margin-bottom: 12px; color: var(--primary);">1. ข้อมูลแผงเช่าและร้านค้า</h4>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_stall_id">เลือกแผงเช่าที่ต้องการเช่า *</label>
-                <select id="c_stall_id" v-model="formContract.stall_id" required class="form-select" @change="onStallSelected">
-                  <option value="" disabled>-- เลือกแผงเช่าที่ว่าง --</option>
-                  <option v-for="s in availableStalls" :key="s.id" :value="s.id">
-                    แผง {{ s.stall_number }} (โซน {{ s.zone?.name || s.zone_id }}) - ฿{{ Number(s.monthly_rate).toLocaleString() }}/ด.
-                  </option>
-                </select>
+                <AppSelect
+                  v-model="formContract.stall_id"
+                  :options="availableStallOptions"
+                  placeholder="-- เลือกแผงเช่าที่ว่าง --"
+                  @change="onStallSelected"
+                />
+                <p v-if="contractErrors.stall_id" class="field-error-text">{{ contractErrors.stall_id }}</p>
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_business_name">ชื่อร้านค้า (Shop/Business Name) *</label>
-                <input id="c_business_name" v-model="formContract.business_name" type="text" required placeholder="เช่น ส้มตำรสเด็ด" class="form-input" />
+                <AppInput id="c_business_name" v-model="formContract.business_name" type="text" placeholder="เช่น ส้มตำรสเด็ด" :error="contractErrors.business_name" @blur="validateContractField('business_name')" />
               </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="c_business_type">ประเภทสินค้าที่จำหน่าย</label>
-              <input id="c_business_type" v-model="formContract.business_type" type="text" placeholder="เช่น อาหารปรุงสุก, เครื่องดื่ม, เสื้อผ้า" class="form-input" />
+              <AppInput id="c_business_type" v-model="formContract.business_type" type="text" placeholder="เช่น อาหารปรุงสุก, เครื่องดื่ม, เสื้อผ้า" />
             </div>
 
             <h4 style="font-size: 0.95rem; margin: 20px 0 12px; color: var(--primary);">2. ข้อมูลผู้เช่า (Tenant Information)</h4>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_tenant_name">ชื่อ-นามสกุล ผู้เช่า *</label>
-                <input id="c_tenant_name" v-model="formContract.tenant_name" type="text" required placeholder="นาย/นาง/น.ส. ..." class="form-input" />
+                <AppInput id="c_tenant_name" v-model="formContract.tenant_name" type="text" placeholder="นาย/นาง/น.ส. ..." :error="contractErrors.tenant_name" @blur="validateContractField('tenant_name')" />
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_tenant_id_card">เลขประจำตัวประชาชน / Tax ID *</label>
-                <input id="c_tenant_id_card" v-model="formContract.tenant_id_card" type="text" required placeholder="13 หลัก" class="form-input" />
+                <AppInput id="c_tenant_id_card" v-model="formContract.tenant_id_card" type="text" placeholder="13 หลัก" :error="contractErrors.tenant_id_card" @blur="validateContractField('tenant_id_card')" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_tenant_phone">เบอร์โทรศัพท์ติดต่อ *</label>
-                <input id="c_tenant_phone" v-model="formContract.tenant_phone" type="text" required placeholder="08x-xxx-xxxx" class="form-input" />
+                <AppInput id="c_tenant_phone" v-model="formContract.tenant_phone" type="text" placeholder="08x-xxx-xxxx" :error="contractErrors.tenant_phone" @blur="validateContractField('tenant_phone')" />
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_tenant_email">อีเมล (ถ้ามี)</label>
-                <input id="c_tenant_email" v-model="formContract.tenant_email" type="email" placeholder="tenant@example.com" class="form-input" />
+                <AppInput id="c_tenant_email" v-model="formContract.tenant_email" type="email" placeholder="tenant@example.com" />
               </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="c_tenant_address">ที่อยู่ตามบัตรประชาชน / ที่อยู่ติดต่อ</label>
-              <textarea id="c_tenant_address" v-model="formContract.tenant_address" rows="2" class="form-textarea" placeholder="บ้านเลขที่ หมู่ ซอย ถนน ตำบล อำเภอ จังหวัด"></textarea>
+              <AppInput id="c_tenant_address" v-model="formContract.tenant_address" type="textarea" :rows="2" placeholder="บ้านเลขที่ หมู่ ซอย ถนน ตำบล อำเภอ จังหวัด" />
             </div>
 
             <h4 style="font-size: 0.95rem; margin: 20px 0 12px; color: var(--primary);">3. เงื่อนไขและอัตราค่าเช่า (Lease Terms)</h4>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_start_date">วันที่เริ่มต้นสัญญา *</label>
-                <input id="c_start_date" v-model="formContract.start_date" type="date" required class="form-input" />
+                <AppInput id="c_start_date" v-model="formContract.start_date" type="date" :error="contractErrors.start_date" @blur="validateContractField('start_date')" />
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_end_date">วันที่สิ้นสุดสัญญา *</label>
-                <input id="c_end_date" v-model="formContract.end_date" type="date" required class="form-input" />
+                <AppInput id="c_end_date" v-model="formContract.end_date" type="date" :error="contractErrors.end_date" @blur="validateContractField('end_date')" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_billing_cycle">รอบการชำระเงิน</label>
-                <select id="c_billing_cycle" v-model="formContract.billing_cycle" class="form-select">
-                  <option value="monthly">รายเดือน (Monthly)</option>
-                  <option value="daily">รายวัน (Daily)</option>
-                </select>
+                <AppSelect v-model="formContract.billing_cycle" :options="billingCycleOptions" />
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_rental_fee">ค่าเช่าต่องวด (บาท) *</label>
-                <input id="c_rental_fee" v-model.number="formContract.rental_fee" type="number" required class="form-input" />
+                <AppInput id="c_rental_fee" v-model="formContract.rental_fee" type="number" :error="contractErrors.rental_fee" @blur="validateContractField('rental_fee')" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="c_security_deposit">เงินประกันความเสียหาย (บาท)</label>
-                <input id="c_security_deposit" v-model.number="formContract.security_deposit" type="number" class="form-input" />
+                <AppInput id="c_security_deposit" v-model="formContract.security_deposit" type="number" />
               </div>
 
               <div class="form-group">
                 <label class="form-label" for="c_advance_payment">เงินจ่ายล่วงหน้า (บาท)</label>
-                <input id="c_advance_payment" v-model.number="formContract.advance_payment" type="number" class="form-input" />
+                <AppInput id="c_advance_payment" v-model="formContract.advance_payment" type="number" />
               </div>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="c_terms">ข้อกำหนดพิเศษ / เงื่อนไขสัญญา</label>
-              <textarea id="c_terms" v-model="formContract.terms_and_conditions" rows="2" class="form-textarea" placeholder="เช่น ห้ามโอนสิทธิ์ให้บุคคลอื่น, ห้ามดัดแปลงโครงสร้าง"></textarea>
+              <AppInput id="c_terms" v-model="formContract.terms_and_conditions" type="textarea" :rows="2" placeholder="เช่น ห้ามโอนสิทธิ์ให้บุคคลอื่น, ห้ามดัดแปลงโครงสร้าง" />
             </div>
           </div>
 
@@ -496,6 +494,7 @@ const loadData = async () => {
     const rawStalls = Array.isArray(stallsRes) ? stallsRes : (Array.isArray(stallsRes?.data) ? stallsRes.data : [])
     const rawApps = Array.isArray(appsRes) ? appsRes : (Array.isArray(appsRes?.data) ? appsRes.data : [])
     availableStalls.value = rawStalls.filter((s: any) => s.status === 'available' || s.stall_status === 'available')
+    if (route.query.stall) searchQuery.value = String(route.query.stall)
     filterContracts()
 
     // If query contains new_for_stall (from Approved Lease Application)
@@ -569,7 +568,75 @@ const filterContracts = () => {
   filteredContracts.value = list
 }
 
+const availableStallOptions = computed(() =>
+  availableStalls.value.map((s: any) => ({
+    value: s.id,
+    label: `แผง ${s.stall_number || s.ident} (${s.project_name || s.zone_name || s.zone?.name || `โซน ${s.zone_id}`}) - ฿${Number(s.monthly_rate || s.monthly_rent || 1800).toLocaleString()}/ด.`
+  }))
+)
+
+const billingCycleOptions = [
+  { value: 'monthly', label: 'รายเดือน (Monthly)' },
+  { value: 'daily', label: 'รายวัน (Daily)' }
+]
+
+const contractErrors = reactive({
+  stall_id: '',
+  business_name: '',
+  tenant_name: '',
+  tenant_id_card: '',
+  tenant_phone: '',
+  start_date: '',
+  end_date: '',
+  rental_fee: ''
+})
+
+const resetContractErrors = () => {
+  contractErrors.stall_id = ''
+  contractErrors.business_name = ''
+  contractErrors.tenant_name = ''
+  contractErrors.tenant_id_card = ''
+  contractErrors.tenant_phone = ''
+  contractErrors.start_date = ''
+  contractErrors.end_date = ''
+  contractErrors.rental_fee = ''
+}
+
+const validateContractField = (field: keyof typeof contractErrors) => {
+  if (field === 'stall_id') {
+    contractErrors.stall_id = formContract.value.stall_id ? '' : 'กรุณาเลือกแผงเช่าที่ต้องการเช่า'
+  } else if (field === 'business_name') {
+    contractErrors.business_name = formContract.value.business_name.trim() ? '' : 'กรุณาระบุชื่อร้านค้า'
+  } else if (field === 'tenant_name') {
+    contractErrors.tenant_name = formContract.value.tenant_name.trim() ? '' : 'กรุณาระบุชื่อ-นามสกุลผู้เช่า'
+  } else if (field === 'tenant_id_card') {
+    contractErrors.tenant_id_card = formContract.value.tenant_id_card.trim() ? '' : 'กรุณาระบุเลขประจำตัวประชาชน / Tax ID'
+  } else if (field === 'tenant_phone') {
+    contractErrors.tenant_phone = formContract.value.tenant_phone.trim() ? '' : 'กรุณาระบุเบอร์โทรศัพท์ติดต่อ'
+  } else if (field === 'start_date') {
+    contractErrors.start_date = formContract.value.start_date ? '' : 'กรุณาเลือกวันที่เริ่มต้นสัญญา'
+  } else if (field === 'end_date') {
+    contractErrors.end_date = formContract.value.end_date ? '' : 'กรุณาเลือกวันที่สิ้นสุดสัญญา'
+  } else if (field === 'rental_fee') {
+    const val = Number(formContract.value.rental_fee)
+    contractErrors.rental_fee = String(formContract.value.rental_fee ?? '').trim() === '' || !Number.isFinite(val) || val < 0 ? 'กรุณาระบุค่าเช่าต่องวด' : ''
+  }
+}
+
+const validateContractForm = () => {
+  validateContractField('stall_id')
+  validateContractField('business_name')
+  validateContractField('tenant_name')
+  validateContractField('tenant_id_card')
+  validateContractField('tenant_phone')
+  validateContractField('start_date')
+  validateContractField('end_date')
+  validateContractField('rental_fee')
+  return !Object.values(contractErrors).some(Boolean)
+}
+
 const onStallSelected = () => {
+  validateContractField('stall_id')
   const stall = availableStalls.value.find(s => s.id === formContract.value.stall_id)
   if (stall) {
     const rate = stall.monthly_rate || stall.monthly_rent || 2000
@@ -581,6 +648,7 @@ const onStallSelected = () => {
 }
 
 const openCreateModal = () => {
+  resetContractErrors()
   formContract.value = {
     stall_id: availableStalls.value[0]?.id || '',
     tenant_name: '',
@@ -606,6 +674,7 @@ const openCreateModal = () => {
 }
 
 const submitContract = async () => {
+  if (!validateContractForm()) return
   saving.value = true
   try {
     const selectedStall = availableStalls.value.find(s => s.id === formContract.value.stall_id)
@@ -690,3 +759,12 @@ onMounted(() => {
   loadData()
 })
 </script>
+
+<style scoped>
+.field-error-text {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+</style>

@@ -23,6 +23,12 @@ func NewRepository(db *gorm.DB) domains.Repository {
 func (r *repository) FindAll(filter requests.ContractFilter) ([]models.Contract, error) {
 	var contracts []models.Contract
 	query := r.conn.Model(&models.Contract{}).Where("status = 'A'")
+	if filter.MarketID != 0 {
+		query = query.Where("market_id = ?", filter.MarketID)
+	}
+	if filter.CreatedBy != 0 {
+		query = query.Where("tenant_user_id = ?", filter.CreatedBy)
+	}
 
 	if filter.StallIdent != "" {
 		query = query.Where("stall_ident = ?", filter.StallIdent)
@@ -53,6 +59,31 @@ func (r *repository) Create(contract *models.Contract) error {
 	contract.CreatedAt = now
 	contract.UpdatedAt = now
 	contract.Status = "A"
+	if contract.MarketID == nil {
+		var stall models.Stall
+		query := r.conn.Where("status = 'A'")
+		if contract.StallID != nil && *contract.StallID > 0 {
+			query = query.Where("id = ?", *contract.StallID)
+		} else {
+			query = query.Where("ident = ?", contract.StallIdent)
+		}
+		if query.First(&stall).Error == nil {
+			contract.MarketID = &stall.MarketID
+		}
+	}
+	if contract.TenantUserID == nil && contract.ApplicationID != nil {
+		var application models.Application
+		if r.conn.Select("created_by").First(&application, *contract.ApplicationID).Error == nil {
+			contract.TenantUserID = application.CreatedBy
+		}
+	}
+	if contract.TenantUserID == nil {
+		var booking models.Booking
+		if r.conn.Select("created_by").Where("stall_ident = ? AND created_by IS NOT NULL", contract.StallIdent).
+			Order("id DESC").First(&booking).Error == nil {
+			contract.TenantUserID = booking.CreatedBy
+		}
+	}
 	return r.conn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(contract).Error; err != nil {
 			return err

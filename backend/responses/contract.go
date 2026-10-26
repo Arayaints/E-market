@@ -7,6 +7,8 @@ type ContractResponse struct {
 	ContractNumber  string    `json:"contract_number"`
 	ApplicationID   *int      `json:"application_id,omitempty"`
 	StallID         *int      `json:"stall_id,omitempty"`
+	MarketID        *int      `json:"market_id,omitempty"`
+	TenantUserID    *int      `json:"tenant_user_id,omitempty"`
 	StallIdent      string    `json:"stall_ident"`
 	TenantName      string    `json:"tenant_name"`
 	TenantPhone     string    `json:"tenant_phone"`

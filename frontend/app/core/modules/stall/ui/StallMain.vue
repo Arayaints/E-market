@@ -6,20 +6,12 @@
     <div class="content-body market-detail-page">
       <!-- Breadcrumb -->
       <div class="md-breadcrumb-row">
-        <AppBreadcrumb :current="currentMarket.name" backTo="/" />
+        <AppBreadcrumb v-if="!isStaff" :current="currentMarket.name" backTo="/" />
         <nav v-if="isOfficer" class="md-market-actions" aria-label="เครื่องมือจัดการตลาด">
-          <NuxtLink :to="editMarketLink" class="md-edit-market-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-            <span>แก้ไขข้อมูล</span>
-          </NuxtLink>
-          <NuxtLink :to="visitManagementLink" class="md-edit-market-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            <span>จัดการรอบเข้าชม</span>
-          </NuxtLink>
-          <NuxtLink :to="stallManagementLink" class="md-edit-market-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"></path></svg>
-            <span>จัดการแผง</span>
-          </NuxtLink>
+          <AppButton :to="editMarketLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></template>แก้ไขข้อมูล</AppButton>
+          <AppButton :to="visitManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg></template>จัดการรอบเข้าชม</AppButton>
+          <AppButton :to="stallManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"></path></svg></template>จัดการแผง</AppButton>
+          <AppButton :to="stallInspectLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></template>ดูข้อมูลแผง</AppButton>
         </nav>
       </div>
 
@@ -429,8 +421,9 @@ import { getMarketGisConfig } from '../data/markets_registry'
 const route = useRoute()
 const { get } = useApi()
 const { role } = useAuth()
-const { applyMarketOverride } = useMarketOverrides()
+const { applyMarketOverride, getMarketOverride } = useMarketOverrides()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
+const isStaff = computed(() => role.value === 'staff')
 
 const buildInitialMarket = (queryVal?: any) => {
   const cfg = getMarketGisConfig(String(queryVal || '1'))
@@ -602,6 +595,7 @@ const bookLink = computed(() => isOfficer.value
 const editMarketLink = computed(() => `/markets/${currentMarket.value.id || route.query.market || 1}/edit`)
 const visitManagementLink = computed(() => `/stalls/visit-schedule?market=${currentMarket.value.id || route.query.market || 1}`)
 const stallManagementLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}`)
+const stallInspectLink = computed(() => `/stalls/manage?market=${currentMarket.value.id || route.query.market || 1}&mode=inspect`)
 
 // แยก "เสาร์ - อาทิตย์ 09:00 - 18:00 น." เป็นวัน / เวลา
 const operatingDays = computed(() => {
@@ -617,14 +611,16 @@ const operatingTime = computed(() => {
 })
 
 const priceRange = computed(() => {
-  const min = Number(gisStallSummary.value?.minRent || currentMarket.value.starting_price_monthly || 1800)
-  const max = Number(gisStallSummary.value?.maxRent || currentMarket.value.max_price_monthly || min)
+  const saved = getMarketOverride(currentMarket.value?.id) || getMarketOverride(currentMarket.value?.slug)
+  const min = Number(saved?.starting_price_monthly ?? gisStallSummary.value?.minRent ?? currentMarket.value.starting_price_monthly ?? 1800)
+  const max = Number(saved?.max_price_monthly ?? gisStallSummary.value?.maxRent ?? currentMarket.value.max_price_monthly ?? min)
   return min === max ? `${min.toLocaleString()}` : `${min.toLocaleString()} - ${max.toLocaleString()}`
 })
 
 const areaRange = computed(() => {
-  const min = Number(gisStallSummary.value?.minAreaSqm || currentMarket.value.min_area_sqm || 4)
-  const max = Number(gisStallSummary.value?.maxAreaSqm || currentMarket.value.max_area_sqm || min)
+  const saved = getMarketOverride(currentMarket.value?.id) || getMarketOverride(currentMarket.value?.slug)
+  const min = Number(saved?.min_area_sqm ?? gisStallSummary.value?.minAreaSqm ?? currentMarket.value.min_area_sqm ?? 4)
+  const max = Number(saved?.max_area_sqm ?? gisStallSummary.value?.maxAreaSqm ?? currentMarket.value.max_area_sqm ?? min)
   const fmt = (val: number) => Number(val.toFixed(1)).toLocaleString()
   return Math.abs(min - max) < 0.05 ? fmt(min) : `${fmt(min)} - ${fmt(max)}`
 })

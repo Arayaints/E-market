@@ -22,17 +22,22 @@ func NewUseCase(repo domains.Repository) domains.UseCase {
 	return &useCase{repo: repo}
 }
 
-func toUserResponse(u *models.User) responses.UserResponse {
-	return responses.UserResponse{
-		ID:        u.ID,
-		Username:  u.Username,
-		FullName:  u.FullName,
-		Role:      u.Role,
-		Email:     u.Email,
-		Phone:     u.Phone,
-		Status:    u.Status,
-		CreatedAt: u.CreatedAt,
+func (u *useCase) toUserResponse(user *models.User) responses.UserResponse {
+	res := responses.UserResponse{
+		ID: user.ID, Username: user.Username, FullName: user.FullName,
+		Role: user.Role, Email: user.Email, Phone: user.Phone,
+		Status: user.Status, CreatedAt: user.CreatedAt,
 	}
+	if user.Role == "staff" {
+		if markets, err := u.repo.FindAssignedMarkets(user.ID); err == nil {
+			for _, market := range markets {
+				res.AssignedMarkets = append(res.AssignedMarkets, responses.AssignedMarketResponse{
+					ID: market.ID, Slug: market.Slug, Code: market.Code, Name: market.Name, District: market.District,
+				})
+			}
+		}
+	}
+	return res
 }
 
 func (u *useCase) Login(req requests.LoginRequest) (*responses.LoginResponse, error) {
@@ -66,7 +71,7 @@ func (u *useCase) Login(req requests.LoginRequest) (*responses.LoginResponse, er
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
 		Role:         user.Role,
-		User:         toUserResponse(user),
+		User:         u.toUserResponse(user),
 	}
 	return &res, nil
 }
@@ -80,6 +85,6 @@ func (u *useCase) GetProfile(userID int) (*responses.UserResponse, error) {
 		logs.Error(err)
 		return nil, responses.NewInternalServerError()
 	}
-	res := toUserResponse(user)
+	res := u.toUserResponse(user)
 	return &res, nil
 }
