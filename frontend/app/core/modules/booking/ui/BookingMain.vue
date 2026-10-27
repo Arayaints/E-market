@@ -12,14 +12,17 @@
           <h1 class="main-page-title">การจองของฉัน</h1>
 
           <div class="page-header-actions">
-            <button
-              class="btn btn-outline-danger btn-sm"
+            <AppButton
+              variant="danger-outline"
+              size="sm"
               @click="handleClearAllData"
               title="ล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบ Flow ใหม่จาก 0"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <template #prefix>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </template>
               <span>รีเซ็ตข้อมูลทดสอบ</span>
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -1059,24 +1062,14 @@
 
           <div class="page-header-actions">
             <AppButton
-              variant="secondary"
-              size="sm"
-              @click="openPolicySettingsModal"
-              title="กำหนดระยะเวลายื่นคำร้องขอเช่าหลังจากดูแผง และระยะเวลาตอบรับคิวรอ"
-            >
-              <template #prefix>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              </template>
-              <span>ตั้งค่าเวลายื่นคำร้อง ({{ policyLeaseDeadlineDays }} วัน)</span>
-            </AppButton>
-            <button
-              class="btn btn-outline-danger btn-sm"
               @click="handleClearAllData"
               title="ล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบ Flow ใหม่จาก 0"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <template #prefix>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </template>
               <span>รีเซ็ตข้อมูลทดสอบ</span>
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -5045,26 +5038,12 @@ const confirmSelectSlot = async () => {
   }
 }
 
+const { resetTestData } = useResetTestData()
+
 const handleClearAllData = async () => {
-  const confirmed = await showConfirm(
-    'คุณต้องการล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบจากศูนย์ ใช่หรือไม่?',
-    {
-      title: 'ยืนยันล้างข้อมูลทดสอบ',
-      type: 'error',
-      icon: 'trash',
-      confirmText: 'ล้างข้อมูลทั้งหมด',
-      cancelText: 'ยกเลิก'
-    }
-  )
-  if (confirmed) {
-    try {
-      await post('/bookings/clear')
-      await loadBookings()
-      await showSuccess('ล้างข้อมูลการจองและคำร้องทั้งหมดเรียบร้อยแล้ว ทุกแผงกลับเป็นสถานะว่างพร้อมทดสอบ!', 'ล้างข้อมูลสำเร็จ')
-    } catch (err: any) {
-      await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการล้างข้อมูล', 'ล้างข้อมูลไม่สำเร็จ')
-    }
-  }
+  await resetTestData(async () => {
+    await loadBookings()
+  })
 }
 
 watch(

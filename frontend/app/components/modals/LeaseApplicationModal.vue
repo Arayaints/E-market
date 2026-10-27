@@ -328,40 +328,7 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const periodMonths = Number(form.value.requested_period_months) || 12
-    const appNumbers: string[] = []
-    for (const targetRecord of selectedStallRecords.value) {
-      const rawId = targetRecord?.stall_id || targetRecord?.stall_number || props.stall?.id || 1
-      const numericStallId = typeof rawId === 'number'
-        ? rawId
-        : (typeof rawId === 'string' && /^\d+$/.test(rawId) ? Number(rawId) : undefined)
-      const stallCode = targetRecord?.stall_number || props.stall?.stall_number || ''
-      const monthlyRate = Number(targetRecord?.stall_monthly_rate || targetRecord?.monthly_rent || 3600)
-      const res: any = await post('/applications', {
-        stall_id: numericStallId,
-        stall_ident: stallCode,
-        stall_number: stallCode,
-        market_name: targetRecord?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
-        booking_id: targetRecord?.id || null,
-        monthly_rate: monthlyRate,
-        applicant_name: form.value.applicant_name,
-        applicant_id_card: form.value.applicant_id_card,
-        applicant_phone: form.value.applicant_phone,
-        applicant_email: form.value.applicant_email,
-        applicant_address: form.value.applicant_address,
-        shop_name: form.value.shop_name,
-        product_type: form.value.product_type,
-        product_category: form.value.product_type,
-        requested_start_date: form.value.requested_start_date,
-        requested_period_months: periodMonths,
-        lease_term_months: periodMonths,
-        proposed_rent_type: form.value.proposed_rent_type
-      })
-      const createdApp = res?.data || res
-      const appNo = createdApp?.application_number || createdApp?.application_no || res?.application_number || res?.application_no || ''
-      if (appNo) appNumbers.push(appNo)
-    }
 
-    successAppNumber.value = appNumbers.join(', ')
     isSuccess.value = true
     emit('success')
   } catch (err: any) {
