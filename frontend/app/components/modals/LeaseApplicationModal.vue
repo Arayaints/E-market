@@ -293,6 +293,7 @@ const handleSubmit = async () => {
       stall_id: numericStallId,
       stall_ident: targetStallNumber.value,
       stall_number: targetStallNumber.value,
+      market_id: targetRecord?.market_id || props.stall?.market_id || undefined,
       market_name: targetRecord?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
       booking_id: targetRecord?.id || null,
       applicant_name: form.value.applicant_name,
@@ -306,7 +307,8 @@ const handleSubmit = async () => {
       requested_start_date: form.value.requested_start_date,
       requested_period_months: periodMonths,
       lease_term_months: periodMonths,
-      proposed_rent_type: form.value.proposed_rent_type
+      proposed_rent_type: form.value.proposed_rent_type,
+      details: `ยื่นขอเช่าแผง ${targetStallNumber.value} เพื่อจำหน่าย${form.value.product_type} ในนามร้าน ${form.value.shop_name} ระยะเวลา ${periodMonths} เดือน`
     })
 
     const createdApp = res?.data || res

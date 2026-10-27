@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"emarket-api/models"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -36,6 +36,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Booking{},
 		&models.Notification{},
 		&models.Application{},
+		&models.ApplicationType{},
 		&models.Contract{},
 		&models.Item{},
 	)

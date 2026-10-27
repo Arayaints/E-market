@@ -12,14 +12,17 @@
           <h1 class="main-page-title">การจองของฉัน</h1>
 
           <div class="page-header-actions">
-            <button
-              class="btn btn-outline-danger btn-sm"
+            <AppButton
+              variant="danger-outline"
+              size="sm"
               @click="handleClearAllData"
               title="ล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบ Flow ใหม่จาก 0"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <template #prefix>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </template>
               <span>รีเซ็ตข้อมูลทดสอบ</span>
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -941,14 +944,17 @@
           <h1 class="main-page-title">จัดการนัดชมแผง</h1>
 
           <div class="page-header-actions">
-            <button
-              class="btn btn-outline-danger btn-sm"
+            <AppButton
+              variant="danger-outline"
+              size="sm"
               @click="handleClearAllData"
               title="ล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบ Flow ใหม่จาก 0"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <template #prefix>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </template>
               <span>รีเซ็ตข้อมูลทดสอบ</span>
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -4230,26 +4236,12 @@ const confirmSelectSlot = async () => {
   }
 }
 
+const { resetTestData } = useResetTestData()
+
 const handleClearAllData = async () => {
-  const confirmed = await showConfirm(
-    'คุณต้องการล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบจากศูนย์ ใช่หรือไม่?',
-    {
-      title: 'ยืนยันล้างข้อมูลทดสอบ',
-      type: 'error',
-      icon: 'trash',
-      confirmText: 'ล้างข้อมูลทั้งหมด',
-      cancelText: 'ยกเลิก'
-    }
-  )
-  if (confirmed) {
-    try {
-      await post('/bookings/clear')
-      await loadBookings()
-      await showSuccess('ล้างข้อมูลการจองและคำร้องทั้งหมดเรียบร้อยแล้ว ทุกแผงกลับเป็นสถานะว่างพร้อมทดสอบ!', 'ล้างข้อมูลสำเร็จ')
-    } catch (err: any) {
-      await showError(err?.data?.detail || 'เกิดข้อผิดพลาดในการล้างข้อมูล', 'ล้างข้อมูลไม่สำเร็จ')
-    }
-  }
+  await resetTestData(async () => {
+    await loadBookings()
+  })
 }
 
 watch(

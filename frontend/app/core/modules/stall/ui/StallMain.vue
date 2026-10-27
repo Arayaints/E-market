@@ -12,6 +12,7 @@
           <AppButton :to="visitManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg></template>จัดการรอบเข้าชม</AppButton>
           <AppButton :to="stallManagementLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z"></path></svg></template>จัดการแผง</AppButton>
           <AppButton :to="stallInspectLink" variant="outline" size="md"><template #prefix><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></template>ดูข้อมูลแผง</AppButton>
+          <AppButton variant="danger-outline" size="md" @click="handleClearAllData" title="ล้างข้อมูลการจองและคำร้องทั้งหมด เพื่อเริ่มทดสอบ Flow ใหม่จาก 0"><template #prefix><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></template>รีเซ็ตข้อมูลทดสอบ</AppButton>
         </nav>
       </div>
 
@@ -422,8 +423,15 @@ const route = useRoute()
 const { get } = useApi()
 const { role } = useAuth()
 const { applyMarketOverride, getMarketOverride } = useMarketOverrides()
+const { resetTestData } = useResetTestData()
 const isOfficer = computed(() => role.value === 'admin' || role.value === 'staff')
 const isStaff = computed(() => role.value === 'staff')
+
+const handleClearAllData = async () => {
+  await resetTestData(async () => {
+    await loadMarketDetailData(route.query.market)
+  })
+}
 
 const buildInitialMarket = (queryVal?: any) => {
   const cfg = getMarketGisConfig(String(queryVal || '1'))
