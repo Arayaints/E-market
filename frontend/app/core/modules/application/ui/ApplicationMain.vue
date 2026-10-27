@@ -881,7 +881,7 @@
               />
             </div>
             <div class="form-group">
-              <label class="form-label">ชื่อร้านค้า / กิจการ (ถ้ามี)</label>
+              <label class="form-label">ชื่อร้านค้า / กิจการ</label>
               <input
                 v-model="generalForm.shop_name"
                 type="text"
