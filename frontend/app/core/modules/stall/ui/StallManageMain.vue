@@ -323,149 +323,46 @@
             </div>
           </div>
 
-          <!-- 2. Floating Filter Bar ลอยอยู่บนแผนที่สำหรับโหมดข้อมูลตลาด (/stalls/map) แบบ Compact Chips เรียบร้อย ไม่ซ้อนทับ -->
-          <div v-if="isMapOverviewMode" class="map-floating-overlay-bar">
-            <div class="map-overlay-left-cluster">
-              <!-- Mode Switcher Pill: สลับระหว่างสถานะแผง และ Heatmap ระดับความต้องการ -->
-              <div class="map-view-toggle-pill" role="tablist" aria-label="สลับมุมมองข้อมูลผัง">
-                <button
-                  type="button"
-                  role="tab"
-                  class="view-toggle-btn"
-                  :class="{ active: !demandViewMode }"
-                  :aria-selected="!demandViewMode"
-                  @click="demandViewMode = false"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                  </svg>
-                  <span>สถานะแผง</span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  class="view-toggle-btn is-demand"
-                  :class="{ active: demandViewMode }"
-                  :aria-selected="demandViewMode"
-                  @click="demandViewMode = true"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-                  </svg>
-                  <span>ระดับความต้องการ</span>
-                  <span class="demand-live-pulse-dot"></span>
-                </button>
-              </div>
-
-              <!-- View 1: Status Filter Chips -->
-              <div v-if="!demandViewMode" class="map-floating-chips-group" aria-label="กรองสถานะแผงเช่า">
-                <button
-                  type="button"
-                  class="map-filter-chip chip-total"
-                  :class="{ active: dashboardStatusFilter === 'all' }"
-                  @click="setDashboardStatusFilter('all')"
-                >
-                  <span class="chip-label">ทั้งหมด</span>
-                  <strong class="chip-badge">{{ currentDisplayedSummary.total }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-available"
-                  :class="{ active: dashboardStatusFilter === 'available' }"
-                  @click="setDashboardStatusFilter('available')"
-                >
-                  <span class="chip-color-dot is-available"></span>
-                  <span class="chip-label">ว่าง</span>
-                  <strong class="chip-badge">{{ currentDisplayedSummary.available }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-reserved"
-                  :class="{ active: dashboardStatusFilter === 'reserved' }"
-                  @click="setDashboardStatusFilter('reserved')"
-                >
-                  <span class="chip-color-dot is-reserved"></span>
-                  <span class="chip-label">ติดจอง</span>
-                  <strong class="chip-badge">{{ currentDisplayedSummary.reserved }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-occupied"
-                  :class="{ active: dashboardStatusFilter === 'occupied' }"
-                  @click="setDashboardStatusFilter('occupied')"
-                >
-                  <span class="chip-color-dot is-occupied"></span>
-                  <span class="chip-label">มีผู้เช่า</span>
-                  <strong class="chip-badge">{{ currentDisplayedSummary.occupied }}</strong>
-                </button>
-              </div>
-
-              <!-- View 2: Demand Heatmap Filter Chips -->
-              <div v-else class="map-floating-chips-group is-demand-chips" aria-label="กรองระดับความต้องการ">
-                <button
-                  type="button"
-                  class="map-filter-chip chip-demand-total"
-                  :class="{ active: demandLevelFilter === 'all' }"
-                  @click="demandLevelFilter = 'all'"
-                >
-                  <span class="chip-label">ทั้งหมด</span>
-                  <strong class="chip-badge">{{ currentDisplayedDemandSummary.total }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-demand-high"
-                  :class="{ active: demandLevelFilter === 'high' }"
-                  @click="demandLevelFilter = demandLevelFilter === 'high' ? 'all' : 'high'"
-                >
-                  <span class="chip-color-dot is-high"></span>
-                  <span class="chip-label">สูงมาก (≥3)</span>
-                  <strong class="chip-badge">{{ currentDisplayedDemandSummary.high }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-demand-medium"
-                  :class="{ active: demandLevelFilter === 'medium' }"
-                  @click="demandLevelFilter = demandLevelFilter === 'medium' ? 'all' : 'medium'"
-                >
-                  <span class="chip-color-dot is-medium"></span>
-                  <span class="chip-label">ปานกลาง (1-2)</span>
-                  <strong class="chip-badge">{{ currentDisplayedDemandSummary.medium }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-demand-low"
-                  :class="{ active: demandLevelFilter === 'low' }"
-                  @click="demandLevelFilter = demandLevelFilter === 'low' ? 'all' : 'low'"
-                >
-                  <span class="chip-color-dot is-low"></span>
-                  <span class="chip-label">มีผู้จองหลัก</span>
-                  <strong class="chip-badge">{{ currentDisplayedDemandSummary.low }}</strong>
-                </button>
-
-                <button
-                  type="button"
-                  class="map-filter-chip chip-demand-none"
-                  :class="{ active: demandLevelFilter === 'none' }"
-                  @click="demandLevelFilter = demandLevelFilter === 'none' ? 'all' : 'none'"
-                >
-                  <span class="chip-color-dot is-none"></span>
-                  <span class="chip-label">แผงว่าง</span>
-                  <strong class="chip-badge">{{ currentDisplayedDemandSummary.none }}</strong>
-                </button>
-              </div>
+          <!-- ภาพรวมตลาด: KPI ลอยเหนือผัง และเครื่องมือแบบแนวตั้งด้านขวา -->
+          <div v-if="isMapOverviewMode" class="market-map-kpi-strip" aria-label="สรุปสถานะแผงเช่า">
+            <button type="button" class="market-map-kpi is-total" :class="{ active: dashboardStatusFilter === 'all' }" @click="setDashboardStatusFilter('all')">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></svg></span>
+              <span class="market-map-kpi-copy"><small>ทั้งหมด</small><strong>{{ currentDisplayedSummary.total.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
+            </button>
+            <button type="button" class="market-map-kpi is-available" :class="{ active: dashboardStatusFilter === 'available' }" @click="setDashboardStatusFilter('available')">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg></span>
+              <span class="market-map-kpi-copy"><small>ว่าง</small><strong>{{ currentDisplayedSummary.available.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
+            </button>
+            <button type="button" class="market-map-kpi is-reserved" :class="{ active: dashboardStatusFilter === 'reserved' }" @click="setDashboardStatusFilter('reserved')">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <span class="market-map-kpi-copy"><small>ติดจอง</small><strong>{{ currentDisplayedSummary.reserved.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
+            </button>
+            <button type="button" class="market-map-kpi is-occupied" :class="{ active: dashboardStatusFilter === 'occupied' }" @click="setDashboardStatusFilter('occupied')">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>
+              <span class="market-map-kpi-copy"><small>มีผู้เช่า</small><strong>{{ currentDisplayedSummary.occupied.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
+            </button>
+            <div class="market-map-kpi is-overdue">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+              <span class="market-map-kpi-copy"><small>ค้างชำระ</small><strong>{{ marketMapRiskSummary.overdue.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
             </div>
+            <div class="market-map-kpi is-expiring">
+              <span class="market-map-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>
+              <span class="market-map-kpi-copy"><small>ใกล้หมดสัญญา</small><strong>{{ marketMapRiskSummary.expiring.toLocaleString('th-TH') }} <em>แผง</em></strong></span>
+            </div>
+          </div>
 
-            <!-- Right: GIS Map Toolbar (teleported map mode tab + search) -->
+          <div v-if="isMapOverviewMode" class="market-map-tool-rail" aria-label="เครื่องมือแผนที่">
             <div id="step1-map-toolbar" class="gis-map-toolbar"></div>
+            <button
+              type="button"
+              class="market-map-view-button"
+              :class="{ active: dashboardStatusFilter === 'all' }"
+              title="แสดงแผงทั้งหมด"
+              aria-label="แสดงแผงทั้งหมด"
+              @click="setDashboardStatusFilter('all')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
           </div>
           <MarketProjectsOverviewMap
             ref="mapRef"
@@ -3642,6 +3539,39 @@ const currentDisplayedSummary = computed(() => {
   }
 })
 
+const marketMapRiskSummary = computed(() => {
+  const overdueStalls = new Set<string>()
+  const expiringStalls = new Set<string>()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiringCutoff = new Date(today)
+  expiringCutoff.setDate(expiringCutoff.getDate() + 30)
+
+  marketContracts.value.forEach((contract: any) => {
+    const contractStatus = String(contract.contract_state || contract.status || '').toLowerCase()
+    if (['terminated', 'cancelled', 'expired'].includes(contractStatus)) return
+
+    const stallCode = String(contract.stall_ident || contract.stall_number || contract.stall_code || contract.id || '').trim().toUpperCase()
+    if (!stallCode) return
+
+    const paymentStatus = String(contract.payment_status || contract.rent_status || contract.billing_status || '').toLowerCase()
+    const dueDateValue = contract.payment_due_date || contract.due_date || contract.next_due_date
+    const dueDate = dueDateValue ? new Date(dueDateValue) : null
+    const isPastDue = dueDate instanceof Date && !Number.isNaN(dueDate.getTime()) && dueDate < today
+    if (paymentStatus === 'overdue' || paymentStatus === 'past_due' || (isPastDue && paymentStatus !== 'paid')) {
+      overdueStalls.add(stallCode)
+    }
+
+    const endDateValue = contract.end_date || contract.contract_end_date
+    const endDate = endDateValue ? new Date(endDateValue) : null
+    if (endDate instanceof Date && !Number.isNaN(endDate.getTime()) && endDate >= today && endDate <= expiringCutoff) {
+      expiringStalls.add(stallCode)
+    }
+  })
+
+  return { overdue: overdueStalls.size, expiring: expiringStalls.size }
+})
+
 const currentDisplayedDemandSummary = computed(() => {
   if (selectedProject.value) {
     const p = selectedProject.value
@@ -5292,6 +5222,268 @@ input,textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-
 
 .is-fullscreen-map-panel :deep(.inspect-selected-stall-drawer.is-full-detail-mode) {
   width: min(560px, calc(100vw - 36px)) !important;
+}
+
+/* Market information overview: six KPI cards floating above the GIS map. */
+.market-map-kpi-strip {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  right: 76px;
+  z-index: 110;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  pointer-events: none;
+}
+
+.market-map-kpi {
+  min-width: 0;
+  min-height: 82px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11);
+  color: #475569;
+  font-family: inherit;
+  text-align: left;
+  pointer-events: auto;
+}
+
+button.market-map-kpi {
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+button.market-map-kpi:hover {
+  transform: translateY(-1px);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.14);
+}
+
+.market-map-kpi.active {
+  border: 2px solid #3b82f6;
+  padding: 12px 13px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+}
+
+.market-map-kpi-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.market-map-kpi-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.market-map-kpi-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.market-map-kpi-copy small {
+  overflow: hidden;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-map-kpi-copy strong {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #0f172a;
+  font-size: clamp(1.15rem, 1.45vw, 1.55rem);
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.market-map-kpi-copy em {
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.market-map-kpi.is-available .market-map-kpi-icon,
+.market-map-kpi.is-available .market-map-kpi-copy em { background: #ecfdf5; color: #059669; }
+.market-map-kpi.is-reserved .market-map-kpi-icon,
+.market-map-kpi.is-reserved .market-map-kpi-copy em { background: #fff7ed; color: #ea580c; }
+.market-map-kpi.is-occupied .market-map-kpi-icon,
+.market-map-kpi.is-occupied .market-map-kpi-copy em { background: #f1f5f9; color: #475569; }
+.market-map-kpi.is-overdue .market-map-kpi-icon,
+.market-map-kpi.is-overdue .market-map-kpi-copy em { background: #fef2f2; color: #dc2626; }
+.market-map-kpi.is-expiring .market-map-kpi-icon,
+.market-map-kpi.is-expiring .market-map-kpi-copy em { background: #f5f3ff; color: #7c3aed; }
+
+/* Compact vertical map tools on the right: search, filters, and demand view. */
+.market-map-tool-rail {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 115;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4px 0;
+  border: 1px solid #e2e8f0;
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  transform: translateY(-50%);
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.master-map-top-bar),
+.market-map-tool-rail .gis-map-toolbar :deep(.master-map-tools-right) {
+  width: auto;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.search-input-group),
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-wrap) {
+  width: 52px;
+  height: 52px;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.search-input-group) {
+  transition: width 0.18s ease;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.search-input-group:focus-within) {
+  position: absolute;
+  top: 4px;
+  right: 60px;
+  width: min(320px, calc(100vw - 100px));
+  filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.14));
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-search-input) {
+  width: 100%;
+  height: 52px;
+  padding: 8px 10px 8px 50px;
+  border: 0;
+  border-radius: 10px 0 0 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.search-input-group:focus-within .map-search-input) {
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: text;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-search-input::placeholder) { color: transparent; }
+.market-map-tool-rail .gis-map-toolbar :deep(.search-input-group:focus-within .map-search-input::placeholder) { color: #94a3b8; }
+.market-map-tool-rail .gis-map-toolbar :deep(.search-icon) { left: 17px; color: #334155; }
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-btn),
+.market-map-view-button {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  border-top: 1px solid #eef2f6;
+  border-radius: 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-btn svg),
+.market-map-view-button svg {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  color: #334155;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-btn:hover),
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-btn.active),
+.market-map-view-button:hover,
+.market-map-view-button.active {
+  background: #eff6ff;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-filter-panel) {
+  top: 0;
+  right: 62px;
+}
+
+.market-map-tool-rail .gis-map-toolbar :deep(.map-advanced-count) {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: #ffffff;
+}
+
+.market-map-view-button.active svg { color: #2563eb; }
+
+.is-fullscreen-map-panel :deep(.map-project-guidance),
+.is-fullscreen-map-panel :deep(.map-floating-floor-preview-pill) {
+  top: 114px !important;
+}
+
+@media (max-width: 1280px) {
+  .market-map-kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .is-fullscreen-map-panel :deep(.map-project-guidance),
+  .is-fullscreen-map-panel :deep(.map-floating-floor-preview-pill) {
+    top: 208px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .market-map-kpi-strip {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .market-map-kpi-strip::-webkit-scrollbar { display: none; }
+  .market-map-kpi { min-width: 184px; min-height: 72px; padding: 10px 12px; }
+  .market-map-kpi.active { padding: 9px 11px; }
+  .market-map-tool-rail { right: 10px; border-right: 1px solid #e2e8f0; border-radius: 14px; }
+  .is-fullscreen-map-panel :deep(.map-project-guidance),
+  .is-fullscreen-map-panel :deep(.map-floating-floor-preview-pill) { top: 96px !important; }
 }
 
 /* Floating Filter Bar & Quick Stats in Sleek Pill/Chip Style (Non-overlapping) */

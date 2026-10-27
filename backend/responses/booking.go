@@ -83,6 +83,7 @@ type WaitlistResponse struct {
 	Position              int        `json:"position"`
 	Status                string     `json:"status"`
 	DismissReason         string     `json:"dismiss_reason,omitempty"`
+	TenantDismissed       bool       `json:"tenant_dismissed"`
 	OfferedAt             *time.Time `json:"offered_at,omitempty"`
 	ExpiresAt             *time.Time `json:"expires_at,omitempty"`
 	OfferExpiresAt        *time.Time `json:"offer_expires_at,omitempty"`

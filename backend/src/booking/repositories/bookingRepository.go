@@ -807,9 +807,11 @@ func (r *repository) CreateWaitlist(item *models.Waitlist) error {
 func (r *repository) FindWaitlistByTenant(userID int) ([]models.Waitlist, error) {
 	_ = r.ProcessWaitlistLifecycle()
 	var items []models.Waitlist
-	query := r.conn.Where("status IN ('waiting', 'offered', 'cancelled', 'expired', 'withdrawn')")
+	query := r.conn.Where("1 = 1")
 	if userID > 0 {
-		query = query.Where("tenant_id = ?", userID)
+		query = query.Where("tenant_id = ? AND tenant_dismissed = false AND status != 'withdrawn'", userID)
+	} else {
+		query = query.Where("status IN ('waiting', 'offered', 'cancelled', 'expired', 'withdrawn')")
 	}
 	err := query.
 		Order("CASE WHEN status = 'offered' THEN 0 WHEN status = 'waiting' THEN 1 ELSE 2 END ASC, position ASC, updated_at DESC, created_at DESC").
@@ -838,34 +840,43 @@ func (r *repository) FindWaitlistByID(id int) (*models.Waitlist, error) {
 func (r *repository) WithdrawWaitlist(item *models.Waitlist) error {
 	return r.conn.Transaction(func(tx *gorm.DB) error {
 		wasOffered := item.Status == "offered"
+		wasActive := item.Status == "waiting" || item.Status == "offered"
 		now := time.Now()
-		dismissReason := item.DismissReason
-		if dismissReason == "" {
-			dismissReason = "ยกเลิกการรอคิว"
+
+		updates := map[string]interface{}{
+			"tenant_dismissed": true,
+			"updated_at":       now,
 		}
-		if err := tx.Model(item).Updates(map[string]interface{}{
-			"status":         "withdrawn",
-			"dismiss_reason": dismissReason,
-			"updated_at":     now,
-		}).Error; err != nil {
+		if wasActive {
+			dismissReason := item.DismissReason
+			if dismissReason == "" {
+				dismissReason = "ผู้เช่ายกเลิกการรอคิวด้วยตนเอง"
+			}
+			updates["status"] = "withdrawn"
+			updates["dismiss_reason"] = dismissReason
+		}
+
+		if err := tx.Model(item).Updates(updates).Error; err != nil {
 			return err
 		}
 
-		// Re-index remaining active waitlist items
-		var remaining []models.Waitlist
-		if err := tx.Where("stall_ident = ? AND status IN ('waiting', 'offered')", item.StallIdent).
-			Order("position ASC, id ASC").Find(&remaining).Error; err != nil {
-			return err
-		}
-		for i := range remaining {
-			if err := tx.Model(&remaining[i]).Update("position", i+1).Error; err != nil {
+		// Re-index remaining active waitlist items only if the withdrawing item was active
+		if wasActive {
+			var remaining []models.Waitlist
+			if err := tx.Where("stall_ident = ? AND status IN ('waiting', 'offered')", item.StallIdent).
+				Order("position ASC, id ASC").Find(&remaining).Error; err != nil {
 				return err
 			}
-		}
+			for i := range remaining {
+				if err := tx.Model(&remaining[i]).Update("position", i+1).Error; err != nil {
+					return err
+				}
+			}
 
-		// If the person who withdrew was holding the active offer, promote the next person or release the stall!
-		if wasOffered {
-			return promoteOrReleaseStallOnTx(tx, item.StallIdent)
+			// If the person who withdrew was holding the active offer, promote the next person or release the stall!
+			if wasOffered {
+				return promoteOrReleaseStallOnTx(tx, item.StallIdent)
+			}
 		}
 		return nil
 	})

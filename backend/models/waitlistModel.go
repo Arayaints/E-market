@@ -17,6 +17,7 @@ type Waitlist struct {
 	Position           int        `gorm:"not null;column:position;index:idx_waitlist_stall_position" json:"position"`
 	Status             string     `gorm:"size:30;not null;default:'waiting';index" json:"status"` // waiting, offered, accepted, withdrawn, expired, cancelled
 	DismissReason      string     `gorm:"size:255;column:dismiss_reason" json:"dismiss_reason,omitempty"`
+	TenantDismissed    bool       `gorm:"column:tenant_dismissed;default:false" json:"tenant_dismissed"`
 	OfferedAt          *time.Time `gorm:"column:offered_at" json:"offered_at,omitempty"`
 	ExpiresAt          *time.Time `gorm:"column:expires_at" json:"expires_at,omitempty"`
 	NearExpiryNotified bool       `gorm:"column:near_expiry_notified;default:false" json:"near_expiry_notified"`

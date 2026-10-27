@@ -1031,6 +1031,7 @@ func toWaitlistResponse(item *models.Waitlist) responses.WaitlistResponse {
 		Position:              item.Position,
 		Status:                item.Status,
 		DismissReason:         dismissReason,
+		TenantDismissed:       item.TenantDismissed,
 		OfferedAt:             item.OfferedAt,
 		ExpiresAt:             expPtr,
 		OfferExpiresAt:        expPtr,
@@ -1167,9 +1168,6 @@ func (u *useCase) WithdrawWaitlist(id int, userID int, actorRole string) error {
 	}
 	if !canManageBookings(actorRole) && item.TenantID != userID {
 		return responses.NewAppErr(http.StatusForbidden, "คุณไม่มีสิทธิ์ออกจากคิวนี้")
-	}
-	if item.Status != "waiting" && item.Status != "offered" && item.Status != "cancelled" && item.Status != "expired" {
-		return responses.NewAppErr(http.StatusConflict, "รายการคิวนี้ไม่สามารถยกเลิกได้")
 	}
 	if err := u.repo.WithdrawWaitlist(item); err != nil {
 		logs.Error(err)

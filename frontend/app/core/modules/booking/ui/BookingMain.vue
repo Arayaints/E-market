@@ -32,7 +32,7 @@
           <button type="button" :class="{ active: tenantBookingSection === 'interests' }" @click="tenantBookingSection = 'interests'">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             <span>แผงที่สนใจ</span>
-            <span class="tab-count-badge">{{ waitlistItems.length }}</span>
+            <span class="tab-count-badge">{{ tenantVisibleWaitlistItems.length }}</span>
           </button>
         </nav>
 
@@ -933,12 +933,12 @@
           <div class="card-header-row">
             <div class="header-left">
               <h2 class="section-title">แผงที่สนใจ (Waiting List)</h2>
-              <div class="item-count-subtitle">{{ waitlistItems.length }} รายการ</div>
+              <div class="item-count-subtitle">{{ tenantVisibleWaitlistItems.length }} รายการ</div>
             </div>
           </div>
-          <div v-if="waitlistItems.length" class="waitlist-list">
+          <div v-if="tenantVisibleWaitlistItems.length" class="waitlist-list">
             <article
-              v-for="item in waitlistItems"
+              v-for="item in tenantVisibleWaitlistItems"
               :key="item.id"
               class="waitlist-item"
               :style="item.status === 'offered' ? 'border-color: #60a5fa; background: #eff6ff;' : (item.status === 'cancelled' || item.status === 'expired' ? 'border-color: #e2e8f0; background: #f8fafc;' : '')"
@@ -1030,14 +1030,14 @@
                   ยื่นคำร้องขอดูแผง
                 </AppButton>
                 <AppButton
-                  :variant="item.status === 'cancelled' || item.status === 'expired' ? 'secondary' : 'danger-outline'"
+                  :variant="item.status === 'cancelled' || item.status === 'expired' || item.status === 'withdrawn' ? 'secondary' : 'danger-outline'"
                   size="sm"
                   @click="withdrawWaitlist(item)"
                 >
-                  <template #prefix v-if="item.status === 'cancelled' || item.status === 'expired'">
+                  <template #prefix v-if="item.status === 'cancelled' || item.status === 'expired' || item.status === 'withdrawn'">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   </template>
-                  <span>{{ item.status === 'offered' ? 'สละสิทธิ์ / ออกจากคิว' : (item.status === 'cancelled' || item.status === 'expired' ? 'นำออกจากรายการ' : 'ออกจากคิว') }}</span>
+                  <span>{{ (item.status === 'cancelled' || item.status === 'expired' || item.status === 'withdrawn') ? 'ลบรายการออก' : (item.status === 'offered' ? 'สละสิทธิ์ / ออกจากคิว' : 'ออกจากคิว') }}</span>
                 </AppButton>
               </div>
             </article>
@@ -2591,6 +2591,9 @@ const loading = ref(true)
 const bookings = ref<any[]>([])
 const waitlistItems = ref<any[]>([])
 const selectedStallWaitlistItems = ref<any[]>([])
+const tenantVisibleWaitlistItems = computed(() => {
+  return waitlistItems.value.filter(item => !item.tenant_dismissed && item.status !== 'withdrawn')
+})
 const tenantBookingSection = ref<'bookings' | 'interests'>(route.query?.tab === 'interests' ? 'interests' : 'bookings')
 const bookingReturnStorageKey = 'booking-list-return-context'
 
@@ -3137,24 +3140,27 @@ const loadBookings = async () => {
 }
 
 const withdrawWaitlist = async (item: any) => {
-  const isClosed = item.status === 'cancelled' || item.status === 'expired'
+  const isClosed = item.status === 'cancelled' || item.status === 'expired' || item.status === 'withdrawn'
   const promptText = isClosed
-    ? `ต้องการนำรายการแผง ${item.stall_number} ออกจากรายการแผงที่สนใจใช่หรือไม่?`
-    : `ต้องการออกจากคิวแผง ${item.stall_number} ใช่หรือไม่?`
-  const titleText = isClosed ? 'นำออกจากรายการ' : 'ออกจากคิว'
-  const confirmBtnText = isClosed ? 'ยืนยันนำออก' : 'ยืนยันออกจากคิว'
+    ? `ต้องการลบรายการแผง ${item.stall_number || item.stall_ident} ออกจากหน้าจอใช่หรือไม่?`
+    : (item.status === 'offered'
+        ? `ต้องการสละสิทธิ์และออกจากคิวแผง ${item.stall_number || item.stall_ident} ใช่หรือไม่?\n(ระบบจะเสนอสิทธิ์ให้ผู้รอคิวลำดับถัดไป)`
+        : `ต้องการออกจากคิวแผง ${item.stall_number || item.stall_ident} ใช่หรือไม่?\n(ระบบจะยกเลิกการรอคิวและปรับลำดับคิวให้อัตโนมัติ)`)
+  const titleText = isClosed ? 'ลบรายการออก' : (item.status === 'offered' ? 'สละสิทธิ์ / ออกจากคิว' : 'ออกจากคิว')
+  const confirmBtnText = isClosed ? 'ลบรายการออก' : 'ยืนยันออกจากคิว'
 
   const confirmed = await showConfirm(promptText, {
     title: titleText,
-    type: 'warning',
+    type: isClosed ? 'danger' : 'warning',
     confirmText: confirmBtnText,
     cancelText: 'ย้อนกลับ'
   })
   if (!confirmed) return
   try {
     await del(`/bookings/waitlist/${item.id}`)
+    waitlistItems.value = waitlistItems.value.filter(w => w.id !== item.id)
     await loadBookings()
-    await showSuccess(isClosed ? 'นำออกจากรายการเรียบร้อยแล้ว' : 'ออกจากคิวเรียบร้อยแล้ว', 'สำเร็จ')
+    await showSuccess(isClosed ? 'ลบรายการออกจากหน้าจอเรียบร้อยแล้ว' : 'ออกจากคิวเรียบร้อยแล้ว', 'สำเร็จ')
   } catch (error: any) {
     await showError(error?.data?.detail || error?.data?.message || 'ไม่สามารถดำเนินการได้')
   }
