@@ -15,6 +15,7 @@ import (
 	"emarket-api/databases/seeds"
 	"emarket-api/logs"
 	"emarket-api/routes"
+	bookingRepoPkg "emarket-api/src/booking/repositories"
 )
 
 // @title e-Market Management System API
@@ -48,6 +49,12 @@ func main() {
 	}
 	if err := seeds.SeedAll(databases.DB); err != nil {
 		log.Printf("Seeding warning: %v", err)
+	}
+	// Reconcile any waitlist records left by a request processed before the
+	// current flow was deployed. This is idempotent and prevents an old queue
+	// from remaining active after its primary holder has filed an application.
+	if err := bookingRepoPkg.NewRepository(databases.DB).ProcessWaitlistLifecycle(); err != nil {
+		log.Printf("Waitlist lifecycle reconciliation warning: %v", err)
 	}
 
 	// Setup Router

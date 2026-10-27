@@ -34,6 +34,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.StallAuditLog{},
 		&models.MarketGISConfig{},
 		&models.Booking{},
+		&models.BookingStall{},
+		&models.Waitlist{},
 		&models.Notification{},
 		&models.Application{},
 		&models.ApplicationType{},

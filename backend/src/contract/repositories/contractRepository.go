@@ -136,6 +136,35 @@ func (r *repository) Create(contract *models.Contract) error {
 				Update("application_state", "completed").Error
 		}
 
+		// Close any remaining active waitlist on this stall as contract has been finalized
+		var activeWaitlist []models.Waitlist
+		if err := tx.Where("stall_ident = ? AND status IN ('waiting', 'offered')", contract.StallIdent).Find(&activeWaitlist).Error; err == nil {
+			for i := range activeWaitlist {
+				wItem := &activeWaitlist[i]
+				_ = tx.Model(wItem).Updates(map[string]interface{}{
+					"status":         "cancelled",
+					"dismiss_reason": "ตัดสิทธิ์เนื่องจากผู้จองหลักทำสัญญาเช่าสำเร็จ",
+					"expires_at":     nil,
+					"updated_at":     now,
+				}).Error
+				closeNotif := models.Notification{
+					RecipientRole:   "tenant",
+					RecipientUserID: &wItem.TenantID,
+					RecipientName:   wItem.TenantName,
+					Type:            "waitlist_cancelled",
+					StatusCode:      "waitlist_cancelled",
+					StatusLabel:     "แผงถูกเช่าแล้ว",
+					Title:           fmt.Sprintf("แผง %s ถูกเช่าแล้ว", wItem.StallIdent),
+					Message:         fmt.Sprintf("แผง %s ที่คุณลงชื่อรอคิวมีผู้จองหลักทำสัญญาเช่าเรียบร้อยแล้ว ระบบจึงปิดรายการรอคิวของคุณ คุณสามารถเลือกแผงอื่นที่ว่างหรือเข้าคิวแผงอื่นได้", wItem.StallIdent),
+					StallNumber:     wItem.StallIdent,
+					MarketName:      wItem.MarketName,
+					ProjectName:     wItem.ProjectName,
+					TargetURL:       "/bookings?tab=interests",
+				}
+				_ = tx.Create(&closeNotif).Error
+			}
+		}
+
 		return nil
 	})
 }

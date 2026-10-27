@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"emarket-api/logs"
 	"emarket-api/models"
@@ -98,7 +99,19 @@ func (u *useCase) GetStalls(filter requests.StallFilter) ([]responses.StallRespo
 
 	res := make([]responses.StallResponse, len(stalls))
 	for i, s := range stalls {
-		res[i] = toStallResponse(&s)
+		resp := toStallResponse(&s)
+		if waitlist, err := u.repo.GetActiveWaitlistByStall(s.Ident); err == nil && len(waitlist) > 0 {
+			resp.WaitlistCount = len(waitlist)
+			if waitlist[0].Status == "offered" && waitlist[0].ExpiresAt != nil && waitlist[0].ExpiresAt.After(time.Now()) {
+				resp.OfferedToTenantID = waitlist[0].TenantID
+				resp.OfferedExpiresAt = waitlist[0].ExpiresAt
+				if resp.Status == "available" || resp.Status == "" {
+					resp.Status = "offered"
+					resp.StallStatus = "offered"
+				}
+			}
+		}
+		res[i] = resp
 	}
 	return res, nil
 }
@@ -118,26 +131,30 @@ func (u *useCase) GetStallByID(id int) (*responses.StallResponse, error) {
 
 func (u *useCase) GetWaitingQueue(ident string) (*responses.WaitingQueueResponse, error) {
 	stallStatus := "available"
-	stallIdent := ident
+	stallIdent := strings.TrimSpace(ident)
 
-	stall, err := u.repo.ByIdent(ident)
+	stall, err := u.repo.ByIdent(stallIdent)
 	if err == nil && stall != nil {
 		stallStatus = stall.StallStatus
 		stallIdent = stall.Ident
 	}
 
-	queueCount, err := u.repo.CountQueue(ident)
-	if err != nil {
-		queueCount = 0
-	}
+	waitlistItems, _ := u.repo.GetActiveWaitlistByStall(stallIdent)
+	queueCount := len(waitlistItems)
 
 	var maskedName = "-"
+	var currentBookerName = ""
 	var maskedPhone = "-"
+	var currentBookerPhone = ""
 	var activeHolderStatus = ""
+	var offeredAtStr *string
 	var expiresAtStr *string
+	var remainingSec int64 = 0
 
-	activeBooking, err := u.repo.GetActiveBooking(ident)
+	activeBooking, err := u.repo.GetActiveBooking(stallIdent)
 	if err == nil && activeBooking != nil {
+		currentBookerName = activeBooking.ApplicantName
+		currentBookerPhone = activeBooking.ApplicantPhone
 		maskedName = maskPDPAName(activeBooking.ApplicantName)
 		maskedPhone = maskPDPAphone(activeBooking.ApplicantPhone)
 		activeHolderStatus = activeBooking.BookingStatus
@@ -150,15 +167,64 @@ func (u *useCase) GetWaitingQueue(ident string) (*responses.WaitingQueueResponse
 		}
 	}
 
+	queueList := make([]responses.WaitingQueueItem, 0, len(waitlistItems))
+	now := time.Now()
+	for idx, w := range waitlistItems {
+		var rem int64 = 0
+		if w.Status == "offered" && w.ExpiresAt != nil && w.ExpiresAt.After(now) {
+			rem = int64(w.ExpiresAt.Sub(now).Seconds())
+			if activeBooking == nil {
+				stallStatus = "offered"
+				activeHolderStatus = "offered"
+				currentBookerName = w.TenantName
+				currentBookerPhone = w.TenantPhone
+				maskedName = maskPDPAName(w.TenantName)
+				maskedPhone = maskPDPAphone(w.TenantPhone)
+				if w.OfferedAt != nil {
+					oStr := w.OfferedAt.Format("2006-01-02T15:04:05Z07:00")
+					offeredAtStr = &oStr
+				}
+				eStr := w.ExpiresAt.Format("2006-01-02T15:04:05Z07:00")
+				expiresAtStr = &eStr
+				remainingSec = rem
+			}
+		}
+		pos := w.Position
+		if pos <= 0 {
+			pos = idx + 1
+		}
+		queueList = append(queueList, responses.WaitingQueueItem{
+			ID:               w.ID,
+			Position:         pos,
+			QueueNumber:      pos,
+			QueuePosition:    pos,
+			TenantID:         w.TenantID,
+			TenantName:       w.TenantName,
+			MaskedName:       maskPDPAName(w.TenantName),
+			TenantPhone:      w.TenantPhone,
+			MaskedPhone:      maskPDPAphone(w.TenantPhone),
+			Status:           w.Status,
+			OfferedAt:        w.OfferedAt,
+			ExpiresAt:        w.ExpiresAt,
+			RemainingSeconds: rem,
+			CreatedAt:        w.CreatedAt,
+		})
+	}
+
 	res := responses.WaitingQueueResponse{
 		StallIdent:          stallIdent,
-		QueueCount:          int(queueCount),
-		CurrentPosition:     int(queueCount) + 1,
+		QueueCount:          queueCount,
+		CurrentPosition:     queueCount + 1,
 		MaskedCurrentBooker: maskedName,
+		CurrentBookerName:   currentBookerName,
 		MaskedBookerPhone:   maskedPhone,
+		CurrentBookerPhone:  currentBookerPhone,
 		ActiveHolderStatus:  activeHolderStatus,
 		Status:              stallStatus,
+		OfferedAt:           offeredAtStr,
 		ExpiresAt:           expiresAtStr,
+		RemainingSeconds:    remainingSec,
+		Queues:              queueList,
 	}
 	return &res, nil
 }

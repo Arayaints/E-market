@@ -178,6 +178,14 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+.app-select-container.is-disabled .app-select-trigger,
+.app-select-trigger:disabled {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed !important;
+}
+
 .app-select-trigger.has-value {
   color: #1e293b;
   font-weight: 500;

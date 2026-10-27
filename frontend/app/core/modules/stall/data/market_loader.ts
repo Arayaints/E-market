@@ -91,9 +91,23 @@ export function getMarketSlug(marketIdOrSlug: string | number): string {
   return MARKET_SLUG_MAP[key] || 'chatuchak'
 }
 
+function resolveBackendApiBase(): string {
+  try {
+    const config = useRuntimeConfig()
+    const base = String(config?.public?.apiBase || config?.public?.apiUrl || '').trim()
+    if (base) return base.replace(/\/+$/, '')
+  } catch {}
+  const envBase = String(
+    (import.meta as any)?.env?.NUXT_PUBLIC_API_BASE ||
+    (import.meta as any)?.env?.NUXT_PUBLIC_API_URL ||
+    'http://localhost:8080/api/v1'
+  ).trim()
+  return envBase.replace(/\/+$/, '')
+}
+
 /**
- * Fetch and load a single market GIS JSON file on-demand.
- * Loads from /data/markets/<slug>.json with immediate cache.
+ * Fetch and load a single market GIS layout on-demand from the Backend API
+ * (`GET /api/v1/markets/<slug>/gis-config`) with immediate cache and fallback to static registry.
  */
 export async function loadMarketGisJson(marketIdOrSlug?: string | number | null, forceReload = false): Promise<MarketGisConfig> {
   const slug = getMarketSlug(marketIdOrSlug || '1')
@@ -102,24 +116,32 @@ export async function loadMarketGisJson(marketIdOrSlug?: string | number | null,
     return marketCache.get(slug)!
   }
 
-  // If running in browser, fetch the dedicated JSON file
+  const baseConfig = getMarketGisConfig(slug)
+
+  // Fetch authoritative GIS projects & facilities from Backend API
   if (typeof window !== 'undefined' && typeof fetch === 'function') {
     try {
-      const res = await fetch(`/data/markets/${slug}.json`, { cache: 'no-store' })
+      const apiBase = resolveBackendApiBase()
+      const res = await fetch(`${apiBase}/markets/${encodeURIComponent(slug)}/gis-config`, { cache: 'no-store' })
       if (res.ok) {
-        const data = await res.json()
-        if (data && data.projects && Array.isArray(data.projects)) {
-          marketCache.set(slug, data)
-          return data
+        const payload = await res.json()
+        const gisData = payload?.data ?? payload
+        const apiProjects = Array.isArray(gisData?.projects) ? gisData.projects : []
+        if (apiProjects.length > 0) {
+          const mergedConfig: MarketGisConfig = {
+            ...baseConfig,
+            projects: mergeMarketProjects(baseConfig.projects, apiProjects)
+          }
+          marketCache.set(slug, mergedConfig)
+          return mergedConfig
         }
       }
     } catch (e) {
-      console.warn(`[market_loader] Failed to fetch /data/markets/${slug}.json, using static fallback`, e)
+      console.warn(`[market_loader] Failed to fetch GIS config from backend for ${slug}, using static fallback`, e)
     }
   }
 
   // Fallback to static registry
-  const fallback = getMarketGisConfig(slug)
-  marketCache.set(slug, fallback)
-  return fallback
+  marketCache.set(slug, baseConfig)
+  return baseConfig
 }

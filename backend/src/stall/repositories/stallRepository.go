@@ -130,6 +130,45 @@ func (r *repository) FindAll(filter requests.StallFilter) ([]models.Stall, error
 		stallIndexes[ident] = len(stalls) - 1
 	}
 
+	// Merge active waitlist offers ('offered' and not expired) so stalls in the
+	// 48-hour waitlist offer window report StallStatus = 'offered'
+	var activeOffers []models.Waitlist
+	offerQuery := r.conn.Model(&models.Waitlist{}).Where("status = 'offered' AND expires_at > ?", time.Now())
+	if resolvedMarketID > 0 {
+		offerQuery = offerQuery.Where("market_id = ? OR market_name LIKE ?", resolvedMarketID, "%"+resolvedMarketName+"%")
+	} else if marketKey != "" {
+		offerQuery = offerQuery.Where("market_name LIKE ?", "%"+marketKey+"%")
+	}
+	if err := offerQuery.Find(&activeOffers).Error; err == nil {
+		for _, offer := range activeOffers {
+			ident := strings.TrimSpace(offer.StallIdent)
+			if ident == "" {
+				continue
+			}
+			if index, exists := stallIndexes[ident]; exists {
+				if stalls[index].StallStatus == "available" || stalls[index].StallStatus == "" {
+					stalls[index].StallStatus = "offered"
+				}
+				continue
+			}
+			marketID := resolvedMarketID
+			if offer.MarketID != nil {
+				marketID = *offer.MarketID
+			}
+			stalls = append(stalls, models.Stall{
+				MarketID:    marketID,
+				MarketSlug:  resolvedMarketSlug,
+				MarketName:  offer.MarketName,
+				ProjectName: offer.ProjectName,
+				Ident:       ident,
+				Name:        "แผงค้า " + ident,
+				StallStatus: "offered",
+				Status:      "A",
+			})
+			stallIndexes[ident] = len(stalls) - 1
+		}
+	}
+
 	if filter.Status == "" {
 		return stalls, nil
 	}
@@ -222,10 +261,24 @@ func (r *repository) GetActiveBooking(stallIdent string) (*models.Booking, error
 	return &booking, nil
 }
 
+func (r *repository) GetActiveWaitlistByStall(stallIdent string) ([]models.Waitlist, error) {
+	now := time.Now()
+	// Expire any stale offers on this stall before returning queue
+	_ = r.conn.Model(&models.Waitlist{}).
+		Where("stall_ident = ? AND status = 'offered' AND expires_at IS NOT NULL AND expires_at <= ?", strings.TrimSpace(stallIdent), now).
+		Updates(map[string]interface{}{"status": "expired", "updated_at": now}).Error
+
+	var items []models.Waitlist
+	err := r.conn.Where("stall_ident = ? AND status IN ('offered', 'waiting')", strings.TrimSpace(stallIdent)).
+		Order("CASE WHEN status = 'offered' THEN 0 ELSE 1 END ASC, position ASC, id ASC").
+		Find(&items).Error
+	return items, err
+}
+
 func (r *repository) CountQueue(stallIdent string) (int64, error) {
 	var total int64
-	err := r.conn.Model(&models.Booking{}).
-		Where("stall_ident = ? AND (queue_number > 0 OR booking_status = 'waiting_queue') AND booking_status NOT IN ('rejected', 'not_interested', 'cancelled', 'no_show', 'lease_applied', 'completed', 'terminated') AND status = 'A'", stallIdent).
+	err := r.conn.Model(&models.Waitlist{}).
+		Where("stall_ident = ? AND status IN ('waiting', 'offered')", strings.TrimSpace(stallIdent)).
 		Count(&total).Error
 	return total, err
 }

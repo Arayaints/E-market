@@ -1,8 +1,11 @@
 package seeds
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"emarket-api/models"
 	"golang.org/x/crypto/bcrypt"
@@ -24,11 +27,22 @@ func SeedAll(db *gorm.DB) error {
 			{Username: "staff", Password: hashPassword("staff1234"), FullName: "เจ้าหน้าที่ตลาด (Staff)", Role: "staff", Email: "staff@emarket.bma.go.th", Phone: "02-123-4568", Status: "A"},
 			{Username: "tenant", Password: hashPassword("tenant1234"), FullName: "สมชาย ใจดี", Role: "tenant", Email: "tenant@emarket.bma.go.th", Phone: "081-234-5678", Status: "A"},
 			{Username: "tenant2", Password: hashPassword("tenant21234"), FullName: "นภาพร รัตนศิลป์", Role: "tenant", Email: "tenant2@emarket.bma.go.th", Phone: "089-111-2233", Status: "A"},
+			{Username: "tenant3", Password: hashPassword("tenant31234"), FullName: "วิชัย เจริญทรัพย์", Role: "tenant", Email: "tenant3@emarket.bma.go.th", Phone: "086-778-9900", Status: "A"},
 		}
 		if err := db.Create(&users).Error; err != nil {
 			return err
 		}
 		log.Println("Seeded users successfully")
+	}
+
+	// Ensure tenant accounts exist even if user table was already created
+	for _, t := range []models.User{
+		{Username: "tenant", Password: hashPassword("tenant1234"), FullName: "สมชาย ใจดี", Role: "tenant", Email: "tenant@emarket.bma.go.th", Phone: "081-234-5678", Status: "A"},
+		{Username: "tenant2", Password: hashPassword("tenant21234"), FullName: "นภาพร รัตนศิลป์", Role: "tenant", Email: "tenant2@emarket.bma.go.th", Phone: "089-111-2233", Status: "A"},
+		{Username: "tenant3", Password: hashPassword("tenant31234"), FullName: "วิชัย เจริญทรัพย์", Role: "tenant", Email: "tenant3@emarket.bma.go.th", Phone: "086-778-9900", Status: "A"},
+	} {
+		var existing models.User
+		db.Where("username = ?", t.Username).Attrs(t).FirstOrCreate(&existing)
 	}
 
 	// 2. Seed 12 BMA Markets
@@ -349,6 +363,47 @@ func SeedAll(db *gorm.DB) error {
 			"total_stalls":           total,
 			"starting_price_monthly": price,
 		})
+	}
+
+	// Seed initial market_gis_config from backend/data/markets/<slug>.json if not yet present
+	for _, market := range marketsForStaff {
+		var existingGIS models.MarketGISConfig
+		err := db.Where("market_id = ?", market.ID).First(&existingGIS).Error
+		if err == nil && len(existingGIS.ProjectsJSON) > 2 {
+			continue
+		}
+		jsonCandidates := []string{
+			filepath.Join("data", "markets", market.Slug+".json"),
+			filepath.Join("backend", "data", "markets", market.Slug+".json"),
+		}
+		for _, p := range jsonCandidates {
+			rawBytes, rErr := os.ReadFile(p)
+			if rErr != nil {
+				continue
+			}
+			var doc map[string]interface{}
+			if json.Unmarshal(rawBytes, &doc) != nil {
+				continue
+			}
+			if projsRaw, ok := doc["projects"]; ok {
+				if projsBytes, mErr := json.Marshal(projsRaw); mErr == nil && len(projsBytes) > 2 {
+					cfg := models.MarketGISConfig{
+						MarketID:       market.ID,
+						ProjectsJSON:   string(projsBytes),
+						FacilitiesJSON: "[]",
+						Published:      true,
+					}
+					_ = db.Where(models.MarketGISConfig{MarketID: market.ID}).
+						Assign(map[string]interface{}{
+							"projects_json":   cfg.ProjectsJSON,
+							"facilities_json": cfg.FacilitiesJSON,
+							"published":       true,
+						}).
+						FirstOrCreate(&cfg).Error
+					break
+				}
+			}
+		}
 	}
 
 	// Normalize legacy booking queue_number and waiting_queue / pending_slot states

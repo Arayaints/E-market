@@ -25,7 +25,7 @@
           :to="staffDashboardLink"
           class="nav-icon-link"
           :class="{ active: route.path === '/stalls/manage' && route.query.mode === 'inspect' }"
-          :title="isExpanded ? '' : 'แดชบอร์ดตลาด'"
+          :title="isExpanded ? '' : 'แดชบอร์ด'"
         >
           <span class="nav-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -35,45 +35,104 @@
               <rect x="14" y="14" width="7" height="7"></rect>
             </svg>
           </span>
-          <span v-if="isExpanded" class="nav-label">แดชบอร์ดตลาด</span>
+          <span v-if="isExpanded" class="nav-label">แดชบอร์ด</span>
         </NuxtLink>
 
+        <!-- 2. ข้อมูลตลาด (แผนที่ผังตลาดแบบเต็มจอ) -->
         <NuxtLink
-          :to="staffMarketInfoLink"
+          :to="staffMarketMapLink"
           class="nav-icon-link"
-          :class="{ active: route.path === '/stalls' }"
+          :class="{ active: route.path === '/stalls/map' }"
           :title="isExpanded ? '' : 'ข้อมูลตลาด'"
         >
           <span class="nav-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 21h18"></path>
-              <path d="M5 21V5l7-3 7 3v16"></path>
-              <path d="M9 21v-5h6v5"></path>
-              <path d="M9 8h.01"></path>
-              <path d="M15 8h.01"></path>
-              <path d="M9 12h.01"></path>
-              <path d="M15 12h.01"></path>
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
             </svg>
           </span>
           <span v-if="isExpanded" class="nav-label">ข้อมูลตลาด</span>
         </NuxtLink>
 
-        <NuxtLink
-          :to="staffLayoutLink"
-          class="nav-icon-link"
-          :class="{ active: route.path === '/stalls/manage' && route.query.mode !== 'inspect' }"
-          :title="isExpanded ? '' : 'จัดการผัง'"
+        <!-- 3. จัดการตลาด (กลุ่มเมนูย่อย) -->
+        <button
+          type="button"
+          class="nav-icon-link staff-nav-group-toggle"
+          :class="{ active: !isExpanded && isMarketManagementRoute }"
+          :aria-expanded="isExpanded ? isMarketManagementExpanded : undefined"
+          :title="isExpanded ? '' : 'จัดการตลาด'"
+          @click="toggleMarketManagement"
         >
           <span class="nav-icon-wrap">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 18-6 3V5l6-3 6 3 6-3v12"></path>
-              <path d="M9 2v16"></path>
-              <path d="M15 5v6"></path>
-              <path d="m14 18 6.5-6.5a1.7 1.7 0 0 0-2.4-2.4L11.6 15.6 11 19z"></path>
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="18" x2="20" y2="18"></line>
+              <circle cx="9" cy="6" r="2"></circle>
+              <circle cx="15" cy="12" r="2"></circle>
+              <circle cx="11" cy="18" r="2"></circle>
             </svg>
           </span>
-          <span v-if="isExpanded" class="nav-label">จัดการผัง</span>
-        </NuxtLink>
+          <span v-if="isExpanded" class="nav-label">จัดการตลาด</span>
+          <svg v-if="isExpanded" class="staff-nav-group-chevron" :class="{ 'is-open': isMarketManagementExpanded }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div v-if="isExpanded && isMarketManagementExpanded" class="staff-nav-submenu">
+          <NuxtLink
+            :to="staffMarketInfoLink"
+            class="nav-icon-link staff-nav-submenu-link"
+            :class="{ active: route.path === '/stalls' }"
+            :title="isExpanded ? '' : 'รายละเอียดตลาด'"
+          >
+            <span class="nav-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18"></path>
+                <path d="M5 21V5l7-3 7 3v16"></path>
+                <path d="M9 21v-5h6v5"></path>
+                <path d="M9 8h.01"></path>
+                <path d="M15 8h.01"></path>
+                <path d="M9 12h.01"></path>
+                <path d="M15 12h.01"></path>
+              </svg>
+            </span>
+            <span v-if="isExpanded" class="nav-label">รายละเอียดตลาด</span>
+          </NuxtLink>
+
+          <NuxtLink
+            :to="staffLayoutLink"
+            class="nav-icon-link staff-nav-submenu-link"
+            :class="{ active: route.path === '/stalls/manage' && route.query.mode !== 'inspect' }"
+            :title="isExpanded ? '' : 'จัดการผัง GIS'"
+          >
+            <span class="nav-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18-6 3V5l6-3 6 3 6-3v12"></path>
+                <path d="M9 2v16"></path>
+                <path d="M15 5v6"></path>
+                <path d="m14 18 6.5-6.5a1.7 1.7 0 0 0-2.4-2.4L11.6 15.6 11 19z"></path>
+              </svg>
+            </span>
+            <span v-if="isExpanded" class="nav-label">จัดการผัง GIS</span>
+          </NuxtLink>
+
+          <NuxtLink
+            :to="staffVisitManagementLink"
+            class="nav-icon-link staff-nav-submenu-link"
+            :class="{ active: route.path.startsWith('/stalls/visit-schedule') }"
+            :title="isExpanded ? '' : 'จัดการรอบเข้าชม'"
+          >
+            <span class="nav-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5l3 2"></path>
+              </svg>
+            </span>
+            <span v-if="isExpanded" class="nav-label">จัดการรอบเข้าชม</span>
+          </NuxtLink>
+        </div>
       </template>
 
       <!-- หน้าหลักสำหรับผู้ดูแลระบบและผู้เช่า -->
@@ -81,7 +140,7 @@
         v-else
         to="/"
         class="nav-icon-link"
-        :class="{ active: route.path === '/' }"
+        :class="{ active: isHomeActive }"
         :title="isExpanded ? '' : 'หน้าแรก'"
       >
         <span class="nav-icon-wrap">
@@ -199,11 +258,23 @@
 <script setup lang="ts">
 const route = useRoute()
 const { user } = useAuth()
-const { isExpanded, collapse } = useSidebar()
+const { isExpanded, expand, collapse } = useSidebar()
 const { notifications, activeRole } = useNotifications()
+
+const isHomeActive = computed(() => {
+  if (route.path === '/') return true
+  // สำหรับแอดมินและผู้เช่า: หน้ารายละเอียดตลาดและหน้าจัดการตลาดจะเชื่อมโยงมาจากหน้าหลัก (ตาม breadcrumb)
+  if (user.value?.role !== 'staff') {
+    return route.path.startsWith('/stalls') || route.path.startsWith('/markets')
+  }
+  return false
+})
 const staffMarketId = computed(() => (user.value as any)?.assigned_markets?.[0]?.id)
 const staffDashboardLink = computed(() =>
   staffMarketId.value ? `/stalls/manage?market=${staffMarketId.value}&mode=inspect` : '/staff'
+)
+const staffMarketMapLink = computed(() =>
+  staffMarketId.value ? `/stalls/map?market=${staffMarketId.value}` : '/staff'
 )
 const staffMarketInfoLink = computed(() =>
   staffMarketId.value ? `/stalls?market=${staffMarketId.value}` : '/staff'
@@ -211,6 +282,23 @@ const staffMarketInfoLink = computed(() =>
 const staffLayoutLink = computed(() =>
   staffMarketId.value ? `/stalls/manage?market=${staffMarketId.value}` : '/staff'
 )
+const staffVisitManagementLink = computed(() =>
+  staffMarketId.value ? `/stalls/visit-schedule?market=${staffMarketId.value}` : '/staff'
+)
+const isMarketManagementRoute = computed(() =>
+  route.path === '/stalls' ||
+  (route.path === '/stalls/manage' && route.query.mode !== 'inspect') ||
+  route.path.startsWith('/stalls/visit-schedule')
+)
+const isMarketManagementExpanded = ref(isMarketManagementRoute.value)
+const toggleMarketManagement = () => {
+  if (!isExpanded.value) {
+    isMarketManagementExpanded.value = true
+    expand()
+    return
+  }
+  isMarketManagementExpanded.value = !isMarketManagementExpanded.value
+}
 const sidebarSeenByMenu = ref<Record<'bookings' | 'applications', number>>({
   bookings: 0,
   applications: 0
@@ -278,6 +366,9 @@ onMounted(loadSidebarAttentionState)
 watch(sidebarAttentionStorageKey, loadSidebarAttentionState)
 
 watch(() => route.fullPath, () => {
+  if (isMarketManagementRoute.value) {
+    isMarketManagementExpanded.value = true
+  }
   if (process.client && window.innerWidth <= 768) {
     collapse()
   }
@@ -344,5 +435,75 @@ watch(() => route.fullPath, () => {
   background: #eff6ff;
   color: #2563eb;
   box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.5);
+}
+
+.staff-nav-group-toggle {
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.staff-nav-group-toggle:hover {
+  background: #f8fafc;
+  color: #2563eb;
+  transform: none;
+}
+
+.staff-nav-group-toggle .nav-label {
+  flex: 1;
+}
+
+.staff-nav-group-chevron {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.staff-nav-group-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.staff-nav-submenu {
+  display: grid;
+  gap: 2px;
+  margin: -1px 0 9px 23px;
+  padding-left: 8px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link {
+  height: 38px;
+  padding-left: 10px;
+  border-radius: 10px;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link .nav-icon-wrap {
+  display: none;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link:hover {
+  background: transparent;
+  transform: none;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link.active {
+  background: transparent;
+  box-shadow: none;
+  color: #2563eb;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link.active::before {
+  display: none;
+}
+
+.sidebar.expanded .staff-nav-submenu .staff-nav-submenu-link.active .nav-label {
+  color: #2563eb;
+  font-weight: 600;
 }
 </style>

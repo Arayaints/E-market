@@ -10,6 +10,8 @@ type Booking struct {
 	MarketID           *int       `gorm:"column:market_id" json:"market_id"`
 	MarketName         string     `gorm:"size:255;column:market_name" json:"market_name"`
 	ProjectName        string     `gorm:"size:255;column:project_name" json:"project_name"`
+	MonthlyRent        float64    `gorm:"column:monthly_rent;default:1800" json:"monthly_rent"`
+	DepositFee         float64    `gorm:"column:deposit_fee;default:1800" json:"deposit_fee"`
 	ApplicantName      string     `gorm:"size:255;not null;column:applicant_name" json:"applicant_name"`
 	ApplicantPhone     string     `gorm:"size:50;not null;column:applicant_phone" json:"applicant_phone"`
 	ApplicantEmail     string     `gorm:"size:255;column:applicant_email" json:"applicant_email"`
@@ -25,6 +27,7 @@ type Booking struct {
 	BookingStatus      string     `gorm:"size:50;default:'pending';column:booking_status" json:"booking_status"`
 	QueueNumber        int        `gorm:"default:0;column:queue_number" json:"queue_number"`
 	AppointmentGroupID string     `gorm:"size:100;column:appointment_group_id" json:"appointment_group_id"`
+	SkipNotification   bool       `gorm:"-" json:"-"`
 	Timeline           string     `gorm:"type:text;column:timeline" json:"timeline"`
 	ExpiresAt          *time.Time `gorm:"column:expires_at" json:"expires_at"`
 	Status             string     `gorm:"type:char(1);default:'A';column:status" json:"status"`
@@ -36,4 +39,29 @@ type Booking struct {
 
 func (Booking) TableName() string {
 	return "booking"
+}
+
+type BookingStall struct {
+	ID                 uint       `gorm:"primaryKey" json:"id"`
+	BookingID          uint       `gorm:"column:booking_id;index" json:"booking_id"`
+	SubBookingID       uint       `gorm:"column:sub_booking_id;index" json:"sub_booking_id"`
+	BookingNo          string     `gorm:"column:booking_no;index" json:"booking_no"`
+	AppointmentGroupID string     `gorm:"column:appointment_group_id;index" json:"appointment_group_id"`
+	MarketID           uint       `gorm:"column:market_id;default:1" json:"market_id"`
+	MarketName         string     `gorm:"column:market_name" json:"market_name"`
+	ProjectName        string     `gorm:"column:project_name" json:"project_name"`
+	StallID            uint       `gorm:"column:stall_id" json:"stall_id"`
+	StallIdent         string     `gorm:"column:stall_ident;index" json:"stall_ident"`
+	MonthlyRent        float64    `gorm:"column:monthly_rent;default:1800" json:"monthly_rent"`
+	DepositFee         float64    `gorm:"column:deposit_fee;default:1800" json:"deposit_fee"`
+	Status             string     `gorm:"column:status;default:pending_approval" json:"status"`
+	CancelReason       string     `gorm:"column:cancel_reason" json:"cancel_reason"`
+	CancelledBy        string     `gorm:"column:cancelled_by" json:"cancelled_by"`
+	CancelledAt        *time.Time `gorm:"column:cancelled_at" json:"cancelled_at"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+}
+
+func (BookingStall) TableName() string {
+	return "booking_stall"
 }

@@ -199,25 +199,7 @@ func (r *repository) Create(app *models.Application) error {
 				_ = tx.Create(&closeNotif).Error
 			}
 
-			// Upsert stall to occupied
-			var stallCount int64
-			tx.Model(&models.Stall{}).Where("ident = ?", app.StallIdent).Count(&stallCount)
-			if stallCount == 0 {
-				newStall := models.Stall{
-					Ident:       app.StallIdent,
-					Name:        "แผงค้า " + app.StallIdent,
-					StallStatus: "occupied",
-					Floor:       "1",
-					Status:      "A",
-				}
-				if app.MarketID != nil {
-					newStall.MarketID = *app.MarketID
-				}
-				_ = tx.Create(&newStall).Error
-			} else {
-				_ = tx.Model(&models.Stall{}).
-					Where("ident = ?", app.StallIdent).
-					Update("stall_status", "occupied").Error
+
 			}
 		}
 		return nil

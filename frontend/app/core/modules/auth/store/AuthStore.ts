@@ -152,10 +152,10 @@ export const useAuthStore = defineStore("auth", {
 					const userRole = normalizeRole(data.role || data.user?.role || (credentials.username.startsWith("tenant") ? "tenant" : credentials.username === "staff" ? "staff" : "admin"))
 					this.role = userRole
 					this.setUser(data.user || {
-						id: credentials.username === "tenant" ? 3 : credentials.username === "tenant2" ? 4 : 1,
+						id: credentials.username === "tenant" ? 3 : credentials.username === "tenant2" ? 4 : credentials.username === "tenant3" ? 17 : 1,
 						username: credentials.username,
-						full_name: credentials.username === "tenant" ? "สมชาย ใจดี" : credentials.username === "tenant2" ? "นภาพร รัตนศิลป์" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
-						phone: credentials.username === "tenant" ? "081-234-5678" : credentials.username === "tenant2" ? "089-111-2233" : "02-123-4567",
+						full_name: credentials.username === "tenant" ? "สมชาย ใจดี" : credentials.username === "tenant2" ? "นภาพร รัตนศิลป์" : credentials.username === "tenant3" ? "วิชัย เจริญทรัพย์" : "ผู้ดูแลระบบตลาด กทม. (Admin)",
+						phone: credentials.username === "tenant" ? "081-234-5678" : credentials.username === "tenant2" ? "089-111-2233" : credentials.username === "tenant3" ? "086-778-9900" : "02-123-4567",
 						role: userRole,
 					})
 					return res.data

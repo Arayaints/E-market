@@ -23,10 +23,12 @@ type Market struct {
 	StartingPriceMonthly float64   `gorm:"column:starting_price_monthly;default:0" json:"starting_price_monthly"`
 	ImageUrl             string    `gorm:"size:500;column:image_url" json:"image_url"`
 	Category             string    `gorm:"size:100;column:category" json:"category"`
-	OperatingHours       string    `gorm:"size:255;column:operating_hours" json:"operating_hours"`
-	Description          string    `gorm:"type:text;column:description" json:"description"`
-	Status               string    `gorm:"size:50;default:'open';column:status" json:"status"`
-	CreatedAt            time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	OperatingHours               string    `gorm:"size:255;column:operating_hours" json:"operating_hours"`
+	Description                  string    `gorm:"type:text;column:description" json:"description"`
+	Status                       string    `gorm:"size:50;default:'open';column:status" json:"status"`
+	LeaseApplicationDeadlineDays int       `gorm:"default:3;column:lease_application_deadline_days" json:"lease_application_deadline_days"`
+	WaitlistOfferHours           int       `gorm:"default:48;column:waitlist_offer_hours" json:"waitlist_offer_hours"`
+	CreatedAt                    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt            time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 

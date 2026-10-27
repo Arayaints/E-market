@@ -98,7 +98,7 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <!-- Rejected / Cancelled / No Show -->
-            <svg v-else-if="['rejected', 'cancelled', 'no_show', 'not_interested'].includes(item.status_code)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="['rejected', 'cancelled', 'no_show', 'not_interested', 'waitlist_cancelled'].includes(item.status_code)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="15" y1="9" x2="9" y2="15"></line>
               <line x1="9" y1="9" x2="15" y2="15"></line>
@@ -156,7 +156,7 @@
                 <line x1="16" y1="13" x2="8" y2="13"></line>
                 <line x1="16" y1="17" x2="8" y2="17"></line>
               </svg>
-              <svg v-else-if="['rejected', 'cancelled', 'no_show', 'not_interested'].includes(toast.status_code)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-else-if="['rejected', 'cancelled', 'no_show', 'not_interested', 'waitlist_cancelled'].includes(toast.status_code)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="15" y1="9" x2="9" y2="15"></line>
                 <line x1="9" y1="9" x2="15" y2="15"></line>
@@ -282,7 +282,17 @@ const handleNotificationClick = async (item: INotificationItem) => {
   await markAsRead(item.id)
   showNotifications.value = false
 
-  if (item.booking_id) {
+  if ((item.status_code === 'waitlist_offered' || item.status_code === 'waitlist_expiring_soon') && item.stall_number) {
+    router.push({
+      path: '/stalls/book',
+      query: {
+        market: item.market_name || 'ตลาดนัดจตุจักร',
+        stall: item.stall_number,
+        step: '1',
+        claimWaitlist: '1'
+      }
+    })
+  } else if (item.booking_id) {
     router.push({ path: `/bookings/${item.booking_id}` })
   } else if (item.target_url) {
     router.push(item.target_url)
@@ -295,6 +305,7 @@ const getStatusToneClass = (statusCode: string) => {
   switch (statusCode) {
     case 'approved':
     case 'completed':
+    case 'waitlist_offered':
       return 'tone-green'
     case 'interested':
     case 'lease_applied':
@@ -306,7 +317,10 @@ const getStatusToneClass = (statusCode: string) => {
     case 'cancelled':
     case 'no_show':
     case 'not_interested':
+    case 'waitlist_expired':
+    case 'waitlist_cancelled':
       return 'tone-red'
+    case 'waitlist_expiring_soon':
     case 'pending_approval':
     default:
       return 'tone-amber'

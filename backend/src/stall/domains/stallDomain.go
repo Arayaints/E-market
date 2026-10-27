@@ -23,5 +23,6 @@ type Repository interface {
 	Update(stall *models.Stall, actorID int, changes string) error
 	FindHistory(stallID int) ([]models.StallAuditLog, error)
 	GetActiveBooking(stallIdent string) (*models.Booking, error)
+	GetActiveWaitlistByStall(stallIdent string) ([]models.Waitlist, error)
 	CountQueue(stallIdent string) (int64, error)
 }

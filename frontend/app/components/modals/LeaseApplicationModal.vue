@@ -48,19 +48,21 @@
       <!-- Form State -->
       <form v-else novalidate @submit.prevent="handleSubmit">
         <div class="modal-body">
-          <!-- Stall Selector when Appointment Card contains multiple stalls -->
+          <!-- Financial Summary calculated from remaining active stalls -->
           <div
-            v-if="selectableSubBookings.length > 1"
             style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;"
           >
-            <label class="form-label" style="color: #1e40af; font-weight: 700; margin-bottom: 6px; display: block;">
-              เลือกแผงค้าในนัดหมายนี้ที่ต้องการยื่นคำร้องขอเช่า <b class="req-star">*</b>
-            </label>
-            <AppSelect
-              v-model="selectedSubBookingId"
-              :options="subBookingSelectOptions"
-              placeholder="เลือกแผงค้าที่ต้องการยื่นคำร้อง"
-            />
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 0.85rem; color: #1e3a8a;">
+              <div>
+                <span>แผงค้าที่ยื่นคำร้อง: </span>
+                <strong>{{ targetStallNumber }} ({{ selectedStallRecords.length }} แผง)</strong>
+              </div>
+              <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                <span>ค่าเช่ารวม: <strong>฿{{ calculatedMonthlyRent.toLocaleString() }}/เดือน</strong></span>
+                <span>เงินมัดจำรวม: <strong>฿{{ calculatedDeposit.toLocaleString() }}</strong></span>
+                <span>รวมแรกเข้า: <strong style="color: #1d4ed8;">฿{{ (calculatedMonthlyRent + calculatedDeposit).toLocaleString() }}</strong></span>
+              </div>
+            </div>
           </div>
 
           <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
@@ -170,31 +172,70 @@ const periodOptions = [
 
 const selectableSubBookings = computed(() => {
   const subs = props.booking?.sub_bookings
-  if (Array.isArray(subs) && subs.length > 1) {
-    return subs.filter((s: any) => s.status === 'interested')
+  if (Array.isArray(subs) && subs.length > 0) {
+    const interestedSubs = subs.filter((s: any) => s.status === 'interested')
+    if (interestedSubs.length > 0) return interestedSubs
+    return subs.filter((s: any) => !['cancelled', 'rejected', 'not_interested', 'no_show', 'terminated', 'expired'].includes(s.status))
   }
-  return []
+  return props.booking ? [props.booking] : []
 })
 
 const subBookingSelectOptions = computed(() => {
-  return selectableSubBookings.value.map((s: any) => ({
+  const totalRate = selectableSubBookings.value.reduce((sum: number, s: any) => sum + Number(s.stall_monthly_rate || 3600), 0)
+  const allCodes = selectableSubBookings.value.map((s: any) => s.stall_number).join(', ')
+  const items = selectableSubBookings.value.map((s: any) => ({
     value: s.id,
-    label: `แผง ${s.stall_number}${s.stall_zone_name ? ` (${s.stall_zone_name})` : ''}${s.stall_monthly_rate ? ` — ฿${Number(s.stall_monthly_rate).toLocaleString()}/เดือน` : ''}`
+    label: `เฉพาะแผง ${s.stall_number}${s.stall_zone_name ? ` (${s.stall_zone_name})` : ''} — ฿${Number(s.stall_monthly_rate || 3600).toLocaleString()}/เดือน`
   }))
+  if (selectableSubBookings.value.length > 1) {
+    return [
+      {
+        value: 'all',
+        label: `ทุกแผงที่เหลือในใบจองนี้ (${selectableSubBookings.value.length} แผง: ${allCodes}) — รวม ฿${totalRate.toLocaleString()}/เดือน`
+      },
+      ...items
+    ]
+  }
+  return items
+})
+
+const selectedStallRecords = computed(() => {
+  if (selectedSubBookingId.value === 'all' && selectableSubBookings.value.length > 0) {
+    return selectableSubBookings.value
+  }
+  if (selectableSubBookings.value.length > 1 && selectedSubBookingId.value) {
+    const found = selectableSubBookings.value.find((s: any) => String(s.id) === String(selectedSubBookingId.value))
+    if (found) return [found]
+  }
+  if (selectableSubBookings.value.length === 1) {
+    return [selectableSubBookings.value[0]]
+  }
+  return props.booking ? [props.booking] : []
 })
 
 const activeBookingRecord = computed(() => {
-  if (selectableSubBookings.value.length > 1 && selectedSubBookingId.value) {
-    const found = selectableSubBookings.value.find((s: any) => String(s.id) === String(selectedSubBookingId.value))
-    if (found) return found
-  }
-  if (selectableSubBookings.value.length === 1) {
-    return selectableSubBookings.value[0]
-  }
-  return props.booking
+  return selectedStallRecords.value[0] || props.booking
+})
+
+const calculatedMonthlyRent = computed(() => {
+  return selectedStallRecords.value.reduce((sum: number, s: any) => {
+    const rate = Number(s?.stall_monthly_rate || s?.monthly_rent || 3600)
+    return sum + rate
+  }, 0)
+})
+
+const calculatedDeposit = computed(() => {
+  return selectedStallRecords.value.reduce((sum: number, s: any) => {
+    const rate = Number(s?.stall_monthly_rate || s?.monthly_rent || 3600)
+    const dep = Number(s?.deposit_fee || rate)
+    return sum + dep
+  }, 0)
 })
 
 const targetStallNumber = computed(() => {
+  if (selectedStallRecords.value.length > 1) {
+    return selectedStallRecords.value.map((s: any) => s.stall_number).join(', ')
+  }
   return activeBookingRecord.value?.stall_number || props.stall?.stall_number || ''
 })
 
@@ -263,7 +304,9 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     isSuccess.value = false
     resetErrors()
-    if (selectableSubBookings.value.length > 0) {
+    if (selectableSubBookings.value.length > 1) {
+      selectedSubBookingId.value = 'all'
+    } else if (selectableSubBookings.value.length === 1) {
       selectedSubBookingId.value = selectableSubBookings.value[0].id
     } else {
       selectedSubBookingId.value = props.booking?.id || ''
@@ -284,35 +327,8 @@ const handleSubmit = async () => {
   if (!validateForm()) return
   submitting.value = true
   try {
-    const targetRecord = activeBookingRecord.value || props.booking
-    const numericStallId = typeof targetStallId.value === 'number'
-      ? targetStallId.value
-      : (typeof targetStallId.value === 'string' && /^\d+$/.test(targetStallId.value) ? Number(targetStallId.value) : undefined)
     const periodMonths = Number(form.value.requested_period_months) || 12
-    const res = await post('/applications', {
-      stall_id: numericStallId,
-      stall_ident: targetStallNumber.value,
-      stall_number: targetStallNumber.value,
-      market_id: targetRecord?.market_id || props.stall?.market_id || undefined,
-      market_name: targetRecord?.market_name || props.stall?.market_name || 'ตลาดนัดจตุจักร',
-      booking_id: targetRecord?.id || null,
-      applicant_name: form.value.applicant_name,
-      applicant_id_card: form.value.applicant_id_card,
-      applicant_phone: form.value.applicant_phone,
-      applicant_email: form.value.applicant_email,
-      applicant_address: form.value.applicant_address,
-      shop_name: form.value.shop_name,
-      product_type: form.value.product_type,
-      product_category: form.value.product_type,
-      requested_start_date: form.value.requested_start_date,
-      requested_period_months: periodMonths,
-      lease_term_months: periodMonths,
-      proposed_rent_type: form.value.proposed_rent_type,
-      details: `ยื่นขอเช่าแผง ${targetStallNumber.value} เพื่อจำหน่าย${form.value.product_type} ในนามร้าน ${form.value.shop_name} ระยะเวลา ${periodMonths} เดือน`
-    })
 
-    const createdApp = res?.data || res
-    successAppNumber.value = createdApp?.application_number || createdApp?.application_no || res?.application_number || res?.application_no || ''
     isSuccess.value = true
     emit('success')
   } catch (err: any) {

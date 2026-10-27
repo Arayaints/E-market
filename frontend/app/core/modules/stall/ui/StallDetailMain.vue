@@ -40,7 +40,7 @@
             <div class="detail-summary-top">
               <div>
                 <div class="detail-eyebrow-row">
-                  <span class="eyebrow">STALL DETAIL · {{ marketName }}</span>
+                  <span class="eyebrow">{{ marketName }}</span>
                   <span class="status-badge" :class="`status-${stall.stall_status || stall.status || 'available'}`">{{ statusLabel }}</span>
                 </div>
                 <h1>แผง {{ stall.ident || stall.stall_ident }}{{ stall.name ? ` (${stall.name})` : '' }}</h1>
